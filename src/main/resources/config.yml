@@ -1,0 +1,119 @@
+###########################################################
+#                        JParkour                         #
+#                          v1.0                           #
+###########################################################
+settings:
+  world: "parkour-XIDX" # XIDX - айди мира.
+  # Введите максимальное количество миров, которые плагин может использовать.
+  # В случае переполнения миров, игрок будет поставлен в очередь и ждать любого свободного сервера.
+  amount: 999
+  game:
+    # Чтобы добавить имя или описание предмету, укажите name и lore по примеру exit.
+    items:
+      exit:
+        slot: 8
+        name: "&cВыход"
+        lore:
+          - ""
+          - "&cВыход&f, а что такое?"
+          - ""
+        # Укажите BARRIER, чтобы плагин определял, что это кнопка выхода.
+        type: BARRIER
+  armor-stands:
+    # Типы:
+    # Bomb - взрывается и нужно выбрать предмет и клик тип, чтобы она не взорвалась.
+    # Use - не взрывается.
+    # Клики:
+    # RIGHT_CLICK - правый клик.
+    # LEFT_CLICK - левый клик.
+    bomb_gold:
+      block: STAINED_GLASS
+      blockData: 4
+      in_block: TNT
+      in_blockData: 0
+      type: bomb
+      item: GOLD_SWORD
+      click_type: RIGHT_CLICK
+    bomb_blue:
+      block: STAINED_GLASS
+      blockData: 11
+      in_block: TNT
+      in_blockData: 0
+      type: bomb
+      item: DIAMOND_SWORD
+      click_type: RIGHT_CLICK
+    diamond_block:
+      block: STAINED_GLASS
+      blockData: 11
+      in_blockData: 0
+      in_block: DIAMOND_BLOCK
+      type: use
+      item: DIAMOND_SWORD
+      click_type: LEFT_CLICK
+    gold_block:
+      block: STAINED_GLASS
+      blockData: 4
+      in_block: GOLD_BLOCK
+      in_blockData: 0
+      type: use
+      item: GOLD_SWORD
+      click_type: LEFT_CLICK
+
+#
+# Чтобы поставить новые строчки в сообщениях воспользуйтесь: \n
+#
+# Сообщения
+messages:
+  # [message] сообщение - Отправить сообщение игроку.
+  # [broadcast] сообщение - Отправить сообщение всему серверу.
+  # [title] сообщение1;сообщение2 - Отправить титул игроку.
+  # [player] команда - Выполнить команду от имени игрока.
+  # [console] команда - Выполнить команду от имени консоли.
+  # [sound] sound;volume;pitch - Выполнить звук для игрока.
+  # Плейсхолдеры:
+  # %jparkour_map% - Отображение имени карты.
+  # %jparkour_id% - Отображение Id карты.
+  # %jparkour_status% - Отображение статуса карты.
+  # %jparkour_lefts% - Отображение кликов по стенду.
+  # %jparkour_maxlefts% - Отображение максимум кликов по стенду.
+  # %jparkour_rights% - Отображение отбитых кликов по бомбе.
+  # %jparkour_maxrights% - Отображение максимум отбитых кликов по бомбе.
+  # Встроенные плейсхолдеры:
+  # %star_win% - Появляются звёздочки, которые игрок заслужил.
+  # %star_loss% - Появляются звёздочки, которые игрок не получил.
+  # Сообщения от команды jparkour
+  cmd:
+    help:
+      - "&a[JParkour] Помощь &7(/jparkour help):"
+      - ""
+      - "&a/jparkour status &f- Посмотреть статус плагина."
+      - "&a/jparkour join &f- Создать или подключиться к любой свободной комнате."
+      - "&a/jparkour join roomid &f- Попытка подключения к комнате (если она свободна)."
+      - "&a/jparkour exit &f- Выйти из игры/очереди."
+      - "&a/jparkour reload &f- Перезагрузить конфигурацию плагина."
+      - ""
+    noperm:
+      - "&cУ вас недостаточно прав!"
+  game:
+    room:
+      notfound: "&cДанной карты не существует."
+      started: "&cИгра уже началась."
+      connect: "&aПодключаем к комнате &e%room%..."
+      waiter: "&aВы были поставлены в очередь.\n&fВыйти из очереди: &c/jparkour exit"
+      exit: "&cВы вышли из очереди."
+      noExit: "&cВы не в игре."
+    status:
+      wait: "&eОжидание"
+      start: "&fИграем"
+      win: "&aПобеда"
+      left: "&fРазрушено блоков: &e%blocks%/&e%blocks_all%"
+      right: "&fОтбито бомб: &e%bombs%&f/&e%bombs_all%"
+    actions:
+      ingame:
+        - "[message] &cВы находитесь в игре!"
+      end:
+        - "[message] &cИгра окончена."
+      kicked:
+        - "[message] &cИгра окончена."
+      win:
+        - "[title] &aПобеда;&e%star_win%&7%star_loss%"

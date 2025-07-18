@@ -1,0 +1,8 @@
+name: JParkour
+version: '1.0'
+main: ru.mitriyf.jparkour.JParkour
+softdepend: [ FastAsyncWorldEdit, PlaceholderAPI ]
+api-version: 1.13
+commands:
+  jparkour:
+    description: game settings

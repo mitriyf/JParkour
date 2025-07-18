@@ -1,0 +1,5 @@
+Hello!
+Привет!
+
+Вставьте сюда любую схематику для генерации конфигурационного файла и начала работы.
+Paste any diagram here to generate a configuration file and get started.
