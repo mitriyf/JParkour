@@ -18,17 +18,11 @@ import ru.mitriyf.jparkour.JParkour;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 public class Utils {
     private final JParkour plugin;
@@ -133,23 +127,6 @@ public class Utils {
             item.setItemMeta(meta);
         }
         return item;
-    }
-    // Другое
-    public void unpack(String zip, String dir) throws IOException {
-        Path destDirPath = Paths.get(dir);
-        try (ZipInputStream zipInputStream = new ZipInputStream(Files.newInputStream(Paths.get(zip)))) {
-            ZipEntry entry;
-            while ((entry = zipInputStream.getNextEntry()) != null) {
-                Path filePath = destDirPath.resolve(entry.getName());
-                if (entry.isDirectory()) {
-                    Files.createDirectories(filePath);
-                } else {
-                    Files.createDirectories(filePath.getParent());
-                    Files.copy(zipInputStream, filePath, StandardCopyOption.REPLACE_EXISTING);
-                }
-                zipInputStream.closeEntry();
-            }
-        }
     }
     public String repeat(String str, int count) {
         if (count <= 0) return "";

@@ -15,6 +15,11 @@ import ru.mitriyf.jparkour.values.info.SchematicData;
 import ru.mitriyf.jparkour.values.info.StandData;
 
 import java.io.*;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 @Getter
@@ -99,12 +104,10 @@ public class Values {
                     plugin.saveResource(schematics + s, true);
                 }
             }
-            // InputStream in = new URL("https://github.com/jdevs-mc/HvsV/raw/refs/heads/main/schematics.zip").openStream();
-            // String fullPath = path + "schematics.zip";
-            // Path fp = Paths.get(fullPath);
-            // Files.copy(in, fp, StandardCopyOption.REPLACE_EXISTING);
-            // plugin.getUtils().unpack(fullPath, path);
-            // Files.deleteIfExists(fp);
+            InputStream in = new URL("https://github.com/mitriyf/JParkour/raw/refs/heads/main/downloads/nether.schematic").openStream();
+            String fullPath = path + "nether.schematic";
+            Path fp = Paths.get(fullPath);
+            Files.copy(in, fp, StandardCopyOption.REPLACE_EXISTING);
         } catch (Exception e) {
             plugin.getLogger().warning("An error occurred when loading the schematics. Check your internet connection.");
             plugin.getLogger().warning("You can download the schematics and upload them to the server on the official page of the resource. (GitHub)");
