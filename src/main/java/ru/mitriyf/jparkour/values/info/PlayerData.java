@@ -18,6 +18,7 @@ public class PlayerData {
     private final String game;
     private final Location loc;
     private final ItemStack[] contents;
+    private final ItemStack[] armorContents;
     private final File file;
     private final boolean allowFly;
     private final int foodLevel;
@@ -34,6 +35,7 @@ public class PlayerData {
         this.file = new File(plugin.getDataFolder(), "playerData/" + p.getUniqueId().toString() + ".yml");
         loc = p.getLocation();
         contents = p.getInventory().getContents();
+        armorContents = p.getInventory().getArmorContents();
         allowFly = p.getAllowFlight();
         foodLevel = p.getFoodLevel();
         healthMax = p.getMaxHealth();
@@ -47,6 +49,7 @@ public class PlayerData {
         p.spigot().respawn();
         p.teleport(loc);
         p.getInventory().setContents(contents);
+        p.getInventory().setArmorContents(armorContents);
         p.setAllowFlight(allowFly);
         p.setFoodLevel(foodLevel);
         p.setMaxHealth(healthMax);

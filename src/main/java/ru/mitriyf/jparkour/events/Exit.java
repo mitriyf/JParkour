@@ -250,7 +250,7 @@ public class Exit implements Listener {
             Game game = values.getRooms().get(id);
             for (Map.Entry<Location, Set<ArmorStand>> a : game.getStands().entrySet()) {
                 if (a.getValue().contains(entity) && entity.getCustomName().equalsIgnoreCase(click)) {
-                    if (p.getItemInHand().isSimilar(entity.getBoots())) {
+                    if (p.getItemInHand().getType() == entity.getBoots().getType()) {
                         a.getValue().forEach(ArmorStand::remove);
                         if (game.getBombs().get(a.getKey()) != null) {
                             game.getBombs().get(a.getKey()).cancel();

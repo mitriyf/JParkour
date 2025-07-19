@@ -252,6 +252,7 @@ public class Game {
         p.setHealth(health);
         p.setFoodLevel(10);
         p.getInventory().clear();
+        p.getInventory().setArmorContents(null);
         values.getSlots().forEach((slot, item) -> p.getInventory().setItem(slot, item));
     }
     private void clear() {

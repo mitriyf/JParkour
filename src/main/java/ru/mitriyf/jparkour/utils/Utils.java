@@ -12,6 +12,7 @@ import org.bukkit.Sound;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import ru.mitriyf.jparkour.JParkour;
@@ -114,18 +115,17 @@ public class Utils {
     }
     public ItemStack generateItem(ConfigurationSection slot) {
         ItemStack item = new ItemStack(Material.valueOf(slot.getString("type")));
-        if (slot.getString("name") != null || slot.getString("lore") != null) {
-            ItemMeta meta = item.getItemMeta();
-            if (slot.getString("name") != null) meta.setDisplayName(hex(slot.getString("name")));
-            if (slot.getString("lore") != null) {
-                List<String> l = new ArrayList<>();
-                for (String t : slot.getStringList("lore")) {
-                    l.add(hex(t));
-                }
-                meta.setLore(l);
+        ItemMeta meta = item.getItemMeta();
+        meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
+        if (slot.getString("name") != null) meta.setDisplayName(hex(slot.getString("name")));
+        if (slot.getString("lore") != null) {
+            List<String> l = new ArrayList<>();
+            for (String t : slot.getStringList("lore")) {
+                l.add(hex(t));
             }
-            item.setItemMeta(meta);
+            meta.setLore(l);
         }
+        item.setItemMeta(meta);
         return item;
     }
     public String repeat(String str, int count) {
