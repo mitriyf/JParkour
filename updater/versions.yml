@@ -1,2 +1,4 @@
 versions:
-  - "1.2:REQUIRED:URL???"
+  - "1.4:REQUIRED:https://github.com/mitriyf/JParkour/releases/download/1.2-release/JParkour.jar"
+  - "1.3:REQUIRED:NULL"
+  - "1.2:REQUIRED:NULL"
