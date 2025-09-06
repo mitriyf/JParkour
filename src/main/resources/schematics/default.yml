@@ -1,60 +1,63 @@
-# Укажите название карты. Оно будет отображаться в Scoreboard.
+# Don't remove the version setting.
+version: 1.3
+
+# Specify the name of the map. It will be displayed in the Scoreboard.
 name: "&fDefault"
-# Укажите символ звёздочки или другой который будет показывать победу.
-# Оставьте это пустым, чтобы выводились цифры.
+# Specify an asterisk symbol or another symbol that will indicate a victory.
+# Leave this blank to display numbers.
 star: "★"
 entity:
-  # Укажите сущность.
+  # Specify the entity.
   type: CHICKEN
-  # Укажите скорость курицы.
+  # Specify the speed of mob.
   speed: 0.3
 player:
-  # Укажите максимальное количество хп. 2 хп - 1 сердечко.
+  # Specify the maximum number of hit points. 2 hit points = 1 heart.
   health: 6
-  # Укажите урон от бомбы.
+  # Specify the bomb damage.
   damageBomb: 2
-  # Укажите радиус от финиша при котором может появиться победа? (Для мобов которые очень высокие)
+  # Specify the radius from the finish line at which victory can appear. (For mobs that are very tall)
   radiusFinish: 0.5
-# Координаты вставки схематики
+# Coordinates of the schematic insertion.
 coords:
   x: 0
   y: 100
   z: 0
-# Локация при телепортации.
+# Location during teleportation.
 location:
-  # Какой yaw будет назначен при телепортации?
+  # What yaw will be assigned during teleportation?
   yaw: 180
-  # Какой north будет назначен при телепортации?
+  # Which north will be assigned during teleportation?
   north: 0
-  # Счёт идёт от высоты игрока.
-  # Укажите высоту, которая будет считаться проигрышной.
-  loss: 98
 locs:
-  # Укажите через: ";" - X, Y, Z от места установки схематики.
+  # Specify through: ";" - X, Y, Z from the location of the schematic.
   spawn: "0.5;0;0.5"
-  # Блок, который будет использоваться для начала игры. (Работает по всему миру)
-  # Уберите лишние блоки для телепортации на этой Z координате. (Чтобы избежать случайного попадания в паркур)
+  # The block that will be used to start the game. (Works worldwide)
+  # Remove the extra blocks for teleportation at this Z coordinate. (To avoid accidentally entering parkour)
   portal: "0;0;-7"
-  # Место начала, где курица побежит.
+  # The starting point where the chicken will run.
   start: "0;0;-12"
-  # Конец.
+  # End.
   end: "0;0;-102"
-items:
-  # Чтобы добавить имя или описание предмету, укажите name и lore по примеру exit.
-  1slot:
-    slot: 0
-    type: DIAMOND_SWORD
-  2slot:
-    slot: 1
-    type: GOLD_SWORD
-# Стенды.
+stars:
+  # 1 - 100%.
+  # 0.8 - 80%.
+  # 0.1 - 10%.
+  # Percent
+  5: 0.9
+  4: 0.75
+  3: 0.5
+  2: 0.3
+  1: 0.15
+
+# Stands.
 stands:
-  # Укажите радиус для появления стендов.
+  # Specify the radius for the stands to appear.
   radiusStands: 5
-  # Поставьте таймер до взрыва бомбы.
+  # Set a timer before the bomb explodes.
   timer: 20 # В тиках. 20 тиков - 1 секунда.
-  # Укажите где будут появляться стенды.
-  # Порядок: тип;X;Y;Z (от места установки схематики)
+  # Specify where the stands will appear.
+  # Order: type;X;Y;Z (from the location of the schematic)
   locs:
   - "gold_block;-2;1;-24"
   - "bomb_blue;0;1;-36"
@@ -63,13 +66,39 @@ stands:
   - "diamond_block;2;1;-69"
   - "bomb_blue;0;1;-79"
   - "bomb_gold;0;0;-94"
-# Система оценивания звёзд.
-stars:
-  # 1 - 100% выполнения.
-  # 0.8 - 80% выполнения.
-  # 0.1 - 10% выполнения.
-  5: 0.9
-  4: 0.75
-  3: 0.5
-  2: 0.3
-  1: 0.15
+# Set up the message.
+# This will only work if you have selected the plugin configuration mode.
+messages:
+  # Actions. These actions perform the same role as in the config.
+  # But there is no support for other languages here.
+  actions:
+    ingame:
+      - "[log] [SCHEMATIC] The %player% cannot perform a certain action while in the game."
+    end:
+      - "[log] [SCHEMATIC] The %player% has finished the game."
+    kicked:
+      - "[log] [SCHEMATIC] The %player% was kicked out of the game."
+    restarted:
+      - "[log] [SCHEMATIC] The game has been restarted."
+    damageHeart:
+      - "[log] [SCHEMATIC] The %player% lost a heart."
+    win:
+      - "[log] [SCHEMATIC] The %player% won and got a score &e%star_win%&7%star_loss%"
+  # The star rating system.
+  stars:
+    # 1 - 100%.
+    # 0.8 - 80%.
+    # 0.1 - 10%.
+    # Specify additional actions below. You can view them in the configuration.
+    5:
+      - "&e★★★★★"
+    4:
+      - "&e★★★★&7★"
+    3:
+      - "&e★★★&7★★"
+    2:
+      - "&e★★&7★★★"
+    1:
+      - "&e★&7★★★★"
+    0:
+      - "&7★★★★★"

@@ -1,0 +1,46 @@
+# If you use ItemStack, all comments in this config will be cleared.
+# Default Item Slots.
+# Item types: itemstack, default.
+# itemStack - An item can be added by a team or experienced people.
+# default - Using the plugin features.
+# [default] To add a name or description to an item, specify name and lore, for example, exit.
+default:
+  # [default] To add a name or description to an item, specify name and lore, for example, exit.
+  # Id of the item.
+  exit:
+    # Item types: itemstack, default.
+    # itemStack - An item can be added by a team or experienced people.
+    # default - Using the plugin features.
+    # Item slot.
+    slot: 8
+    type: default
+    # Item Info.
+    item:
+      # The name of the item.
+      name: "&cExit"
+      # Description of the item.
+      lore:
+        - ""
+        - "&cExit&f, and what is it?"
+        - ""
+      # Specify BARRIER so that the plugin can detect that this is an exit button.
+      type: BARRIER
+  1slot:
+    slot: 0
+    type: default
+    item:
+      type: DIAMOND_SWORD
+  2slot:
+    slot: 1
+    type: default
+    item:
+      type: GOLD_SWORD
+# Specify items for specific schematics.
+schematics:
+  # Specify the schem ID.
+  nether:
+    2slot:
+      slot: 4
+      type: default
+      item:
+        type: NETHER_STAR

@@ -11,6 +11,7 @@ import ru.mitriyf.jparkour.values.Values;
 import java.io.File;
 
 @Getter
+@SuppressWarnings("deprecation")
 public class PlayerData {
     private final JParkour plugin;
     private final Values values;
@@ -27,6 +28,7 @@ public class PlayerData {
     private final double health;
     private final GameMode gamemode;
     private final float exp;
+
     public PlayerData(JParkour plugin, Player p, String game) {
         this.plugin = plugin;
         this.values = plugin.getValues();
@@ -44,6 +46,7 @@ public class PlayerData {
         gamemode = p.getGameMode();
         exp = p.getExp();
     }
+
     public void apply() {
         p.getInventory().clear();
         p.spigot().respawn();
@@ -58,6 +61,8 @@ public class PlayerData {
         p.setGameMode(gamemode);
         p.setExp(exp);
         p.updateInventory();
-        if (!file.delete()) file.deleteOnExit();
+        if (!file.delete()) {
+            file.deleteOnExit();
+        }
     }
 }

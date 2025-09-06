@@ -4,15 +4,18 @@ import lombok.Getter;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import ru.mitriyf.jparkour.utils.Utils;
+import ru.mitriyf.jparkour.utils.actions.Action;
+import ru.mitriyf.jparkour.values.Values;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @Getter
 public class SchematicData {
+    private final Utils utils;
+    private final Values values;
     private final String name;
     private final String star;
     private final Map<double[], String> stands = new HashMap<>();
@@ -21,7 +24,6 @@ public class SchematicData {
     private final double speed;
     private final double radiusFinish;
     private final double radiusStands;
-    private final double loss;
     private final String schematic;
     private final double[] spawn;
     private final double[] portal;
@@ -37,7 +39,22 @@ public class SchematicData {
     private final int z;
     private final int maxLefts, maxRights;
     private final double five, four, three, two, one;
-    public SchematicData(Map<String, StandData> standMap, Utils utils, YamlConfiguration cfg, String schematicId) {
+    private List<Action> damageHeart = new ArrayList<>();
+    private List<Action> inGame = new ArrayList<>();
+    private List<Action> kicked = new ArrayList<>();
+    private List<Action> restarted = new ArrayList<>();
+    private List<Action> mEnd = new ArrayList<>();
+    private List<Action> win = new ArrayList<>();
+    private List<Action> mZero = new ArrayList<>();
+    private List<Action> mOne = new ArrayList<>();
+    private List<Action> mTwo = new ArrayList<>();
+    private List<Action> mThree = new ArrayList<>();
+    private List<Action> mFour = new ArrayList<>();
+    private List<Action> mFive = new ArrayList<>();
+
+    public SchematicData(Values values, YamlConfiguration cfg, String schematicId, String mapId) {
+        this.values = values;
+        this.utils = values.getUtils();
         name = cfg.getString("name");
         star = cfg.getString("star");
         ConfigurationSection e = cfg.getConfigurationSection("entity");
@@ -55,13 +72,12 @@ public class SchematicData {
         ConfigurationSection lc = cfg.getConfigurationSection("location");
         yaw = lc.getInt("yaw");
         north = lc.getInt("north");
-        loss = lc.getDouble("loss");
         ConfigurationSection locs = cfg.getConfigurationSection("locs");
         spawn = toDouble(locs.getString("spawn"));
         portal = toDouble(locs.getString("portal"));
         start = toDouble(locs.getString("start"));
         end = toDouble(locs.getString("end"));
-        ConfigurationSection items = cfg.getConfigurationSection("items");
+        ConfigurationSection items = values.getItemSlots().getConfigurationSection("schematics." + mapId);
         items.getKeys(false).forEach(s -> slots.put(items.getConfigurationSection(s).getInt("slot"),
                 utils.generateItem(items.getConfigurationSection(s))));
         ConfigurationSection st = cfg.getConfigurationSection("stands");
@@ -72,7 +88,7 @@ public class SchematicData {
             stands.put(toDouble(s.replace(n[0] + ";", "")), n[0]);
         });
         maxLefts = (int) stands.values().stream().filter(stand ->
-                standMap.get(stand).getType().equalsIgnoreCase("use")).count();
+                values.getStands().get(stand).getType().equalsIgnoreCase("use")).count();
         maxRights = stands.size() - maxLefts;
         ConfigurationSection stars = cfg.getConfigurationSection("stars");
         five = stars.getDouble("5");
@@ -80,21 +96,67 @@ public class SchematicData {
         three = stars.getDouble("3");
         two = stars.getDouble("2");
         one = stars.getDouble("1");
+        ConfigurationSection messages = cfg.getConfigurationSection("messages");
+        setupMessages(messages);
     }
+
+    private void setupMessages(ConfigurationSection msg) {
+        ConfigurationSection actions = msg.getConfigurationSection("actions");
+        inGame = getActionList(actions.getStringList("ingame"));
+        mEnd = getActionList(actions.getStringList("end"));
+        restarted = getActionList(actions.getStringList("restarted"));
+        kicked = getActionList(actions.getStringList("kicked"));
+        damageHeart = getActionList(actions.getStringList("damageHeart"));
+        win = getActionList(actions.getStringList("win"));
+        ConfigurationSection stars = msg.getConfigurationSection("stars");
+        mFive = getActionList(stars.getStringList("5"));
+        mFour = getActionList(stars.getStringList("4"));
+        mThree = getActionList(stars.getStringList("3"));
+        mTwo = getActionList(stars.getStringList("2"));
+        mOne = getActionList(stars.getStringList("1"));
+        mZero = getActionList(stars.getStringList("0"));
+    }
+
+    private List<Action> getActionList(List<String> s) {
+        return values.getActionList(s);
+    }
+
+    public void sendMessage(Player p, int s) {
+        if (s >= 5) {
+            utils.sendMessage(p, mFive);
+        } else if (s == 4) {
+            utils.sendMessage(p, mFour);
+        } else if (s == 3) {
+            utils.sendMessage(p, mThree);
+        } else if (s == 2) {
+            utils.sendMessage(p, mTwo);
+        } else if (s == 1) {
+            utils.sendMessage(p, mOne);
+        } else {
+            utils.sendMessage(p, mZero);
+        }
+    }
+
     public int getStars(int lefts, int rights) {
         double rig = (double) rights / maxRights;
         double lef = (double) lefts / maxLefts;
         double all = (rig + lef) / 2;
-        if (all >= five) return 5;
-        else if (all >= four) return 4;
-        else if (all >= three) return 3;
-        else if (all >= two) return 2;
-        else if (all >= one) return 1;
-        else return 0;
+        if (all >= five) {
+            return 5;
+        } else if (all >= four) {
+            return 4;
+        } else if (all >= three) {
+            return 3;
+        } else if (all >= two) {
+            return 2;
+        } else if (all >= one) {
+            return 1;
+        } else {
+            return 0;
+        }
     }
+
     private double[] toDouble(String id) {
-        return Arrays.stream(id.split(";"))
-                .mapToDouble(Double::parseDouble)
-                .toArray();
+        return Arrays.stream(id.split(";")).mapToDouble(Double::parseDouble).toArray();
     }
 }

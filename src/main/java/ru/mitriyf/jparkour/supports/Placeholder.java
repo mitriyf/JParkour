@@ -5,15 +5,19 @@ import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import ru.mitriyf.jparkour.JParkour;
-import ru.mitriyf.jparkour.values.Values;
 import ru.mitriyf.jparkour.game.Game;
+import ru.mitriyf.jparkour.game.manager.Manager;
+import ru.mitriyf.jparkour.values.Values;
 
 public class Placeholder extends PlaceholderExpansion {
+    private final Manager manager;
     private final Values values;
 
     public Placeholder(JParkour plugin) {
+        manager = plugin.getManager();
         values = plugin.getValues();
     }
+
     @Override
     public String onPlaceholderRequest(Player p, @NotNull String ind) {
         String[] args = ind.split("_");
@@ -22,8 +26,8 @@ public class Placeholder extends PlaceholderExpansion {
             String fals = PlaceholderAPIPlugin.booleanFalse();
             String gameId;
             Game game = null;
-            if (values.getPlayers().containsKey(p.getUniqueId())) {
-                gameId = values.getPlayers().get(p.getUniqueId()).getGame();
+            if (manager.getPlayers().containsKey(p.getUniqueId())) {
+                gameId = manager.getPlayers().get(p.getUniqueId()).getGame();
                 game = values.getRooms().get(gameId);
             }
             if (args[0].equalsIgnoreCase("active")) {
@@ -51,6 +55,7 @@ public class Placeholder extends PlaceholderExpansion {
         }
         return null;
     }
+
     @Override
     public @NotNull String getIdentifier() {
         return "JParkour";
