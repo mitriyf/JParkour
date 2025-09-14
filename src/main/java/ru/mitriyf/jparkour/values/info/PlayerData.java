@@ -8,8 +8,6 @@ import org.bukkit.inventory.ItemStack;
 import ru.mitriyf.jparkour.JParkour;
 import ru.mitriyf.jparkour.values.Values;
 
-import java.io.File;
-
 @Getter
 @SuppressWarnings("deprecation")
 public class PlayerData {
@@ -20,7 +18,6 @@ public class PlayerData {
     private final Location loc;
     private final ItemStack[] contents;
     private final ItemStack[] armorContents;
-    private final File file;
     private final boolean allowFly;
     private final int foodLevel;
     private final double healthMax;
@@ -34,7 +31,6 @@ public class PlayerData {
         this.values = plugin.getValues();
         this.p = p;
         this.game = game;
-        this.file = new File(plugin.getDataFolder(), "playerData/" + p.getUniqueId().toString() + ".yml");
         loc = p.getLocation();
         contents = p.getInventory().getContents();
         armorContents = p.getInventory().getArmorContents();
@@ -61,8 +57,5 @@ public class PlayerData {
         p.setGameMode(gamemode);
         p.setExp(exp);
         p.updateInventory();
-        if (!file.delete()) {
-            file.deleteOnExit();
-        }
     }
 }

@@ -1,5 +1,5 @@
 # Don't remove the version setting.
-version: 1.3
+version: 1.4
 
 # Specify the name of the map. It will be displayed in the Scoreboard.
 name: "&fDefault"
@@ -11,13 +11,19 @@ entity:
   type: CHICKEN
   # Specify the speed of mob.
   speed: 0.3
+  # Specify how many ticks the next mob movement will be measured.
+  everyTicks: 1
 player:
   # Specify the maximum number of hit points. 2 hit points = 1 heart.
   health: 6
   # Specify the bomb damage.
   damageBomb: 2
+  # Should we immediately provide all items of schematics and default?
+  fullSlots: false
   # Specify the radius from the finish line at which victory can appear. (For mobs that are very tall)
   radiusFinish: 0.5
+  # Specify how many ticks the player will be kicked after. (Finish, 20 ticks = 1 second)
+  exitTime: 100
 # Coordinates of the schematic insertion.
 coords:
   x: 0
@@ -55,7 +61,7 @@ stands:
   # Specify the radius for the stands to appear.
   radiusStands: 5
   # Set a timer before the bomb explodes.
-  timer: 20 # В тиках. 20 тиков - 1 секунда.
+  timer: 20 # In ticks. 20 ticks - 1 second.
   # Specify where the stands will appear.
   # Order: type;X;Y;Z (from the location of the schematic)
   locs:
@@ -72,8 +78,10 @@ messages:
   # Actions. These actions perform the same role as in the config.
   # But there is no support for other languages here.
   actions:
-    ingame:
-      - "[log] [SCHEMATIC] The %player% cannot perform a certain action while in the game."
+    joined:
+      - "[log] [SCHEMATIC] The %player% connected to the game: %game%"
+    started:
+      - "[log] [SCHEMATIC] The %player% started the game."
     end:
       - "[log] [SCHEMATIC] The %player% has finished the game."
     kicked:
@@ -83,7 +91,7 @@ messages:
     damageHeart:
       - "[log] [SCHEMATIC] The %player% lost a heart."
     win:
-      - "[log] [SCHEMATIC] The %player% won and got a score &e%star_win%&7%star_loss%"
+      - "[log] [SCHEMATIC] The %player% won and got a score %star_win%|%star_loss%"
   # The star rating system.
   stars:
     # 1 - 100%.

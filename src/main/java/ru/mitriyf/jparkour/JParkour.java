@@ -6,6 +6,7 @@ import ru.mitriyf.jparkour.cmd.CJParkour;
 import ru.mitriyf.jparkour.events.Events;
 import ru.mitriyf.jparkour.game.Game;
 import ru.mitriyf.jparkour.game.manager.Manager;
+import ru.mitriyf.jparkour.supports.Supports;
 import ru.mitriyf.jparkour.utils.Utils;
 import ru.mitriyf.jparkour.values.Values;
 import ru.mitriyf.jparkour.values.updater.Updater;
@@ -16,14 +17,15 @@ import java.util.concurrent.ThreadLocalRandom;
 @Getter
 public final class JParkour extends JavaPlugin {
     private final ThreadLocalRandom rnd = ThreadLocalRandom.current();
-    private final String configVersion = "1.3";
-    private final String schematicVersion = "1.3";
+    private final String configVersion = "1.4";
+    private final String schematicVersion = "1.4";
     private int version = 13;
     private Updater updater;
     private Values values;
     private Utils utils;
     private Events events;
     private Manager manager;
+    private Supports supports;
 
     @Override
     public void onEnable() {
@@ -31,11 +33,12 @@ public final class JParkour extends JavaPlugin {
         version = getVer();
         values = new Values(this);
         utils = new Utils(this);
+        manager = new Manager(this);
+        supports = new Supports(this);
+        utils.setup();
         updater = new Updater(this);
         values.setup();
         updater.checkUpdates();
-        utils.setup();
-        manager = new Manager(this);
         getCommand("jparkour").setExecutor(new CJParkour(this));
         events = new Events(this);
         events.setup();
@@ -43,11 +46,11 @@ public final class JParkour extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        if (values.getPlaceholder() != null) {
-            values.getPlaceholder().unregister();
+        if (supports.getPlaceholders() != null) {
+            supports.getPlaceholders().unregister();
         }
         for (Game game : new HashMap<>(values.getRooms()).values()) {
-            game.close();
+            game.close(true, true);
         }
     }
 

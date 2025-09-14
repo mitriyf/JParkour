@@ -72,7 +72,7 @@ public class PlayerEvents implements Listener {
     @EventHandler
     public void entityDamage(EntityDamageEvent e) {
         if (startWithWorld(e.getEntity().getWorld())) {
-            if (e.getCause() == cause && manager.getPlayers().containsKey(e.getEntity().getUniqueId())) {
+            if (e.getCause() == cause && manager.getPlayers().containsKey(e.getEntity().getUniqueId()) && !e.getEntity().leaveVehicle()) {
                 String id = manager.getPlayers().get(e.getEntity().getUniqueId()).getGame();
                 Game game = values.getRooms().get(id);
                 game.restart();
@@ -98,6 +98,7 @@ public class PlayerEvents implements Listener {
         if (startWithWorld(e.getEntity().getWorld())) {
             String id = manager.getPlayers().get(e.getEntity().getUniqueId()).getGame();
             Game game = values.getRooms().get(id);
+            game.getRun().getTask().cancel();
             scheduler.runTaskLater(plugin, () -> {
                 e.getEntity().spigot().respawn();
                 game.restart();
@@ -112,7 +113,7 @@ public class PlayerEvents implements Listener {
         if (manager.getPlayers().containsKey(p.getUniqueId())) {
             if (p.getItemInHand().getType() == Material.BARRIER) {
                 String game = manager.getPlayers().get(p.getUniqueId()).getGame();
-                values.getRooms().get(game).close();
+                values.getRooms().get(game).close(true, false);
             }
         }
     }
@@ -123,7 +124,7 @@ public class PlayerEvents implements Listener {
         if (startWithWorld(e.getPlayer().getWorld())) {
             String id = manager.getPlayers().get(e.getPlayer().getUniqueId()).getGame();
             Game game = values.getRooms().get(id);
-            game.close();
+            game.close(true, false);
         }
     }
 

@@ -1,20 +1,21 @@
 package ru.mitriyf.jparkour.values.updater;
 
-import org.apache.commons.io.FileUtils;
 import org.bukkit.configuration.file.YamlConfiguration;
 import ru.mitriyf.jparkour.JParkour;
 import ru.mitriyf.jparkour.values.Values;
 import ru.mitriyf.jparkour.values.updater.config.ConfigUpdater;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -41,27 +42,25 @@ public class Updater {
 
     public void checkVersions() {
         try {
-            InputStream in = new URL("https://github.com/mitriyf/JParkour/raw/refs/heads/main/updater/versions.yml").openStream();
+            URLConnection connection = new URL("https://github.com/mitriyf/JParkour/raw/refs/heads/main/updater/versions.yml").openConnection();
+            connection.setConnectTimeout(5000);
+            InputStream in = connection.getInputStream();
             File cfg = new File(plugin.getDataFolder(), "temp/versions.yml");
-            FileUtils.copyInputStreamToFile(in, cfg);
+            File folder = cfg.getParentFile();
+            if (folder.mkdirs()) {
+                copyInputStreamToFile(in, cfg);
+            }
             YamlConfiguration versions = YamlConfiguration.loadConfiguration(cfg);
-            FileUtils.deleteQuietly(cfg.getParentFile());
-            for (String ver : versions.getStringList("versions")) {
+            values.deleteDirectory(folder);
+            List<String> versionsList = versions.getStringList("versions");
+            for (String ver : versionsList) {
                 String[] info = ver.split(";");
                 String pluginVersion = plugin.getDescription().getVersion();
                 if (pluginVersion.equals(info[0])) {
                     logger.info("This is the correct version of the plugin, as reviewed by Updater.");
                     return;
                 } else if (values.isRequired() & info[1].equals("REQUIRED") || values.isRelease()) {
-                    boolean devMode = true;
-                    for (String searchVer : versions.getStringList("versions")) {
-                        String[] searchInfo = searchVer.split(";");
-                        if (pluginVersion.equals(searchInfo[0])) {
-                            devMode = false;
-                            break;
-                        }
-                    }
-                    if (devMode) {
+                    if (!versionsList.contains(pluginVersion)) {
                         logger.warning("No version was found. This is a developer version.");
                         return;
                     }
@@ -127,6 +126,16 @@ public class Updater {
                 }
             } catch (IOException e) {
                 plugin.getLogger().warning("Update " + cfg.getName() + " is failed! Error: " + e);
+            }
+        }
+    }
+
+    private void copyInputStreamToFile(InputStream inputStream, File file) throws IOException {
+        try (FileOutputStream outputStream = new FileOutputStream(file)) {
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, bytesRead);
             }
         }
     }

@@ -34,7 +34,7 @@ default:
     slot: 1
     type: default
     item:
-      type: GOLD_SWORD
+      type: GOLDEN_SWORD
 # Specify items for specific schematics.
 schematics:
   # Specify the schem ID.

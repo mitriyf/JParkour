@@ -1,6 +1,105 @@
+###########################################################
+#                        JParkour                         #
+#                          v1.4                           #
+###########################################################
+
 # Don't remove the version setting.
 version: 1.4
 
+# Plugin settings.
+settings:
+  # Insert hex or minimessage.
+  # minimessage - for Paper, 1.18+.
+  # hex - It works starting from version 1.16.5, but if your server is lower than this version, do not change anything.
+  translate: hex
+  # You can find out the language code by clicking on the link below and looking at the In-Game section.
+  # https://minecraft.fandom.com/wiki/Language#Languages
+  # Set true to enable locales for messages.
+  # You can configure locales in the plugin folder where the locales. folder is located. You can create your own files.
+  locales: false
+  # Game settings.
+  games:
+    # XIDX is the world's ID.
+    # Worlds are deleted after the next launch.
+    world: "jparkour-XIDX"
+    # Enter the maximum number of worlds that the plugin can use.
+    # If the worlds are full, the player will be put in a queue and wait for any available server.
+    amount: 999
+    # Is it possible to delete the map after the game ends?
+    # Set it to false if you are concerned about errors in the game console.
+    deleteWhenClosing: true
+  # Notification of updates.
+  updater:
+    # Is it enabled?
+    # Updates are checked when the plugin is enabled.
+    enabled: true
+    # Auto-update settings.
+    settings:
+      # Enable this to update only critical updates.
+      required: true
+      # Enable this feature to update the plugin with any new versions.
+      release: false
+  # Plugin support.
+  supports:
+    # Enable PlaceholderAPI support.
+    placeholderAPI: false
+    # Tops settings.
+    tops:
+      # Enable Tops support.
+      enabled: true
+      # How often will the tops be updated? (In seconds)
+      updateInterval: 900
+  # Stands.
+  armor-stands:
+    # Types:
+    # Bomb - explodes, and you need to select an item and click the type so that it doesn't explode.
+    # Use - doesn't explode.
+    # Clicks:
+    # RIGHT_CLICK - right click.
+    # LEFT_CLICK - left click.
+    bomb_gold:
+      # Material block.
+      block: YELLOW_STAINED_GLASS
+      # For older versions.
+      blockData: 4
+      # The material block is inside.
+      in_block: TNT
+      # For older versions.
+      in_blockData: 0
+      # The type of stand.
+      type: bomb
+      # An item that can defeat a stand.
+      item: GOLDEN_SWORD
+      # Which key should I press?
+      click_type: RIGHT_CLICK
+    bomb_blue:
+      block: BLUE_STAINED_GLASS
+      blockData: 11
+      in_block: TNT
+      in_blockData: 0
+      type: bomb
+      item: DIAMOND_SWORD
+      click_type: RIGHT_CLICK
+    diamond_block:
+      block: BLUE_STAINED_GLASS
+      blockData: 11
+      in_blockData: 0
+      in_block: DIAMOND_BLOCK
+      type: use
+      item: DIAMOND_SWORD
+      click_type: LEFT_CLICK
+    gold_block:
+      block: YELLOW_STAINED_GLASS
+      blockData: 4
+      in_block: GOLD_BLOCK
+      in_blockData: 0
+      type: use
+      item: GOLDEN_SWORD
+      click_type: LEFT_CLICK
+
+# Set up the message.
+# This will only work if you have selected the plugin configuration mode.
+# If you have enabled locales, the messages below will be displayed by default if the language is not set.
 messages:
   # Actions:
   # [actionbar] message - Send the actionbar with your message. For 1.11+
@@ -8,7 +107,7 @@ messages:
   # [broadcast] message - Send a message to all players.
   # [log] message - Send a message to the console.
   # [delay] ticks - Make a delay between actions. In ticks. (20 ticks = 1 second)
-  # [player] command - Run the command on behalf of the player.
+  # [player] message - Execute a message on behalf of the player. (or a command via /)
   # [teleport] world;x;y;z;yaw;pitch;delay - Teleport the player to the specified coordinates. The delay is measured in ticks.
   # [console] command - Run the command on behalf of the console.
   # [title] title;subtitle;fadeIn;stay;fadeOut - Send the title to the player. For 1.8+
@@ -33,11 +132,11 @@ messages:
   # %jparkour_maxlefts% - Displays the maximum number of clicks on the stand.
   # %jparkour_rights% - Displays the number of clicks on the bomb.
   # %jparkour_maxrights% - Displays the maximum number of bomb clicks.
-  # %jparkour_tops_SchematicName_Number_name% - Ruft den Namen eines Spielers ab, der sich in einem bestimmten Top befindet.
-  # %jparkour_tops_SchematicName_Number_accuracy% - Ruft die Genauigkeit eines Spielers ab, der sich in einem bestimmten Top befindet.
-  # %jparkour_tops_SchematicName_Number_time% - Ruft die exakte Abschlusszeit eines Spielers ab, der sich in einem bestimmten Top befindet.
+  # %jparkour_tops_SchematicName_Number_name% - Get the name of a player who is on a specific top.
+  # %jparkour_tops_SchematicName_Number_accuracy% - Get the accuracy of a player who is on a specific top.
+  # %jparkour_tops_SchematicName_Number_time% - Get the exact completion time of a player who is on a specific top.
   #
-  # Ersetze "SchematicName" durch die ID des Schematics und "Number" durch die gewünschte Position in der Bestenliste.
+  # Change "SchematicName" to the schematics' ID, and "Number" to the number in the top that you require.
   #
   # Built-in placeholders:
   # %accuracy% - Display the player's execution accuracy.
@@ -56,7 +155,7 @@ messages:
       - ""
       - "[message] &a/jparkour status &f- Check the status of the plugin."
       - "[message] &a/jparkour join &f- Create or join any available room."
-      - "[message] &a/jparkour join roomid &f- Attempt to connect to the room (if it is free)."
+      - "[message] &a/jparkour join roomId &f- Attempt to connect to the room (if it is free)."
       - "[message] &a/jparkour exit &f- Exit the game/queue."
       - "[message] &a/jparkour item &f- Get a Item Help."
       - "[message] &a/jparkour admin &f- Get a Admin Help."

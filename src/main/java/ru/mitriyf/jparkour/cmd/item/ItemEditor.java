@@ -89,7 +89,7 @@ public class ItemEditor {
             slots.set(pItem + ".type", "itemstack");
             slots.set(pItem + ".item", p.getItemInHand());
             try {
-                slots.save(values.getConfigSlots());
+                slots.save(values.getSlotsFile());
                 p.sendMessage("§aThe " + args[4] + " item was created successfully!\nUse: /jparkour reload - Apply the new settings.");
             } catch (Exception e) {
                 plugin.getLogger().warning("Error item " + args[3] + " save slots.yml: " + e);
@@ -140,7 +140,7 @@ public class ItemEditor {
                     FileConfiguration slots = values.getItemSlots();
                     slots.set(item.getCurrentPath(), null);
                     try {
-                        slots.save(values.getConfigSlots());
+                        slots.save(values.getSlotsFile());
                         s.sendMessage("§aThe item " + args[3] + " has been successfully deleted.\nUse: /jparkour reload - Apply the new settings.");
                     } catch (Exception e) {
                         plugin.getLogger().warning("Error item " + args[3] + " save slots.yml: " + e);

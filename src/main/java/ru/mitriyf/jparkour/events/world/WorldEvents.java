@@ -1,6 +1,5 @@
 package ru.mitriyf.jparkour.events.world;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.World;
 import org.bukkit.event.EventHandler;
@@ -10,31 +9,37 @@ import org.bukkit.event.world.WorldInitEvent;
 import org.bukkit.event.world.WorldLoadEvent;
 import org.bukkit.event.world.WorldSaveEvent;
 import org.bukkit.event.world.WorldUnloadEvent;
-import ru.mitriyf.jparkour.game.manager.Manager;
+import ru.mitriyf.jparkour.JParkour;
 import ru.mitriyf.jparkour.values.Values;
 
-public class WorldEvents implements Listener {
-    private final Values values;
-    private final Manager manager;
+import java.util.ArrayList;
+import java.util.List;
 
-    public WorldEvents(Values values, Manager manager) {
-        this.values = values;
-        this.manager = manager;
+public class WorldEvents implements Listener {
+    private final List<String> unloaded = new ArrayList<>();
+    private final JParkour plugin;
+    private final Values values;
+
+    public WorldEvents(JParkour plugin) {
+        this.plugin = plugin;
+        this.values = plugin.getValues();
     }
 
     @EventHandler
     public void stopWorldSaving(WorldUnloadEvent e) {
         World w = e.getWorld();
-        if (startWithWorld(w) && !manager.getUnloaded().contains(w.getName())) {
+        if (startWithWorld(w) && !unloaded.contains(w.getName())) {
             for (Chunk chunk : w.getLoadedChunks()) {
                 chunk.unload(false);
             }
             w.setAutoSave(false);
             w.setKeepSpawnInMemory(false);
-            manager.getUnloaded().add(w.getName());
+            unloaded.add(w.getName());
             e.setCancelled(true);
-            Bukkit.unloadWorld(w, false);
+            plugin.getServer().unloadWorld(w, false);
+            return;
         }
+        unloaded.remove(w.getName());
     }
 
     @EventHandler

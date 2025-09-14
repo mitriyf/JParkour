@@ -2,20 +2,15 @@ package ru.mitriyf.jparkour.game;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.commons.io.FileUtils;
-import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
-import org.bukkit.Location;
-import org.bukkit.Material;
+import org.bukkit.*;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.scheduler.BukkitTask;
 import ru.mitriyf.jparkour.JParkour;
-import ru.mitriyf.jparkour.game.actions.data.Locations;
-import ru.mitriyf.jparkour.game.actions.task.Run;
 import ru.mitriyf.jparkour.game.manager.Manager;
+import ru.mitriyf.jparkour.game.temp.data.Locations;
+import ru.mitriyf.jparkour.game.temp.task.Run;
 import ru.mitriyf.jparkour.utils.Utils;
 import ru.mitriyf.jparkour.utils.actions.Action;
 import ru.mitriyf.jparkour.values.Values;
@@ -25,6 +20,7 @@ import ru.mitriyf.jparkour.values.info.StandData;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Getter
@@ -38,19 +34,21 @@ public class Game {
     private final Run run;
     private final Locations locs;
     private final ThreadLocalRandom rnd;
-    private final String[] search = {"%star_win%", "%star_loss%"};
+    private final String[] searchGame = {"%game%"};
+    private final String[] search = {"%game%", "%accuracy%", "%star_win%", "%star_loss%"};
     private final List<BukkitTask> tasks = new ArrayList<>();
     private final Set<String> actives = new HashSet<>();
     private final Map<String, StandData> stands;
     private final BukkitScheduler scheduler;
     private final int maxLefts, maxRights;
+    private final boolean fullSlots;
     private final Location start;
     private final String locale;
     private final String mapName;
     private final String name;
     private final String map;
     private final SchematicData info;
-    private final int health;
+    private final int health, exitTime;
     private boolean started;
     private String status;
     @Setter
@@ -58,23 +56,25 @@ public class Game {
     @Setter
     private int lefts, rights;
 
-    public Game(JParkour plugin, Player p, String mapId, String name) {
+    public Game(JParkour plugin, CountDownLatch latch, Player p, String mapId, String name) {
         this.plugin = plugin;
         this.utils = plugin.getUtils();
         this.player = p;
         this.uuid = p.getUniqueId();
         this.values = plugin.getValues();
         this.manager = plugin.getManager();
+        this.scheduler = plugin.getServer().getScheduler();
         this.name = name;
         this.rnd = plugin.getRnd();
         this.map = setMap(mapId);
         this.info = values.getSchematics().get(map);
-        this.locs = new Locations(this);
+        this.locs = new Locations(this, latch);
         this.run = new Run(this);
+        fullSlots = info.isFullSlots();
         stands = values.getStands();
         mapName = info.getName();
         health = info.getHealth();
-        scheduler = plugin.getServer().getScheduler();
+        exitTime = info.getExitTime();
         locale = utils.getLocale().player(p);
         status = values.getSWait().getOrDefault(locale, values.getSWait().get(""));
         maxLefts = info.getMaxLefts();
@@ -85,49 +85,67 @@ public class Game {
 
     public void addPlayer(Player p) {
         manager.getPlayers().put(uuid, new PlayerData(plugin, p, name));
-        if (!p.teleport(locs.getSpawn())) {
-            manager.getPlayers().remove(uuid);
-            close();
-            return;
-        }
-        setDefault();
+        scheduler.runTask(plugin, () -> {
+            if (!p.teleport(locs.getSpawn())) {
+                manager.getPlayers().remove(uuid);
+                close(true, false);
+            } else {
+                setDefault();
+                sendMessage(values.getJoined(), info.getJoined(), searchGame, new String[]{name});
+            }
+        });
     }
 
-    public void kickPlayer() {
-        manager.getPlayers().get(uuid).apply();
+    public World generateWorld(String name) {
+        return utils.getWorldGenerator().generateWorld(name);
+    }
+
+    public void kickPlayer(boolean force, boolean isPluginStop) {
+        if (manager.getPlayers().get(uuid) != null) {
+            manager.getPlayers().get(uuid).apply();
+        }
         manager.getPlayers().remove(uuid);
-        sendMessage(values.getKicked(), info.getKicked());
+        if (!isPluginStop) {
+            if (force) {
+                sendMessage(values.getKicked(), info.getKicked(), searchGame, new String[]{name});
+            } else {
+                sendMessage(values.getEnd(), info.getMEnd(), searchGame, new String[]{name});
+            }
+        }
     }
 
     public void finish() {
         status = values.getSWin().getOrDefault(locale, values.getSWin().get(""));
         player.setAllowFlight(true);
         player.setFlying(true);
-        int stars = info.getStars(lefts, rights);
+        double accuracy = info.getAccuracy(lefts, rights);
+        int accuracyFull = (int) Math.round(accuracy * 100);
+        int stars = info.getStars(accuracy);
         String[] replace;
         if (info.getStar().isEmpty()) {
-            replace = new String[]{stars + "", "5"};
+            replace = new String[]{name, String.valueOf(accuracyFull), String.valueOf(stars), "5"};
         } else {
             String star = info.getStar();
             String fill = utils.repeat(star, stars);
             String empty = utils.repeat(star, 5 - stars);
-            replace = new String[]{fill, empty};
+            replace = new String[]{name, String.valueOf(accuracyFull), fill, empty};
         }
+        plugin.getSupports().getTops().setData(player, map, accuracyFull);
         sendMessage(values.getWin(), info.getWin(), search, replace);
         info.sendMessage(player, stars);
-        tasks.add(plugin.getServer().getScheduler().runTaskLater(plugin, this::close, 100));
+        tasks.add(plugin.getServer().getScheduler().runTaskLater(plugin, () -> close(false, false), exitTime));
     }
 
     public void start() {
         clear();
-        for (Map.Entry<Integer, ItemStack> d : info.getSlots().entrySet()) {
-            player.getInventory().setItem(d.getKey(), d.getValue());
-        }
         started = true;
         start.setYaw(info.getYaw());
         start.setPitch(info.getNorth());
         player.teleport(start);
         status = values.getSStart().getOrDefault(locale, values.getSStart().get(""));
+        if (!fullSlots) {
+            info.getSlots().forEach((slot, item) -> player.getInventory().setItem(slot, item));
+        }
         run.startMove();
     }
 
@@ -150,12 +168,14 @@ public class Game {
         sendMessage(values.getRestarted(), info.getRestarted());
     }
 
-    public void close() {
+    public void close(boolean force, boolean isPluginStop) {
         clear();
-        kickPlayer();
+        kickPlayer(force, isPluginStop);
         Bukkit.unloadWorld(name, false);
-        FileUtils.deleteQuietly(new File(name));
         values.getRooms().remove(name);
+        if (values.isDeleteWhenClosing()) {
+            values.deleteDirectory(new File(name));
+        }
     }
 
     private String setMap(String mapId) {
@@ -174,6 +194,9 @@ public class Game {
         player.getInventory().clear();
         player.getInventory().setArmorContents(null);
         values.getSlots().forEach((slot, item) -> player.getInventory().setItem(slot, item));
+        if (fullSlots) {
+            info.getSlots().forEach((slot, item) -> player.getInventory().setItem(slot, item));
+        }
     }
 
     public void paste(Location loc, String schematic) {

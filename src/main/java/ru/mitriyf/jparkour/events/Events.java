@@ -19,7 +19,7 @@ public class Events implements Listener {
     public Events(JParkour plugin) {
         this.plugin = plugin;
         Values values = plugin.getValues();
-        worldEvents = new WorldEvents(values, plugin.getManager());
+        worldEvents = new WorldEvents(plugin);
         blockEvents = new BlockEvents(values);
         entityEvents = new EntityEvents(values);
         playerEvents = new PlayerEvents(plugin);

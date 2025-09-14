@@ -1,7 +1,8 @@
 name: JParkour
-version: '1.3'
+version: '1.4'
 main: ru.mitriyf.jparkour.JParkour
-softdepend: [ FastAsyncWorldEdit, PlaceholderAPI ]
+depend: [ FastAsyncWorldEdit ]
+softdepend: [ PlaceholderAPI ]
 api-version: 1.13
 commands:
   jparkour:

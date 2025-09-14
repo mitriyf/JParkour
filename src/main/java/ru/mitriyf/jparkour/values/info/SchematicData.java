@@ -16,31 +16,22 @@ import java.util.*;
 public class SchematicData {
     private final Utils utils;
     private final Values values;
-    private final String name;
-    private final String star;
+    private final String mapId;
     private final Map<double[], String> stands = new HashMap<>();
     private final Map<Integer, ItemStack> slots = new HashMap<>();
-    private final EntityType entity;
-    private final double speed;
-    private final double radiusFinish;
-    private final double radiusStands;
     private final String schematic;
-    private final double[] spawn;
-    private final double[] portal;
-    private final double[] start;
-    private final double[] end;
-    private final int health;
-    private final int damageBomb;
-    private final int timer;
-    private final int yaw;
-    private final int north;
-    private final int x;
-    private final int y;
-    private final int z;
-    private final int maxLefts, maxRights;
-    private final double five, four, three, two, one;
+    private String name, star;
+    private EntityType entity;
+    private long everyTicks;
+    private boolean fullSlots;
+    private double speed, radiusFinish, radiusStands;
+    private double[] spawn, portal, start, end;
+    private int health, damageBomb, exitTime, timer, yaw, north, x, y, z, maxLefts, maxRights;
+    private double five, four, three, two, one;
     private List<Action> damageHeart = new ArrayList<>();
+    private List<Action> joined = new ArrayList<>();
     private List<Action> inGame = new ArrayList<>();
+    private List<Action> started = new ArrayList<>();
     private List<Action> kicked = new ArrayList<>();
     private List<Action> restarted = new ArrayList<>();
     private List<Action> mEnd = new ArrayList<>();
@@ -55,20 +46,30 @@ public class SchematicData {
     public SchematicData(Values values, YamlConfiguration cfg, String schematicId, String mapId) {
         this.values = values;
         this.utils = values.getUtils();
+        this.mapId = mapId;
+        schematic = schematicId;
+        setupSettings(cfg);
+        ConfigurationSection messages = cfg.getConfigurationSection("messages");
+        setupMessages(messages);
+    }
+
+    private void setupSettings(YamlConfiguration cfg) {
         name = cfg.getString("name");
         star = cfg.getString("star");
         ConfigurationSection e = cfg.getConfigurationSection("entity");
         entity = EntityType.valueOf(e.getString("type"));
         speed = e.getDouble("speed");
+        everyTicks = e.getLong("everyTicks");
         ConfigurationSection p = cfg.getConfigurationSection("player");
         health = p.getInt("health");
         damageBomb = p.getInt("damageBomb");
+        fullSlots = p.getBoolean("fullSlots");
         radiusFinish = p.getDouble("radiusFinish");
+        exitTime = p.getInt("exitTime");
         ConfigurationSection coords = cfg.getConfigurationSection("coords");
         x = coords.getInt("x");
         y = coords.getInt("y");
         z = coords.getInt("z");
-        schematic = schematicId;
         ConfigurationSection lc = cfg.getConfigurationSection("location");
         yaw = lc.getInt("yaw");
         north = lc.getInt("north");
@@ -78,8 +79,7 @@ public class SchematicData {
         start = toDouble(locs.getString("start"));
         end = toDouble(locs.getString("end"));
         ConfigurationSection items = values.getItemSlots().getConfigurationSection("schematics." + mapId);
-        items.getKeys(false).forEach(s -> slots.put(items.getConfigurationSection(s).getInt("slot"),
-                utils.generateItem(items.getConfigurationSection(s))));
+        items.getKeys(false).forEach(s -> slots.put(items.getConfigurationSection(s).getInt("slot"), utils.generateItem(items.getConfigurationSection(s))));
         ConfigurationSection st = cfg.getConfigurationSection("stands");
         radiusStands = st.getDouble("radiusStands");
         timer = st.getInt("timer");
@@ -87,8 +87,7 @@ public class SchematicData {
             String[] n = s.split(";");
             stands.put(toDouble(s.replace(n[0] + ";", "")), n[0]);
         });
-        maxLefts = (int) stands.values().stream().filter(stand ->
-                values.getStands().get(stand).getType().equalsIgnoreCase("use")).count();
+        maxLefts = (int) stands.values().stream().filter(stand -> values.getStands().get(stand).getType().equalsIgnoreCase("use")).count();
         maxRights = stands.size() - maxLefts;
         ConfigurationSection stars = cfg.getConfigurationSection("stars");
         five = stars.getDouble("5");
@@ -96,12 +95,12 @@ public class SchematicData {
         three = stars.getDouble("3");
         two = stars.getDouble("2");
         one = stars.getDouble("1");
-        ConfigurationSection messages = cfg.getConfigurationSection("messages");
-        setupMessages(messages);
     }
 
     private void setupMessages(ConfigurationSection msg) {
         ConfigurationSection actions = msg.getConfigurationSection("actions");
+        joined = getActionList(actions.getStringList("joined"));
+        started = getActionList(actions.getStringList("started"));
         inGame = getActionList(actions.getStringList("ingame"));
         mEnd = getActionList(actions.getStringList("end"));
         restarted = getActionList(actions.getStringList("restarted"));
@@ -137,19 +136,23 @@ public class SchematicData {
         }
     }
 
-    public int getStars(int lefts, int rights) {
+    public double getAccuracy(int lefts, int rights) {
         double rig = (double) rights / maxRights;
         double lef = (double) lefts / maxLefts;
-        double all = (rig + lef) / 2;
-        if (all >= five) {
+        double full = (rig + lef) / 2;
+        return (double) Math.round(full * 100) / 100;
+    }
+
+    public int getStars(double accuracy) {
+        if (accuracy >= five) {
             return 5;
-        } else if (all >= four) {
+        } else if (accuracy >= four) {
             return 4;
-        } else if (all >= three) {
+        } else if (accuracy >= three) {
             return 3;
-        } else if (all >= two) {
+        } else if (accuracy >= two) {
             return 2;
-        } else if (all >= one) {
+        } else if (accuracy >= one) {
             return 1;
         } else {
             return 0;

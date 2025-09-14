@@ -8,6 +8,8 @@ import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.logging.Logger;
+
 @Getter
 public class StandData {
     private final ItemStack block;
@@ -15,8 +17,10 @@ public class StandData {
     private final String type;
     private final ItemStack item;
     private final String click_type;
+    private final Logger logger;
 
-    public StandData(ConfigurationSection id) {
+    public StandData(ConfigurationSection id, Logger logger) {
+        this.logger = logger;
         type = id.getString("type");
         click_type = id.getString("click_type");
         item = getStack(id.getString("item"), 0);
@@ -51,8 +55,13 @@ public class StandData {
 
     @SuppressWarnings("deprecation")
     private ItemStack getStack(String m, int data) {
-        ItemStack stack = new ItemStack(Material.valueOf(m));
-        stack.setDurability((short) data);
-        return stack;
+        try {
+            ItemStack stack = new ItemStack(Material.valueOf(m));
+            stack.setDurability((short) data);
+            return stack;
+        } catch (Exception e) {
+            logger.warning("One of the stands failed to load ItemStack. Error: " + e);
+            return new ItemStack(Material.BARRIER);
+        }
     }
 }

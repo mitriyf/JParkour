@@ -3,7 +3,10 @@ package ru.mitriyf.jparkour.events.entity;
 import org.bukkit.entity.Entity;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.entity.*;
+import org.bukkit.event.entity.CreatureSpawnEvent;
+import org.bukkit.event.entity.EntityExplodeEvent;
+import org.bukkit.event.entity.EntityTargetEvent;
+import org.bukkit.event.entity.ItemSpawnEvent;
 import org.bukkit.event.player.PlayerArmorStandManipulateEvent;
 import ru.mitriyf.jparkour.values.Values;
 
@@ -20,11 +23,6 @@ public class EntityEvents implements Listener {
         if (startWithWorld(e.getEntity()) && e.getSpawnReason() != reason) {
             e.setCancelled(true);
         }
-    }
-
-    @EventHandler
-    public void entityCreatePortal(EntityCreatePortalEvent e) {
-        e.setCancelled(startWithWorld(e.getEntity()));
     }
 
     @EventHandler

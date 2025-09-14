@@ -1,5 +1,5 @@
 # Die Version-Einstellung nicht bereinigen.
-version: 1.3
+version: 1.4
 
 messages:
   # Aktionen:
@@ -7,6 +7,7 @@ messages:
   # [message] Nachricht - Sende eine Nachricht an den Spieler.
   # [broadcast] Nachricht - Sende eine Nachricht an alle Spieler.
   # [log] Nachricht - Sende eine Nachricht an die Konsole.
+  # [delay] Zecken - Machen Sie eine Verzögerung zwischen den Aktionen. In Zecken. (20 Zecken = 1 Sekunde)
   # [player] Befehl - Führe den Befehl im Namen des Spielers aus.
   # [teleport] Welt;x;y;z;yaw;pitch;Verzögerung - Teleportiere den Spieler zu den angegebenen Koordinaten. Die Verzögerung wird in Ticks gemessen.
   # [console] Befehl - Führe den Befehl im Namen der Konsole aus.
@@ -34,6 +35,7 @@ messages:
   # %jparkour_maxrights% - Zeigt die maximale Anzahl der Bombenklicks.
   #
   # Eingebaute Platzhalter:
+  # %accuracy% - Zeigt die Ausführungsgenauigkeit des Spielers an.
   # %star_win% - Zeigt die Sterne an, die der Spieler verdient hat.
   # %star_loss% - Zeigt die Sterne an, die der Spieler nicht verdient hat.
   #
@@ -51,6 +53,8 @@ messages:
       - "[message] &a/jparkour join &f- Erstelle oder betrete einen verfügbaren Raum."
       - "[message] &a/jparkour join roomid &f- Versuche, eine Verbindung zum Raum herzustellen (wenn er frei ist)."
       - "[message] &a/jparkour exit &f- Verlasse das Spiel/die Warteschlange."
+      - "[message] &a/jparkour item &f- Holen Sie sich Hilfe für den Unterbefehl item."
+      - "[message] &a/jparkour admin &f- Hilfe über den Unterbefehl admin erhalten."
       - "[message] &a/jparkour reload &f- Plugin-Konfiguration neu laden."
       - ""
     noperm:
@@ -77,15 +81,19 @@ messages:
       left: "&fBlöcke zerstört: &e%blocks%/&e%blocks_all%"
       right: "&fBomben abgewehrt: &e%bombs%&f/&e%bombs_all%"
     actions:
+      joined:
+        - "[message] &aSie waren mit dem Spiel verbunden: &e%game%"
+      started:
+        - "[message] &eDas Spiel hat begonnen."
       ingame:
         - "[message] &cDu bist im Spiel!"
       end:
         - "[message] &cDas Spiel ist vorbei."
-      kicked:
-        - "[message] &cDas Spiel ist vorbei."
       restarted:
         - "[message] &aDas Spiel wurde neu gestartet."
+      kicked:
+        - "[message] &cDas Spiel ist vorbei."
       damageHeart:
         - "[message] &c-1 &l♥"
       win:
-        - "[title] &aSieg;&e%star_win%&7%star_loss%"
+        - "[title] &aSieg;&e%star_win%&7%star_loss% &f- &e%accuracy%%"

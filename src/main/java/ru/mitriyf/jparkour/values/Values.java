@@ -3,7 +3,6 @@ package ru.mitriyf.jparkour.values;
 import com.google.common.collect.ImmutableList;
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.commons.io.FileUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -11,7 +10,6 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.inventory.ItemStack;
 import ru.mitriyf.jparkour.JParkour;
 import ru.mitriyf.jparkour.game.Game;
-import ru.mitriyf.jparkour.supports.Placeholder;
 import ru.mitriyf.jparkour.utils.Utils;
 import ru.mitriyf.jparkour.utils.actions.Action;
 import ru.mitriyf.jparkour.utils.actions.ActionType;
@@ -22,6 +20,7 @@ import ru.mitriyf.jparkour.values.info.SchematicData;
 import ru.mitriyf.jparkour.values.info.StandData;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
@@ -38,7 +37,8 @@ public class Values {
     private final JParkour plugin;
     private final Logger logger;
     private final File dataFolder;
-    private final File configSlots;
+    private final File slotsFile;
+    private final File configFile;
     private final Pattern action_pattern = Pattern.compile("\\[(\\w+)] ?(.*)");
     private final Map<String, SchematicData> schematics = new HashMap<>();
     private final String[] lcs = new String[]{"de_DE", "en_US", "ru_RU"};
@@ -49,8 +49,10 @@ public class Values {
     private final Map<String, List<Action>> waiter = new HashMap<>();
     private final Map<String, List<Action>> noExit = new HashMap<>();
     private final Map<String, List<Action>> noperm = new HashMap<>();
+    private final Map<String, List<Action>> mStarted = new HashMap<>();
     private final Map<String, List<Action>> restarted = new HashMap<>();
     private final Map<String, List<Action>> kicked = new HashMap<>();
+    private final Map<String, List<Action>> joined = new HashMap<>();
     private final Map<String, List<Action>> inGame = new HashMap<>();
     private final Map<String, List<Action>> help = new HashMap<>();
     private final Map<String, List<Action>> exit = new HashMap<>();
@@ -66,36 +68,37 @@ public class Values {
     private final Map<String, String> left = new HashMap<>();
     private final Map<String, Game> rooms = new HashMap<>();
     private final List<String> maps = new ArrayList<>();
+    private boolean deleteWhenClosing, updaterEnabled, topsEnabled, required, release, placeholderAPI, locale;
     private FileConfiguration config;
-    private boolean updaterEnabled, required, release, placeholderAPI, locale;
     @Setter
     private FileConfiguration itemSlots;
+    @Setter
+    private String defaultId = "";
+    @Setter
+    private String schematicUrl;
     private String world, worldStart;
-    private Placeholder placeholder;
     private Colorizer colorizer;
     private Utils utils;
-    private int amount;
+    private int topsInterval, amount;
 
     public Values(JParkour plugin) {
         this.plugin = plugin;
         this.dataFolder = plugin.getDataFolder();
-        this.configSlots = new File(plugin.getDataFolder(), "slots.yml");
+        this.configFile = new File(plugin.getDataFolder(), "config.yml");
+        this.slotsFile = new File(plugin.getDataFolder(), "slots.yml");
         this.logger = plugin.getLogger();
     }
 
     public void setup() {
-        plugin.saveDefaultConfig();
-        plugin.reloadConfig();
-        config = plugin.getConfig();
-        if (!configSlots.exists()) {
-            plugin.saveResource("slots.yml", true);
-        }
-        itemSlots = YamlConfiguration.loadConfiguration(configSlots);
+        saveConfigs();
+        config = YamlConfiguration.loadConfiguration(configFile);
+        itemSlots = YamlConfiguration.loadConfiguration(slotsFile);
         utils = plugin.getUtils();
         clear();
         setupSettings();
         setupLocales();
         setupSchematics();
+        plugin.getSupports().register();
     }
 
     private void setupSchematics() {
@@ -109,8 +112,7 @@ public class Values {
                 exportSchematics();
                 logger.info("The download has been completed successfully.");
             } catch (Exception e) {
-                logger.warning("A critical error.");
-                throw new RuntimeException(e);
+                logger.warning("A critical error. Error: " + e);
             }
         }
         ConfigurationSection cfg = config.getConfigurationSection("settings");
@@ -119,14 +121,13 @@ public class Values {
         if (files == null) {
             logger.warning("No files were found in the schematics folder.");
         } else {
-            String sc = "schematics/";
             for (File schem : files) {
                 if (schem.getName().contains(".schem")) {
                     String name = schem.getName().split("\\.")[0];
                     String l = name.toLowerCase();
                     File file = new File(dir, name + ".yml");
                     if (!file.exists()) {
-                        plugin.saveResource(sc + "default.yml", true);
+                        plugin.saveResource("schematics/default.yml", true);
                         if (new File(dir, "default.yml").renameTo(file)) {
                             logger.info("The configuration file " + file.getName() + " has been created");
                         } else {
@@ -136,7 +137,13 @@ public class Values {
                     }
                     YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
                     maps.add(l);
-                    schematics.put(l, new SchematicData(this, yaml, schem.getName(), name));
+                    String schemName = schem.getName();
+                    schematics.put(l, new SchematicData(this, yaml, schemName, name));
+                    try {
+                        utils.getSchematic().generate(schemName, schem);
+                    } catch (Exception e) {
+                        logger.warning("Error loading schematic. Error: " + e);
+                    }
                 }
             }
         }
@@ -153,10 +160,11 @@ public class Values {
                     plugin.saveResource(schematics + s, true);
                 }
             }
-            InputStream in = new URL("https://github.com/mitriyf/JParkour/raw/refs/heads/main/downloads/nether.schematic").openStream();
-            String fullPath = path + "nether.schematic";
+            InputStream in = new URL("https://github.com/mitriyf/JParkour/raw/refs/heads/main/downloads/" + schematicUrl).openStream();
+            String fullPath = path + schematicUrl;
             Path fp = Paths.get(fullPath);
             Files.copy(in, fp, StandardCopyOption.REPLACE_EXISTING);
+            in.close();
         } catch (Exception e) {
             logger.warning("An error occurred when loading the schematics. Check your internet connection.");
             logger.warning("You can download the schematics and upload them to the server on the official page of the resource. (GitHub)");
@@ -176,24 +184,25 @@ public class Values {
             colorizer = new CHex();
         }
         locale = settings.getBoolean("locales");
-        world = settings.getString("world");
-        amount = settings.getInt("amount");
+        ConfigurationSection games = settings.getConfigurationSection("games");
+        world = games.getString("world");
+        amount = games.getInt("amount");
+        deleteWhenClosing = games.getBoolean("deleteWhenClosing");
         ConfigurationSection updater = settings.getConfigurationSection("updater");
         updaterEnabled = updater.getBoolean("enabled");
         ConfigurationSection updaterSettings = updater.getConfigurationSection("settings");
         required = updaterSettings.getBoolean("required");
         release = updaterSettings.getBoolean("release");
         worldStart = world.replace("XIDX", "");
-        ConfigurationSection plugins = settings.getConfigurationSection("plugins");
-        placeholderAPI = plugins.getBoolean("placeholderAPI");
+        ConfigurationSection supports = settings.getConfigurationSection("supports");
+        placeholderAPI = supports.getBoolean("placeholderAPI");
         if (placeholderAPI && Bukkit.getPluginManager().getPlugin("PlaceholderAPI") == null) {
             logger.warning("The PlaceholderAPI was not detected. This feature will be disabled.");
             placeholderAPI = false;
         }
-        if (placeholderAPI) {
-            placeholder = new Placeholder(plugin);
-            placeholder.register();
-        }
+        ConfigurationSection tops = supports.getConfigurationSection("tops");
+        topsEnabled = tops.getBoolean("enabled");
+        topsInterval = tops.getInt("updateInterval") * 20;
         ConfigurationSection items = itemSlots.getConfigurationSection("default");
         for (String s : items.getKeys(false)) {
             ConfigurationSection slot = items.getConfigurationSection(s);
@@ -202,7 +211,7 @@ public class Values {
         ConfigurationSection armorStands = settings.getConfigurationSection("armor-stands");
         for (String s : armorStands.getKeys(false)) {
             ConfigurationSection id = armorStands.getConfigurationSection(s);
-            stands.put(s, new StandData(id));
+            stands.put(s, new StandData(id, logger));
         }
         recovery();
     }
@@ -250,7 +259,9 @@ public class Values {
             left.put(name, status.getString("left"));
             right.put(name, status.getString("right"));
             ConfigurationSection actions = game.getConfigurationSection("actions");
+            joined.put(name, getActionList(actions.getStringList("joined")));
             inGame.put(name, getActionList(actions.getStringList("ingame")));
+            mStarted.put(name, getActionList(actions.getStringList("started")));
             restarted.put(name, getActionList(actions.getStringList("restarted")));
             kicked.put(name, getActionList(actions.getStringList("kicked")));
             end.put(name, getActionList(actions.getStringList("end")));
@@ -267,8 +278,50 @@ public class Values {
         }
         for (File file : list) {
             if (file.getName().startsWith(worldStart)) {
-                FileUtils.deleteQuietly(new File(file.getName()));
+                deleteDirectory(new File(file.getName()));
             }
+        }
+    }
+
+    public void deleteDirectory(File f) {
+        File[] files = f.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                if (file.isDirectory()) {
+                    deleteDirectory(file);
+                } else {
+                    delete(file);
+                }
+            }
+            delete(f);
+        }
+    }
+
+    private void delete(File f) {
+        try {
+            Files.delete(f.toPath());
+        } catch (IOException ignored) {
+        }
+    }
+
+    private void saveConfigs() {
+        saveConfig("config", configFile);
+        saveConfig("slots", slotsFile);
+    }
+
+    private void saveConfig(String configName, File file) {
+        if (file.exists()) {
+            return;
+        }
+        String resource = configName + defaultId + ".yml";
+        try {
+            plugin.saveResource(resource, true);
+            if (!defaultId.isEmpty()) {
+                Path oldCfg = new File(plugin.getDataFolder(), resource).toPath();
+                Files.move(oldCfg, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            }
+        } catch (Exception e) {
+            logger.warning("Error save configurations. Error: " + e);
         }
     }
 
@@ -296,6 +349,7 @@ public class Values {
     }
 
     private void clear() {
+        plugin.getSupports().unregister();
         schematics.clear();
         map.clear();
         maps.clear();
@@ -306,7 +360,7 @@ public class Values {
         right.clear();
         slots.clear();
         stands.clear();
-        for (Map<String, List<Action>> map : Arrays.asList(help, noperm, notfound, started, damageHeart, connect, exit, waiter, noExit, inGame, kicked, end, win)) {
+        for (Map<String, List<Action>> map : Arrays.asList(help, noperm, notfound, started, mStarted, joined, damageHeart, connect, exit, waiter, noExit, inGame, kicked, end, win)) {
             map.clear();
         }
     }

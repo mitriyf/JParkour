@@ -6,6 +6,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import ru.mitriyf.jparkour.JParkour;
+import ru.mitriyf.jparkour.cmd.admin.AdminEditor;
 import ru.mitriyf.jparkour.cmd.item.ItemEditor;
 import ru.mitriyf.jparkour.game.manager.Manager;
 import ru.mitriyf.jparkour.utils.Utils;
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 public class CJParkour implements CommandExecutor {
+    private final AdminEditor adminEditor;
     private final ItemEditor itemEditor;
     private final JParkour plugin;
     private final Values values;
@@ -28,6 +30,7 @@ public class CJParkour implements CommandExecutor {
         this.utils = plugin.getUtils();
         this.manager = plugin.getManager();
         this.itemEditor = new ItemEditor(plugin);
+        this.adminEditor = new AdminEditor(plugin);
     }
 
     private void sendMessage(CommandSender sender, Map<String, List<Action>> message) {
@@ -36,7 +39,7 @@ public class CJParkour implements CommandExecutor {
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command cmd, @NotNull String s, @NotNull String[] args) {
-        if (args.length == 0 || args.length >= 6 || args[0].equalsIgnoreCase("help")) {
+        if (!sender.hasPermission("jparkour.help") || args.length == 0 || args.length >= 6 || args[0].equalsIgnoreCase("help")) {
             if (sender.hasPermission("jparkour.help")) {
                 sendMessage(sender, values.getHelp());
             } else {
@@ -57,6 +60,10 @@ public class CJParkour implements CommandExecutor {
                 itemEditor.checkItemCommand(sender, args);
                 return false;
             }
+            case "admin": {
+                adminEditor.checkAdminCommand(sender, args);
+                return false;
+            }
             case "status": {
                 status(sender);
                 return false;
@@ -73,8 +80,8 @@ public class CJParkour implements CommandExecutor {
     }
 
     private void join(CommandSender sender, String[] args) {
-        if (!(sender instanceof Player)) {
-            sender.sendMessage("§cYou console!");
+        if (!(sender instanceof Player) || !sender.hasPermission("jparkour.join")) {
+            sendMessage(sender, values.getNoperm());
             return;
         }
         Player p = (Player) sender;
@@ -86,8 +93,8 @@ public class CJParkour implements CommandExecutor {
     }
 
     private void exit(CommandSender sender) {
-        if (!(sender instanceof Player)) {
-            sender.sendMessage("§cYou console!");
+        if (!(sender instanceof Player) || !sender.hasPermission("jparkour.join")) {
+            sendMessage(sender, values.getNoperm());
             return;
         }
         Player p = (Player) sender;
@@ -98,7 +105,7 @@ public class CJParkour implements CommandExecutor {
             utils.sendMessage(p, values.getExit());
         } else if (manager.getPlayers().get(p.getUniqueId()) != null) {
             String game = manager.getPlayers().get(p.getUniqueId()).getGame();
-            values.getRooms().get(game).close();
+            values.getRooms().get(game).close(true, false);
         } else {
             utils.sendMessage(p, values.getNoExit());
         }
@@ -118,9 +125,7 @@ public class CJParkour implements CommandExecutor {
             sendMessage(sender, values.getNoperm());
             return;
         }
-        plugin.saveDefaultConfig();
-        plugin.reloadConfig();
-        values.setup();
+        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, values::setup);
         sender.sendMessage("§aSuccessfully!");
     }
 }

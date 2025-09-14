@@ -1,10 +1,10 @@
 ###########################################################
 #                        JParkour                         #
-#                          v1.3                           #
+#                          v1.4                           #
 ###########################################################
 
 # Don't remove the version setting.
-version: 1.3
+version: 1.4
 
 # Plugin settings.
 settings:
@@ -17,12 +17,17 @@ settings:
   # Set true to enable locales for messages.
   # You can configure locales in the plugin folder where the locales. folder is located. You can create your own files.
   locales: false
-  # XIDX is the world's ID.
-  # Worlds are deleted after the next launch.
-  world: "jparkour-XIDX"
-  # Enter the maximum number of worlds that the plugin can use.
-  # If the worlds are full, the player will be put in a queue and wait for any available server.
-  amount: 999
+  # Game settings.
+  games:
+    # XIDX is the world's ID.
+    # Worlds are deleted after the next launch.
+    world: "jparkour-XIDX"
+    # Enter the maximum number of worlds that the plugin can use.
+    # If the worlds are full, the player will be put in a queue and wait for any available server.
+    amount: 999
+    # Is it possible to delete the map after the game ends?
+    # Set it to false if you are concerned about errors in the game console.
+    deleteWhenClosing: true
   # Notification of updates.
   updater:
     # Is it enabled?
@@ -34,14 +39,20 @@ settings:
       required: true
       # Enable this feature to update the plugin with any new versions.
       release: false
-  # Plugin support.
-  plugins:
+  # Plugin supports.
+  supports:
     # Enable PlaceholderAPI support.
     placeholderAPI: false
+    # Tops settings.
+    tops:
+      # Enable Tops support.
+      enabled: true
+      # How often will the tops be updated? (In seconds)
+      updateInterval: 900
   # Stands.
   armor-stands:
     # Types:
-    # Bomb - explodes and you need to select an item and click the type so that it doesn't explode.
+    # Bomb - explodes, and you need to select an item and click the type so that it doesn't explode.
     # Use - doesn't explode.
     # Clicks:
     # RIGHT_CLICK - right click.
@@ -95,7 +106,8 @@ messages:
   # [message] message - Send a message to the player.
   # [broadcast] message - Send a message to all players.
   # [log] message - Send a message to the console.
-  # [player] command - Run the command on behalf of the player.
+  # [delay] ticks - Make a delay between actions. In ticks. (20 ticks = 1 second)
+  # [player] message - Execute a message on behalf of the player. (or a command via /)
   # [teleport] world;x;y;z;yaw;pitch;delay - Teleport the player to the specified coordinates. The delay is measured in ticks.
   # [console] command - Run the command on behalf of the console.
   # [title] title;subtitle;fadeIn;stay;fadeOut - Send the title to the player. For 1.8+
@@ -120,8 +132,14 @@ messages:
   # %jparkour_maxlefts% - Displays the maximum number of clicks on the stand.
   # %jparkour_rights% - Displays the number of clicks on the bomb.
   # %jparkour_maxrights% - Displays the maximum number of bomb clicks.
+  # %jparkour_tops_SchematicName_Number_name% - Get the name of a player who is on a specific top.
+  # %jparkour_tops_SchematicName_Number_accuracy% - Get the accuracy of a player who is on a specific top.
+  # %jparkour_tops_SchematicName_Number_time% - Get the exact completion time of a player who is on a specific top.
+  #
+  # Change "SchematicName" to the schematics' ID, and "Number" to the number in the top that you require.
   #
   # Built-in placeholders:
+  # %accuracy% - Display the player's execution accuracy.
   # %star_win% - Displays the stars that the player has earned.
   # %star_loss% - Displays the stars that the player has not earned.
   #
@@ -137,9 +155,10 @@ messages:
       - ""
       - "[message] &a/jparkour status &f- Check the status of the plugin."
       - "[message] &a/jparkour join &f- Create or join any available room."
-      - "[message] &a/jparkour join roomid &f- Attempt to connect to the room (if it is free)."
+      - "[message] &a/jparkour join roomId &f- Attempt to connect to the room (if it is free)."
       - "[message] &a/jparkour exit &f- Exit the game/queue."
       - "[message] &a/jparkour item &f- Get a Item Help."
+      - "[message] &a/jparkour admin &f- Get a Admin Help."
       - "[message] &a/jparkour reload &f- Reload the plugin configuration."
       - ""
     noperm:
@@ -166,6 +185,10 @@ messages:
       left: "&fBlocks destroyed: &e%blocks%/&e%blocks_all%"
       right: "&fBombs repelled: &e%bombs%&f/&e%bombs_all%"
     actions:
+      joined:
+        - "[message] &aYou are connected to the game: &e%game%"
+      started:
+        - "[message] &eGame is started."
       ingame:
         - "[message] &cYou are in the game!"
       end:
@@ -177,4 +200,4 @@ messages:
       damageHeart:
         - "[message] &c-1 &l♥"
       win:
-        - "[title] &aVictory;&e%star_win%&7%star_loss%"
+        - "[title] &aVictory;&e%star_win%&7%star_loss% &f- &e%accuracy%%"

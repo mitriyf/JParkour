@@ -31,26 +31,38 @@ import ru.mitriyf.jparkour.utils.locales.versions.Locale13;
 import ru.mitriyf.jparkour.utils.schematic.Paste;
 import ru.mitriyf.jparkour.utils.schematic.versions.Paste12;
 import ru.mitriyf.jparkour.utils.schematic.versions.Paste13;
+import ru.mitriyf.jparkour.utils.worlds.WorldGenerator;
+import ru.mitriyf.jparkour.utils.worlds.versions.Generator12;
+import ru.mitriyf.jparkour.utils.worlds.versions.Generator13;
 import ru.mitriyf.jparkour.values.Values;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
 
 public class Utils {
     private final BukkitScheduler scheduler;
+    private final CountDownLatch latch;
     private final JParkour plugin;
     private final Values values;
+    private final Logger logger;
+    @Getter
+    public Paste schematic;
     private boolean aBar = false, bar = false, tit = false;
     @Getter
+    private WorldGenerator worldGenerator;
+    @Getter
     private Locale locale;
-    private Paste schematic;
     private Title title;
 
     public Utils(JParkour plugin) {
         this.plugin = plugin;
         this.values = plugin.getValues();
+        this.logger = plugin.getLogger();
+        this.latch = new CountDownLatch(1);
         this.scheduler = plugin.getServer().getScheduler();
     }
 
@@ -69,42 +81,53 @@ public class Utils {
             title = new Title11();
         }
         if (version < 13) {
+            values.setSchematicUrl("nether.schematic");
             locale = new Locale12();
-            schematic = new Paste12();
+            schematic = new Paste12(logger);
+            worldGenerator = new Generator12();
         } else {
+            values.setSchematicUrl("nether.schem");
+            values.setDefaultId("13");
             locale = new Locale13();
             schematic = new Paste13();
+            worldGenerator = new Generator13();
         }
     }
 
     public void sendMessage(Player p, List<Action> actions) {
-        for (Action action : actions) {
-            sendPlayer(p, action, null, null);
-        }
+        scheduler.runTaskAsynchronously(plugin, () -> {
+            for (Action action : actions) {
+                sendPlayer(p, action, null, null);
+            }
+        });
     }
 
     public void sendMessage(Player p, List<Action> actions, String[] search, String[] replace) {
-        for (Action action : actions) {
-            sendPlayer(p, action, search, replace);
-        }
+        scheduler.runTaskAsynchronously(plugin, () -> {
+            for (Action action : actions) {
+                sendPlayer(p, action, search, replace);
+            }
+        });
     }
 
 
     public void sendMessage(CommandSender sender, Map<String, List<Action>> actions) {
-        sendMessage(sender, actions, null, null);
+        scheduler.runTaskAsynchronously(plugin, () -> sendMessage(sender, actions, null, null));
     }
 
     public void sendMessage(CommandSender sender, Map<String, List<Action>> actions, String[] search, String[] replace) {
-        if (sender instanceof Player) {
-            Player p = (Player) sender;
-            for (Action action : actions.getOrDefault(locale.player(p), actions.get(""))) {
-                sendPlayer(p, action, search, replace);
+        scheduler.runTaskAsynchronously(plugin, () -> {
+            if (sender instanceof Player) {
+                Player p = (Player) sender;
+                for (Action action : actions.getOrDefault(locale.player(p), actions.get(""))) {
+                    sendPlayer(p, action, search, replace);
+                }
+                return;
             }
-            return;
-        }
-        for (Action action : actions.get("")) {
-            sendSender(sender, action, search, replace);
-        }
+            for (Action action : actions.get("")) {
+                sendSender(sender, action, search, replace);
+            }
+        });
     }
 
     private void sendPlayer(Player p, Action action, String[] search, String[] replace) {
@@ -144,6 +167,14 @@ public class Utils {
             case LOG:
                 log(context);
                 break;
+            case DELAY:
+                try {
+                    if (latch.await(Integer.parseInt(context) * 50L, TimeUnit.MILLISECONDS)) {
+                        break;
+                    }
+                } catch (Exception ignored) {
+                }
+                break;
             default:
                 sendMessage(p, context);
                 break;
@@ -162,6 +193,14 @@ public class Utils {
                 break;
             case LOG:
                 log(context);
+                break;
+            case DELAY:
+                try {
+                    if (latch.await(Integer.parseInt(context) * 50L, TimeUnit.MILLISECONDS)) {
+                        break;
+                    }
+                } catch (Exception ignored) {
+                }
                 break;
             case PLAYER:
             case TITLE:
@@ -182,7 +221,7 @@ public class Utils {
             try {
                 String[] spl = s.split(";");
                 if (spl.length == 0 || spl.length > 4) {
-                    plugin.getLogger().warning("Invalid sound. [sound;volume;pitch;delay], error: " + s);
+                    logger.warning("Invalid sound. [sound;volume;pitch;delay], error: " + s);
                     return;
                 }
                 int later = spl.length == 4 ? fInt(spl[3]) : 0;
@@ -191,7 +230,7 @@ public class Utils {
                 float pitch = spl.length >= 3 ? fFloat(spl[2]) : 1.0F;
                 scheduler.runTaskLaterAsynchronously(plugin, () -> p.playSound(p.getLocation(), sound, volume, pitch), later);
             } catch (Exception e) {
-                plugin.getLogger().warning("Sound error: " + e);
+                logger.warning("Sound error: " + e);
             }
         });
     }
@@ -201,7 +240,7 @@ public class Utils {
             try {
                 String[] spl = s.split(";");
                 if (spl.length == 0 || spl.length > 4) {
-                    plugin.getLogger().warning("Invalid effect. [type;duration;amplifier;delay], error: " + s);
+                    logger.warning("Invalid effect. [type;duration;amplifier;delay], error: " + s);
                     return;
                 }
                 int later = spl.length == 4 ? fInt(spl[3]) : 0;
@@ -211,7 +250,7 @@ public class Utils {
                 PotionEffect effect = new PotionEffect(type, duration, amplifier);
                 scheduler.runTaskLater(plugin, () -> p.addPotionEffect(effect), later);
             } catch (Exception e) {
-                plugin.getLogger().warning("Effect error: " + e);
+                logger.warning("Effect error: " + e);
             }
         });
     }
@@ -221,7 +260,7 @@ public class Utils {
             try {
                 String[] spl = s.split(";");
                 if (spl.length == 0 || spl.length > 7) {
-                    plugin.getLogger().warning("Invalid location. [world;x;y;z;yaw;pitch;delay], error: " + s);
+                    logger.warning("Invalid location. [world;x;y;z;yaw;pitch;delay], error: " + s);
                     return;
                 }
                 int later = spl.length == 7 ? fInt(spl[6]) : 0;
@@ -237,7 +276,7 @@ public class Utils {
                 Location loc = new Location(w, x, y, z, yaw, pitch);
                 scheduler.runTaskLater(plugin, () -> p.teleport(loc), later);
             } catch (Exception e) {
-                plugin.getLogger().warning("Teleport error: " + e);
+                logger.warning("Teleport error: " + e);
             }
         });
     }
@@ -247,7 +286,7 @@ public class Utils {
     }
 
     private void dispatchPlayer(Player p, String cmd) {
-        scheduler.runTaskLater(plugin, () -> p.performCommand(cmd), 0);
+        scheduler.runTaskLater(plugin, () -> p.chat(cmd), 0);
     }
 
     @SuppressWarnings("deprecation")
@@ -255,12 +294,12 @@ public class Utils {
         scheduler.runTaskAsynchronously(plugin, () -> {
             try {
                 if (aBar) {
-                    plugin.getLogger().warning("Invalid actionbar. [message]. For 1.11+, error: " + bar);
+                    logger.warning("Invalid actionbar. [message]. For 1.11+, error: " + bar);
                     return;
                 }
                 p.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(fStr(bar)));
             } catch (Exception e) {
-                plugin.getLogger().warning("ActionBar error: " + e);
+                logger.warning("ActionBar error: " + e);
             }
         });
     }
@@ -277,7 +316,7 @@ public class Utils {
             try {
                 String[] t = titleS.split(";");
                 if (t.length == 0 || t.length > 5 || tit) {
-                    plugin.getLogger().warning("Invalid title. [title;subtitle;int;int1;int2]. For 1.8+, error: " + title);
+                    logger.warning("Invalid title. [title;subtitle;int;int1;int2]. For 1.8+, error: " + title);
                     return;
                 }
                 String titleF = fStr(t[0]);
@@ -287,7 +326,7 @@ public class Utils {
                 int fadeOut = t.length == 5 ? fInt(t[4]) : 20;
                 title.send(p, titleF, subtitle, fadeIn, stay, fadeOut);
             } catch (Exception e) {
-                plugin.getLogger().warning("Title error: " + e);
+                logger.warning("Title error: " + e);
             }
         });
 
@@ -298,7 +337,7 @@ public class Utils {
             try {
                 String[] b = bossbar.split(";");
                 if (b.length == 0 || b.length > 6 || bar) {
-                    plugin.getLogger().warning("Invalid bossbar. [message;color;type;time;style;flag]. For 1.9+, error: " + bossbar);
+                    logger.warning("Invalid bossbar. [message;color;type;time;style;flag]. For 1.9+, error: " + bossbar);
                     return;
                 }
                 BarColor color = b.length >= 2 ? BarColor.valueOf(b[1].toUpperCase()) : BarColor.WHITE;
@@ -338,7 +377,7 @@ public class Utils {
                     }.runTaskTimerAsynchronously(plugin, 1, 1);
                 }
             } catch (Exception e) {
-                plugin.getLogger().warning("Bossbar error: " + e);
+                logger.warning("Bossbar error: " + e);
             }
         });
     }
@@ -348,7 +387,7 @@ public class Utils {
     }
 
     private void log(String log) {
-        plugin.getLogger().info(log);
+        logger.info(log);
     }
 
     private String fStr(String s) {
@@ -369,15 +408,10 @@ public class Utils {
 
     @SuppressWarnings("all")
     public void paste(Location loc, String schematicId) {
-        File schem = new File(plugin.getDataFolder(), "schematics/" + schematicId);
-        if (!schem.exists()) {
-            plugin.getLogger().warning("File " + schematicId + " not found.");
-            return;
-        }
         try {
-            schematic.paste(loc, schem);
+            schematic.paste(loc, schematicId);
         } catch (Exception error) {
-            plugin.getLogger().warning("An error occurred while inserting the diagram. Please contact the administrator.\nError: " + error);
+            logger.warning("An error occurred while inserting the diagram. Please contact the administrator.\nError: " + error);
         }
     }
 
@@ -404,7 +438,7 @@ public class Utils {
             item.setItemMeta(meta);
             return item;
         } catch (Exception e) {
-            plugin.getLogger().warning("Error generate item " + slot.toString() + ": " + e);
+            logger.warning("Error generate item " + slot.toString() + ": " + e);
             return new ItemStack(Material.AIR);
         }
     }
