@@ -78,6 +78,7 @@ public class Run {
             Location loc = chicken.getLocation();
             if (chicken.getPassenger() == null) {
                 scheduler.runTask(plugin, game::restart);
+                task.cancel();
                 return;
             }
             if (loc.distance(end) <= radiusFinish) {

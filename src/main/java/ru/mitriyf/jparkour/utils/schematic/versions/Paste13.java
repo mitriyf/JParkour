@@ -18,7 +18,7 @@ public class Paste13 implements Paste {
     @Override
     public void paste(Location loc, String schem) {
         World w = FaweAPI.getWorld(loc.getWorld().getName());
-        clipboards.get(schem).paste(w, BlockVector3.at(loc.getX(), loc.getY(), loc.getZ()), false, false, null);
+        clipboards.get(schem).paste(w, BlockVector3.at(loc.getX(), loc.getY(), loc.getZ()), false, true, null);
     }
 
     @Override
