@@ -19,13 +19,11 @@ import java.util.Map;
 public class CJParkour implements CommandExecutor {
     private final AdminEditor adminEditor;
     private final ItemEditor itemEditor;
-    private final JParkour plugin;
     private final Values values;
     private final Utils utils;
     private final Manager manager;
 
     public CJParkour(JParkour plugin) {
-        this.plugin = plugin;
         this.values = plugin.getValues();
         this.utils = plugin.getUtils();
         this.manager = plugin.getManager();
@@ -125,7 +123,7 @@ public class CJParkour implements CommandExecutor {
             sendMessage(sender, values.getNoperm());
             return;
         }
-        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, values::setup);
+        values.setup();
         sender.sendMessage("§aSuccessfully!");
     }
 }
