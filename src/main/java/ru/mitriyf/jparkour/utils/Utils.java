@@ -11,6 +11,8 @@ import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
@@ -39,6 +41,7 @@ import ru.mitriyf.jparkour.values.Values;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
@@ -51,9 +54,12 @@ public class Utils {
     private final Logger logger;
     @Getter
     public Paste schematic;
-    private boolean aBar = false, bar = false, tit = false;
+    @Getter
+    private boolean actionBar = false, bar = false, tit = false;
     @Getter
     private WorldGenerator worldGenerator;
+    @Getter
+    private Material gSword;
     @Getter
     private Locale locale;
     private Title title;
@@ -68,29 +74,33 @@ public class Utils {
 
     public void setup() {
         int version = plugin.getVersion();
-        if (version < 8) {
-            tit = true;
-        }
-        if (version < 9) {
-            bar = true;
-        }
-        if (version < 11) {
-            aBar = true;
-            title = new Title10();
-        } else {
-            title = new Title11();
-        }
         if (version < 13) {
+            if (version < 8) {
+                tit = true;
+            }
+            if (version < 9) {
+                bar = true;
+            }
             values.setSchematicUrl("nether.schematic");
             locale = new Locale12();
-            schematic = new Paste12(logger);
+            schematic = new Paste12(plugin);
             worldGenerator = new Generator12();
+            gSword = Material.valueOf("GOLD_SWORD");
         } else {
             values.setSchematicUrl("nether.schem");
             values.setDefaultId("13");
             locale = new Locale13();
-            schematic = new Paste13();
+            schematic = new Paste13(plugin);
             worldGenerator = new Generator13();
+            gSword = Material.GOLDEN_SWORD;
+        }
+        if (version < 11) {
+            actionBar = true;
+            if (!tit) {
+                title = new Title10();
+            }
+        } else {
+            title = new Title11();
         }
     }
 
@@ -132,7 +142,7 @@ public class Utils {
 
     private void sendPlayer(Player p, Action action, String[] search, String[] replace) {
         ActionType type = action.getType();
-        String context = replaceEach(action.getContext().replace("%player%", p.getName()), search, replace);
+        String context = replaceEach(action.getContext().replace("%player%", p.getName()).replace("%world%", p.getWorld().getName()), search, replace);
         if (values.isPlaceholderAPI()) {
             context = PlaceholderAPI.setPlaceholders(p, context);
         }
@@ -163,6 +173,9 @@ public class Utils {
                 break;
             case EFFECT:
                 giveEffect(p, context);
+                break;
+            case EXPLOSION:
+                createExplosion(p, context);
                 break;
             case LOG:
                 log(context);
@@ -209,6 +222,7 @@ public class Utils {
             case EFFECT:
             case TELEPORT:
             case SOUND:
+            case EXPLOSION:
                 break;
             default:
                 sendMessage(sender, context);
@@ -217,68 +231,86 @@ public class Utils {
     }
 
     private void playSound(Player p, String s) {
-        scheduler.runTaskAsynchronously(plugin, () -> {
-            try {
-                String[] spl = s.split(";");
-                if (spl.length == 0 || spl.length > 4) {
-                    logger.warning("Invalid sound. [sound;volume;pitch;delay], error: " + s);
-                    return;
-                }
-                int later = spl.length == 4 ? fInt(spl[3]) : 0;
-                Sound sound = Sound.valueOf(spl[0]);
-                float volume = spl.length >= 2 ? fFloat(spl[1]) : 1.0F;
-                float pitch = spl.length >= 3 ? fFloat(spl[2]) : 1.0F;
-                scheduler.runTaskLaterAsynchronously(plugin, () -> p.playSound(p.getLocation(), sound, volume, pitch), later);
-            } catch (Exception e) {
-                logger.warning("Sound error: " + e);
+        try {
+            String[] spl = s.split(";");
+            if (spl.length == 0 || spl.length > 4) {
+                logger.warning("Invalid sound. [sound;volume;pitch;delay], error: " + s);
+                return;
             }
-        });
+            int later = spl.length == 4 ? fInt(spl[3]) : 0;
+            Sound sound = Sound.valueOf(spl[0]);
+            float volume = spl.length >= 2 ? fFloat(spl[1]) : 1.0F;
+            float pitch = spl.length >= 3 ? fFloat(spl[2]) : 1.0F;
+            scheduler.runTaskLaterAsynchronously(plugin, () -> p.playSound(p.getLocation(), sound, volume, pitch), later);
+        } catch (Exception e) {
+            logger.warning("Sound error: " + e);
+        }
     }
 
     private void giveEffect(Player p, String s) {
-        scheduler.runTaskAsynchronously(plugin, () -> {
-            try {
-                String[] spl = s.split(";");
-                if (spl.length == 0 || spl.length > 4) {
-                    logger.warning("Invalid effect. [type;duration;amplifier;delay], error: " + s);
-                    return;
-                }
-                int later = spl.length == 4 ? fInt(spl[3]) : 0;
-                PotionEffectType type = PotionEffectType.getByName(spl[0]);
-                int duration = spl.length >= 2 ? fInt(spl[1]) : 1;
-                int amplifier = spl.length >= 3 ? fInt(spl[2]) : 1;
-                PotionEffect effect = new PotionEffect(type, duration, amplifier);
-                scheduler.runTaskLater(plugin, () -> p.addPotionEffect(effect), later);
-            } catch (Exception e) {
-                logger.warning("Effect error: " + e);
+        try {
+            String[] spl = s.split(";");
+            if (spl.length == 0 || spl.length > 4) {
+                logger.warning("Invalid effect. [type;duration;amplifier;delay], error: " + s);
+                return;
             }
-        });
+            int later = spl.length == 4 ? fInt(spl[3]) : 0;
+            PotionEffectType type = PotionEffectType.getByName(spl[0]);
+            int duration = spl.length >= 2 ? fInt(spl[1]) : 1;
+            int amplifier = spl.length >= 3 ? fInt(spl[2]) : 1;
+            PotionEffect effect = new PotionEffect(type, duration, amplifier);
+            scheduler.runTaskLater(plugin, () -> p.addPotionEffect(effect), later);
+        } catch (Exception e) {
+            logger.warning("Effect error: " + e);
+        }
     }
 
     private void teleport(Player p, String s) {
-        scheduler.runTaskAsynchronously(plugin, () -> {
-            try {
-                String[] spl = s.split(";");
-                if (spl.length == 0 || spl.length > 7) {
-                    logger.warning("Invalid location. [world;x;y;z;yaw;pitch;delay], error: " + s);
-                    return;
-                }
-                int later = spl.length == 7 ? fInt(spl[6]) : 0;
-                World w = Bukkit.getWorld(spl[0]);
-                if (w == null) {
-                    w = Bukkit.getWorld("world");
-                }
-                double x = spl.length >= 2 ? fDouble(spl[1]) : 0;
-                double y = spl.length >= 3 ? fDouble(spl[2]) : 80;
-                double z = spl.length >= 4 ? fDouble(spl[3]) : 0;
-                float yaw = spl.length >= 5 ? fFloat(spl[4]) : 180;
-                float pitch = spl.length >= 6 ? fFloat(spl[5]) : 0;
-                Location loc = new Location(w, x, y, z, yaw, pitch);
-                scheduler.runTaskLater(plugin, () -> p.teleport(loc), later);
-            } catch (Exception e) {
-                logger.warning("Teleport error: " + e);
+        try {
+            String[] spl = s.split(";");
+            if (spl.length == 0 || spl.length > 7) {
+                logger.warning("Invalid location. [world;x;y;z;yaw;pitch;delay], error: " + s);
+                return;
             }
-        });
+            int later = spl.length == 7 ? fInt(spl[6]) : 0;
+            World w = Bukkit.getWorld(spl[0]);
+            if (w == null) {
+                w = Bukkit.getWorld("world");
+            }
+            double x = spl.length >= 2 ? fDouble(spl[1]) : 0;
+            double y = spl.length >= 3 ? fDouble(spl[2]) : 80;
+            double z = spl.length >= 4 ? fDouble(spl[3]) : 0;
+            float yaw = spl.length >= 5 ? fFloat(spl[4]) : 180;
+            float pitch = spl.length >= 6 ? fFloat(spl[5]) : 0;
+            Location loc = new Location(w, x, y, z, yaw, pitch);
+            scheduler.runTaskLater(plugin, () -> p.teleport(loc), later);
+        } catch (Exception e) {
+            logger.warning("Teleport error: " + e);
+        }
+    }
+
+    // PLAYEFFECT, FIREWORK, PARTICLE. FIX 1.13-1.14 light.
+    // больше слотов в эдиторе.
+    private void createExplosion(Player p, String s) {
+        try {
+            String[] spl = s.split(";");
+            if (spl.length == 0 || spl.length > 7) {
+                logger.warning("Invalid explosion. [power;setFire;breakBlocks;delay;addX;addY;addZ], error: " + s);
+                return;
+            }
+            int later = spl.length >= 4 ? fInt(spl[3]) : 0;
+            float power = fFloat(spl[0]);
+            boolean setFire = spl.length >= 2 && fBoolean(spl[1]);
+            boolean breakBlocks = spl.length >= 3 && fBoolean(spl[2]);
+            Location loc = p.getLocation().clone();
+            double addX = spl.length >= 5 ? fDouble(spl[4]) : 0;
+            double addY = spl.length >= 6 ? fDouble(spl[5]) : 0;
+            double addZ = spl.length == 7 ? fDouble(spl[6]) : 0;
+            loc.add(addX, addY, addZ);
+            scheduler.runTaskLater(plugin, () -> p.getWorld().createExplosion(loc.getX(), loc.getY(), loc.getZ(), power, setFire, breakBlocks), later);
+        } catch (Exception e) {
+            logger.warning("Explosion error: " + e);
+        }
     }
 
     private void dispatchConsole(String cmd) {
@@ -291,17 +323,15 @@ public class Utils {
 
     @SuppressWarnings("deprecation")
     private void sendActionBar(Player p, String bar) {
-        scheduler.runTaskAsynchronously(plugin, () -> {
-            try {
-                if (aBar) {
-                    logger.warning("Invalid actionbar. [message]. For 1.11+, error: " + bar);
-                    return;
-                }
-                p.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(fStr(bar)));
-            } catch (Exception e) {
-                logger.warning("ActionBar error: " + e);
+        try {
+            if (actionBar) {
+                logger.warning("Invalid actionbar. [message]. For 1.11+, error: " + bar);
+                return;
             }
-        });
+            p.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(fStr(bar)));
+        } catch (Exception e) {
+            logger.warning("ActionBar error: " + e);
+        }
     }
 
     private void broadcast(String message) {
@@ -333,53 +363,51 @@ public class Utils {
     }
 
     private void sendBossbar(Player p, String bossbar) {
-        scheduler.runTaskAsynchronously(plugin, () -> {
-            try {
-                String[] b = bossbar.split(";");
-                if (b.length == 0 || b.length > 6 || bar) {
-                    logger.warning("Invalid bossbar. [message;color;type;time;style;flag]. For 1.9+, error: " + bossbar);
-                    return;
-                }
-                BarColor color = b.length >= 2 ? BarColor.valueOf(b[1].toUpperCase()) : BarColor.WHITE;
-                String type = b.length >= 3 ? b[2].toLowerCase() : "time";
-                long time = b.length >= 4 ? fInt(b[3]) : 5;
-                long ticks = time * 20L;
-                BarStyle style = b.length >= 5 ? BarStyle.valueOf(b[4].toUpperCase()) : BarStyle.SEGMENTED_6;
-                BarFlag flag = b.length == 6 ? BarFlag.valueOf(b[5].toUpperCase()) : null;
-                boolean update = b[0].contains("%time%");
-                String text = fStr(b[0].replace("%time%", time + ""));
-                BossBar bossBar = flag == null ? plugin.getServer().createBossBar(text, color, style) : plugin.getServer().createBossBar(text, color, style, flag);
-                bossBar.addPlayer(p);
-                if (type.equals("stop")) {
-                    scheduler.runTaskLaterAsynchronously(plugin, () -> {
-                        bossBar.removeAll();
-                        bossBar.setVisible(false);
-                    }, ticks);
-                } else {
-                    new BukkitRunnable() {
-                        private int t = 0;
-
-                        @Override
-                        public void run() {
-                            t++;
-                            if (t == ticks) {
-                                bossBar.removeAll();
-                                bossBar.setVisible(false);
-                                cancel();
-                                return;
-                            }
-                            int left = (int) (time - Math.floor((double) t / 20));
-                            if (update) {
-                                bossBar.setTitle(fStr(b[0].replace("%time%", left + "")));
-                            }
-                            bossBar.setProgress(1 - ((double) t / ticks));
-                        }
-                    }.runTaskTimerAsynchronously(plugin, 1, 1);
-                }
-            } catch (Exception e) {
-                logger.warning("Bossbar error: " + e);
+        try {
+            String[] b = bossbar.split(";");
+            if (b.length == 0 || b.length > 6 || bar) {
+                logger.warning("Invalid bossbar. [message;color;type;time;style;flag]. For 1.9+, error: " + bossbar);
+                return;
             }
-        });
+            BarColor color = b.length >= 2 ? BarColor.valueOf(b[1].toUpperCase()) : BarColor.WHITE;
+            String type = b.length >= 3 ? b[2].toLowerCase() : "time";
+            long time = b.length >= 4 ? fInt(b[3]) : 5;
+            long ticks = time * 20L;
+            BarStyle style = b.length >= 5 ? BarStyle.valueOf(b[4].toUpperCase()) : BarStyle.SEGMENTED_6;
+            BarFlag flag = b.length == 6 ? BarFlag.valueOf(b[5].toUpperCase()) : null;
+            boolean update = b[0].contains("%time%");
+            String text = fStr(b[0].replace("%time%", time + ""));
+            BossBar bossBar = flag == null ? plugin.getServer().createBossBar(text, color, style) : plugin.getServer().createBossBar(text, color, style, flag);
+            bossBar.addPlayer(p);
+            if (type.equalsIgnoreCase("stop")) {
+                scheduler.runTaskLaterAsynchronously(plugin, () -> {
+                    bossBar.removeAll();
+                    bossBar.setVisible(false);
+                }, ticks);
+            } else {
+                new BukkitRunnable() {
+                    private int t = 0;
+
+                    @Override
+                    public void run() {
+                        t++;
+                        if (t == ticks) {
+                            bossBar.removeAll();
+                            bossBar.setVisible(false);
+                            cancel();
+                            return;
+                        }
+                        int left = (int) (time - Math.floor((double) t / 20));
+                        if (update) {
+                            bossBar.setTitle(fStr(b[0].replace("%time%", left + "")));
+                        }
+                        bossBar.setProgress(1 - ((double) t / ticks));
+                    }
+                }.runTaskTimerAsynchronously(plugin, 1, 1);
+            }
+        } catch (Exception e) {
+            logger.warning("Bossbar error: " + e);
+        }
     }
 
     private void sendMessage(CommandSender s, String text) {
@@ -406,19 +434,45 @@ public class Utils {
         return Double.parseDouble(s);
     }
 
+    private boolean fBoolean(String s) {
+        return Boolean.parseBoolean(s);
+    }
+
     @SuppressWarnings("all")
-    public void paste(Location loc, String schematicId) {
+    public void paste(Location loc, String schematicId, boolean pasteAir) {
         try {
-            schematic.paste(loc, schematicId);
+            schematic.paste(loc, schematicId, pasteAir);
         } catch (Exception error) {
             logger.warning("An error occurred while inserting the diagram. Please contact the administrator.\nError: " + error);
+        }
+    }
+
+    @SuppressWarnings("deprecation")
+    public void saveItem(Player p, String sPath, int slot, String itemName, Material material) {
+        String item = sPath + "." + itemName;
+        FileConfiguration slots = values.getItemSlots();
+        slots.set(item + ".slot", slot);
+        if (p != null) {
+            slots.set(item + ".type", "itemstack");
+            slots.set(item + ".item", p.getItemInHand());
+        } else {
+            slots.set(item + ".type", "default");
+            slots.set(item + ".item.type", material.toString());
+        }
+        try {
+            slots.save(values.getSlotsFile());
+            if (p != null) {
+                p.sendMessage("§aThe " + itemName + " item was created successfully!\nUse: /jparkour reload - Apply the new settings.");
+            }
+        } catch (Exception e) {
+            plugin.getLogger().warning("Error item " + itemName + " save slots.yml: " + e);
         }
     }
 
     public ItemStack generateItem(ConfigurationSection slot) {
         try {
             String type = slot.getString("type");
-            if (type.equalsIgnoreCase("itemstack")) {
+            if (type != null && type.equalsIgnoreCase("itemstack")) {
                 return slot.getItemStack("item");
             }
             slot = slot.getConfigurationSection("item");
@@ -459,6 +513,15 @@ public class Utils {
         }
 
         return result.toString();
+    }
+
+    public Entity getEntity(World world, UUID uuid) {
+        for (Entity entity : world.getEntities()) {
+            if (entity.getUniqueId().equals(uuid)) {
+                return entity;
+            }
+        }
+        return null;
     }
 
     public String repeat(String str, int count) {

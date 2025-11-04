@@ -14,6 +14,8 @@ default:
     # Item slot.
     slot: 8
     type: default
+    # Set true to make the item kick the player out of the game when clicked.
+    exit: true
     # Item Info.
     item:
       # The name of the item.
@@ -23,24 +25,83 @@ default:
         - ""
         - "&cExit&f, and what is it?"
         - ""
-      # Specify BARRIER so that the plugin can detect that this is an exit button.
       type: BARRIER
-  1slot:
+  restart:
+    slot: 7
+    type: default
+    # Set true if this item should restart the game.
+    restart: true
+    item:
+      name: "&aRestart game"
+      type: ENDER_PEARL
+# Editing items for the editor.
+editor:
+  # [default] You can add your own types, for example,
+  # if you want the item to only bind to bomb_diamond, then insert it into the stand.
+  # By default, stand is set to default, which means that this item is bound through a command.
+  ironAxe:
+    # Item types: itemstack, default.
+    # itemStack - An item can be added by a team or experienced people.
+    # default - Using the plugin features.
+    # Item slot.
     slot: 0
     type: default
+    stand: default
+    # Item Info.
     item:
-      type: DIAMOND_SWORD
-  2slot:
+      # The name of the item.
+      name: "&aSettings"
+      # Description of the item.
+      lore:
+        - ""
+        - "&aSet stand."
+        - ""
+      # Specify BARRIER so that the plugin can detect that this is an exit button.
+      type: IRON_AXE
+  diamondSword:
     slot: 1
     type: default
+    stand: bomb_diamond
     item:
+      name: "&cbomb&f_&bdiamond"
+      type: DIAMOND_SWORD
+  gSword:
+    slot: 3
+    type: default
+    stand: bomb_gold
+    item:
+      name: "&cbomb&f_&egold"
       type: GOLD_SWORD
+  diamondPickaxe:
+    slot: 2
+    type: default
+    stand: diamond_block
+    item:
+      name: "&bdiamond_block"
+      type: DIAMOND_PICKAXE
+  gPickaxe:
+    slot: 4
+    type: default
+    stand: gold_block
+    item:
+      name: "&egold_block"
+      type: GOLD_PICKAXE
 # Specify items for specific schematics.
 schematics:
   # Specify the schem ID.
   nether:
-    2slot:
+    5slot:
       slot: 4
       type: default
       item:
         type: NETHER_STAR
+    1slot:
+      slot: 0
+      type: default
+      item:
+        type: DIAMOND_SWORD
+    2slot:
+      slot: 1
+      type: default
+      item:
+        type: GOLD_SWORD

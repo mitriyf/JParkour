@@ -7,7 +7,6 @@ import ru.mitriyf.jparkour.events.block.BlockEvents;
 import ru.mitriyf.jparkour.events.entity.EntityEvents;
 import ru.mitriyf.jparkour.events.player.PlayerEvents;
 import ru.mitriyf.jparkour.events.world.WorldEvents;
-import ru.mitriyf.jparkour.values.Values;
 
 public class Events implements Listener {
     private final WorldEvents worldEvents;
@@ -18,10 +17,9 @@ public class Events implements Listener {
 
     public Events(JParkour plugin) {
         this.plugin = plugin;
-        Values values = plugin.getValues();
         worldEvents = new WorldEvents(plugin);
-        blockEvents = new BlockEvents(values);
-        entityEvents = new EntityEvents(values);
+        blockEvents = new BlockEvents(plugin);
+        entityEvents = new EntityEvents(plugin);
         playerEvents = new PlayerEvents(plugin);
     }
 

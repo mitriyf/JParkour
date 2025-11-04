@@ -2,4 +2,12 @@ Hello!
 Привет!
 
 Вставьте сюда любую схематику для генерации конфигурационного файла и начала работы.
-Paste any diagram here to generate a configuration file and get started.
+
+Paste any schematic here to generate a configuration file and get started.
+
+
+// Версия плагина 1.5 - означает, что это профессиональная версия плагина.
+// Это может быть окончательная версия плагина, если в ней нет ошибок (или идей :3).
+
+// Plugin version 1.5 - indicates that this is the pro version of the plugin.
+// This may be the final version of the plugin, if there are no bugs or errors (or ideas :3)

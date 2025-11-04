@@ -38,6 +38,9 @@ public class Tops {
     }
 
     public void startTimer() {
+        if (task != null) {
+            task.cancel();
+        }
         task = scheduler.runTaskTimerAsynchronously(plugin, () -> {
             File[] schematics = playerData.listFiles();
             if (schematics != null) {
@@ -49,15 +52,18 @@ public class Tops {
     }
 
     public void setData(Player p, String mapId, int accuracy) {
-        File infoPlayerFile = new File(playerData, mapId + "/" + p.getUniqueId() + ".yml");
-        try {
-            Files.createDirectories(infoPlayerFile.getParentFile().toPath());
-        } catch (Exception e) {
-            logger.warning("Error creating directories for tops. Error: " + e);
-        }
-        YamlConfiguration infoPlayer = YamlConfiguration.loadConfiguration(infoPlayerFile);
-        infoPlayer.set("name", p.getName());
-        if (infoPlayer.getInt("accuracy") < accuracy) {
+        scheduler.runTaskAsynchronously(plugin, () -> {
+            File infoPlayerFile = new File(playerData, mapId + "/" + p.getUniqueId() + ".yml");
+            try {
+                Files.createDirectories(infoPlayerFile.getParentFile().toPath());
+            } catch (Exception e) {
+                logger.warning("Error creating directories for tops. Error: " + e);
+            }
+            YamlConfiguration infoPlayer = YamlConfiguration.loadConfiguration(infoPlayerFile);
+            if (infoPlayer.getInt("accuracy") >= accuracy) {
+                return;
+            }
+            infoPlayer.set("name", p.getName());
             infoPlayer.set("accuracy", accuracy);
             infoPlayer.set("time", OffsetDateTime.now().format(formatter));
             try {
@@ -65,6 +71,6 @@ public class Tops {
             } catch (Exception e) {
                 logger.warning("Error save playerData file. Error: " + e);
             }
-        }
+        });
     }
 }

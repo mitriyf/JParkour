@@ -1,11 +1,60 @@
 # Don't remove the version setting.
-version: 1.4
+version: 1.5
 
 # Specify the name of the map. It will be displayed in the Scoreboard.
-name: "&fDefault"
-# Specify an asterisk symbol or another symbol that will indicate a victory.
-# Leave this blank to display numbers.
-star: "★"
+schematic:
+  name: "&fDefault"
+  # Specify an asterisk symbol or another symbol that will indicate a victory.
+  # Leave this blank to display numbers.
+  star: "★"
+  # Specify whether to insert air blocks into the schematic.
+  # The default value is false, as it does not work correctly with the editor in newer versions.
+  pasteAir: false
+  # GameRules.
+  # GameRule:Value
+  gameRules:
+    - "randomTickSpeed:0"
+# The game rules are configurable by the plugin.
+rules:
+  # Event when player food level changes.
+  foodLevelChange: false
+  # Event when player picks up an item.
+  pickupItem: false
+  # Event when player consumes an item.
+  consumeItem: false
+  # Event when player drops an item.
+  dropItem: false
+  # Event when entity takes damage.
+  entityDamage: false
+  # Event when creature spawns in the world.
+  creatureSpawn: false
+  # Event when entity explodes.
+  entityExplode: false
+  # Event when entity targets another entity.
+  entityTarget: false
+  # Event when item spawns in the world.
+  itemSpawn: false
+  # Event when player places a block.
+  placeBlock: false
+  # Event when player breaks a block.
+  breakBlock: false
+  # Event when block starts burning.
+  burnBlock: false
+  # Event when block is ignited.
+  igniteBlock: false
+  # Event when block changes from one state to another.
+  fromToBlock: false
+  # Event when entity changes a block.
+  entityChangeBlock: false
+  # Event when block physics occurs.
+  physicsBlock: false
+  # Event when block fades.
+  fadeBlock: false
+  # Event when leaves decay naturally.
+  leavesDecay: false
+  # Event when player places multiple blocks at once.
+  multiPlaceBlock: false
+# Entity settings.
 entity:
   # Specify the entity.
   type: CHICKEN
@@ -13,11 +62,39 @@ entity:
   speed: 0.3
   # Specify how many ticks the next mob movement will be measured.
   everyTicks: 1
+  # Running entity.
+  run:
+    # Should I reset the vector's speed at the finish line?
+    resetVectorFinish: true
+    # Down and up when parkouring. It can help if you have too much parkour or something else.
+    directions:
+      # Up.
+      up:
+        # Checking all the blocks is ahead.
+        blockChecks:
+          # How many blocks ahead the plugin will look at.
+          forward: 3
+          # Should I check the upper blocks?
+          upBlock: true
+        # Lifting speed.
+        speed: 0.3
+      # Down.
+      down:
+        # Checking what height is needed for the block.
+        check: -0.2
+        # The rate of descent.
+        speed: -0.8
 player:
   # Specify the maximum number of hit points. 2 hit points = 1 heart.
   health: 6
+  # Specify the food level that the player will always have.
+  foodLevel: 10
+  # Specify which gameMode will be issued to the player.
+  gameMode: ADVENTURE
   # Specify the bomb damage.
   damageBomb: 2
+  # If the bomb was activated by the wrong object, then detonate it.
+  failedDefuseBomb: true
   # Should we immediately provide all items of schematics and default?
   fullSlots: false
   # Specify the radius from the finish line at which victory can appear. (For mobs that are very tall)
@@ -42,9 +119,9 @@ locs:
   # Remove the extra blocks for teleportation at this Z coordinate. (To avoid accidentally entering parkour)
   portal: "0;0;-7"
   # The starting point where the chicken will run.
-  start: "0;0;-12"
+  start: "0.5;0;-11.5"
   # End.
-  end: "0;0;-102"
+  end: "0.5;0;-101.5"
 stars:
   # 1 - 100%.
   # 0.8 - 80%.
@@ -65,13 +142,13 @@ stands:
   # Specify where the stands will appear.
   # Order: type;X;Y;Z (from the location of the schematic)
   locs:
-  - "gold_block;-2;1;-24"
-  - "bomb_blue;0;1;-36"
-  - "diamond_block;2;2;-47"
-  - "gold_block;-2;2;-57"
-  - "diamond_block;2;1;-69"
-  - "bomb_blue;0;1;-79"
-  - "bomb_gold;0;0;-94"
+  - "gold_block;-1.5;1;-23.5"
+  - "bomb_diamond;0.5;1;-35.5"
+  - "diamond_block;2.5;2;-46.5"
+  - "gold_block;-1.5;2;-56.5"
+  - "diamond_block;2.5;1;-68.5"
+  - "bomb_diamond;0.5;1;-78.5"
+  - "bomb_gold;0.5;0;-93.5"
 # Set up the message.
 # This will only work if you have selected the plugin configuration mode.
 messages:

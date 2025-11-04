@@ -12,11 +12,11 @@ import org.bukkit.event.world.WorldUnloadEvent;
 import ru.mitriyf.jparkour.JParkour;
 import ru.mitriyf.jparkour.values.Values;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 public class WorldEvents implements Listener {
-    private final List<String> unloaded = new ArrayList<>();
+    private final Set<String> unloaded = new HashSet<>();
     private final JParkour plugin;
     private final Values values;
 

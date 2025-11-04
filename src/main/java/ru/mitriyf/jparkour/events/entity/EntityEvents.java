@@ -8,20 +8,28 @@ import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.EntityTargetEvent;
 import org.bukkit.event.entity.ItemSpawnEvent;
 import org.bukkit.event.player.PlayerArmorStandManipulateEvent;
+import ru.mitriyf.jparkour.JParkour;
+import ru.mitriyf.jparkour.game.Game;
+import ru.mitriyf.jparkour.game.manager.Manager;
 import ru.mitriyf.jparkour.values.Values;
 
 public class EntityEvents implements Listener {
     private final CreatureSpawnEvent.SpawnReason reason = CreatureSpawnEvent.SpawnReason.CUSTOM;
+    private final Manager manager;
     private final Values values;
 
-    public EntityEvents(Values values) {
-        this.values = values;
+    public EntityEvents(JParkour plugin) {
+        values = plugin.getValues();
+        manager = plugin.getManager();
     }
 
     @EventHandler
     public void creatureSpawn(CreatureSpawnEvent e) {
-        if (startWithWorld(e.getEntity()) && e.getSpawnReason() != reason) {
-            e.setCancelled(true);
+        if (startWithWorld(e.getEntity())) {
+            Game game = manager.getGame(e.getEntity().getWorld().getName());
+            if (game != null && e.getSpawnReason() != reason && !game.getInfo().isCreatureSpawn()) {
+                e.setCancelled(true);
+            }
         }
     }
 
@@ -32,17 +40,32 @@ public class EntityEvents implements Listener {
 
     @EventHandler
     public void entityExplode(EntityExplodeEvent e) {
-        e.setCancelled(startWithWorld(e.getEntity()));
+        if (startWithWorld(e.getEntity())) {
+            Game game = manager.getGame(e.getEntity().getWorld().getName());
+            if (game != null && !game.getInfo().isEntityExplode()) {
+                e.setCancelled(true);
+            }
+        }
     }
 
     @EventHandler
     public void entityTarget(EntityTargetEvent e) {
-        e.setCancelled(startWithWorld(e.getEntity()));
+        if (startWithWorld(e.getEntity())) {
+            Game game = manager.getGame(e.getEntity().getWorld().getName());
+            if (game != null && !game.getInfo().isEntityTarget()) {
+                e.setCancelled(true);
+            }
+        }
     }
 
     @EventHandler
     public void itemSpawn(ItemSpawnEvent e) {
-        e.setCancelled(startWithWorld(e.getEntity()));
+        if (startWithWorld(e.getEntity())) {
+            Game game = manager.getGame(e.getEntity().getWorld().getName());
+            if (game != null && !game.getInfo().isItemSpawn()) {
+                e.setCancelled(true);
+            }
+        }
     }
 
     private boolean startWithWorld(Entity e) {

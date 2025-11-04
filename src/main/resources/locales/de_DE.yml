@@ -17,29 +17,40 @@ messages:
   # // Ersetze $version$ durch die Version deines Servers, zum Beispiel: https://helpch.at/docs/1.8.8/org/bukkit/Sound.html
   # [effect] Typ;Dauer;Verstärker;Verzögerung - Gib dem Spieler den Effekt. Verzögerung und Dauer werden in Ticks gemessen.
   # Finde die Effekttypen hier: https://helpch.at/docs/$version$/org/bukkit/potion/PotionEffectType.html
+  # [explosion] Leistung;FeuerSetzen;BlöckeZerstören;Verzögerung;XHinzufügen;YHinzufügen;ZHinzufügen - Erstelle eine Explosion. Die Verzögerung wird in Ticks gemessen.
+  # FeuerSetzen, BlöckeZerstören - auf false oder true setzen. XHinzufügen, YHinzufügen, ZHinzufügen - Double-Werte, die zum Explosionsort des Spielers addiert werden.
   # [bossbar] Nachricht;Farbe;Typ;Zeit;Stil;Flag - Sende einen Bossbalken an einen Spieler mit einer Nachricht für eine bestimmte Zeit. Für 1.9+
   # Typen:
-  # stop - Der Bossbalken verschwindet nach der angegebenen Zeit (Sekunden)
-  # time - Der Bossbalken animiert die verbleibende Zeit.
+  # stop - der Bossbalken verschwindet nach der angegebenen Zeit (Sekunden)
+  # time - der Bossbalken animiert die verbleibende Zeit.
   # Funktionen:
-  # %time% - Verbleibende Sekunden.
+  # %time% - verbleibende Sekunden.
   # Alle Funktionen wie Farbe, Stil und Flag findest du hier: https://helpch.at/docs/$version$/org/bukkit/boss/BossBar.html
   #
   # Platzhalter:
-  # %jparkour_map% - Zeigt den Namen der Map an.
-  # %jparkour_id% - Zeigt die ID der Map an.
-  # %jparkour_status% - Zeigt den Status der Map an.
-  # %jparkour_lefts% - Zeigt die Anzahl der Klicks auf den Stand.
-  # %jparkour_maxlefts% - Zeigt die maximale Anzahl der Klicks auf den Stand.
-  # %jparkour_rights% - Zeigt die Anzahl der Klicks auf die Bombe.
-  # %jparkour_maxrights% - Zeigt die maximale Anzahl der Bombenklicks.
+  # %jparkour_map% - zeigt den Namen der Map an.
+  # %jparkour_id% - zeigt die ID der Map an.
+  # %jparkour_status% - zeigt den Status der Map an.
+  # %jparkour_lefts% - zeigt die Anzahl der Klicks auf den Stand.
+  # %jparkour_maxlefts% - zeigt die maximale Anzahl der Klicks auf den Stand.
+  # %jparkour_rights% - zeigt die Anzahl der Klicks auf die Bombe.
+  # %jparkour_maxrights% - zeigt die maximale Anzahl der Bombenklicks.
+  # %jparkour_tops_SchematicName_Number_name% - den Namen eines Spielers abrufen, der sich in einer bestimmten Bestenliste befindet.
+  # %jparkour_tops_SchematicName_Number_top% - die Platzierung eines Spielers in der Bestenliste abrufen.
+  # %jparkour_tops_SchematicName_Number_accuracy% - die Genauigkeit eines Spielers abrufen, der sich in einer bestimmten Bestenliste befindet.
+  # %jparkour_tops_SchematicName_Number_time% - die genaue Abschlusszeit eines Spielers abrufen, der sich in einer bestimmten Bestenliste befindet.
+  #
+  # Ersetze "SchematicName" durch die ID der Schematik und "Number" durch die gewünschte Position in der Bestenliste.
+  # Wenn du die Position des Spielers in der Bestenliste nicht kennst, kannst du sie abrufen, indem du "Number" durch "name=SpielerName" ersetzt.
+  # Gib den Spitznamen des Spielers bei "SpielerName" ein. Beispiele: %jparkour_tops_nether_1_top%,
+  # %jparkour_tops_nether_name=Mitriyf_top%, %jparkour_tops_nether_name=%player%_top%.
   #
   # Eingebaute Platzhalter:
-  # %accuracy% - Zeigt die Ausführungsgenauigkeit des Spielers an.
-  # %star_win% - Zeigt die Sterne an, die der Spieler verdient hat.
-  # %star_loss% - Zeigt die Sterne an, die der Spieler nicht verdient hat.
+  # %accuracy% - zeigt die Ausführungsgenauigkeit des Spielers an.
+  # %star_win% - zeigt die Sterne an, die der Spieler verdient hat.
+  # %star_loss% - zeigt die Sterne an, die der Spieler nicht verdient hat.
   #
-  # Info:
+  # Information:
   # An die Konsole gesendete Nachrichten können Platzhalter nicht ersetzen oder bestimmte oben genannte Aktionen ausführen.
   # Eingebaute Funktionen:
   # %player% - Spielernamen abrufen.
@@ -53,7 +64,6 @@ messages:
       - "[message] &a/jparkour join &f- Erstelle oder betrete einen verfügbaren Raum."
       - "[message] &a/jparkour join roomid &f- Versuche, eine Verbindung zum Raum herzustellen (wenn er frei ist)."
       - "[message] &a/jparkour exit &f- Verlasse das Spiel/die Warteschlange."
-      - "[message] &a/jparkour item &f- Holen Sie sich Hilfe für den Unterbefehl item."
       - "[message] &a/jparkour admin &f- Hilfe über den Unterbefehl admin erhalten."
       - "[message] &a/jparkour reload &f- Plugin-Konfiguration neu laden."
       - ""
@@ -80,6 +90,8 @@ messages:
       win: "&aSieg"
       left: "&fBlöcke zerstört: &e%blocks%/&e%blocks_all%"
       right: "&fBomben abgewehrt: &e%bombs%&f/&e%bombs_all%"
+    placeholders:
+      notClaimed: "Nicht abgeholt"
     actions:
       joined:
         - "[message] &aSie waren mit dem Spiel verbunden: &e%game%"
@@ -95,5 +107,6 @@ messages:
         - "[message] &cDas Spiel ist vorbei."
       damageHeart:
         - "[message] &c-1 &l♥"
+        - "[explosion] 1"
       win:
         - "[title] &aSieg;&e%star_win%&7%star_loss% &f- &e%accuracy%%"

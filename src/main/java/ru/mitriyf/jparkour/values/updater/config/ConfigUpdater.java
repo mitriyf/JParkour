@@ -26,8 +26,8 @@ public class ConfigUpdater {
         this.plugin = plugin;
     }
 
-    public void update(String resourceName, File toUpdate, String... ignoredSections) throws IOException {
-        update(plugin, resourceName, toUpdate, Arrays.asList(ignoredSections));
+    public void update(String resourceName, File toUpdate, String ignoredSection) throws IOException {
+        update(plugin, resourceName, toUpdate, ignoredSection == null || ignoredSection.isEmpty() ? Collections.emptyList() : Collections.singletonList(ignoredSection));
     }
 
     private void update(Plugin plugin, String resourceName, File toUpdate, List<String> ignoredSections) throws IOException {
@@ -35,7 +35,7 @@ public class ConfigUpdater {
         FileConfiguration defaultConfig = YamlConfiguration.loadConfiguration(new InputStreamReader(plugin.getResource(resourceName), StandardCharsets.UTF_8));
         FileConfiguration currentConfig = YamlConfiguration.loadConfiguration(toUpdate);
         Map<String, String> comments = parseComments(plugin, resourceName, defaultConfig);
-        Map<String, String> ignoredSectionsValues = parseIgnoredSections(toUpdate, comments, ignoredSections == null ? Collections.emptyList() : ignoredSections);
+        Map<String, String> ignoredSectionsValues = parseIgnoredSections(toUpdate, comments, ignoredSections);
         StringWriter writer = new StringWriter();
         write(defaultConfig, currentConfig, new BufferedWriter(writer), comments, ignoredSectionsValues);
         String value = writer.toString();
@@ -50,11 +50,15 @@ public class ConfigUpdater {
         for (String fullKey : defaultConfig.getKeys(true)) {
             String indents = getIndents(fullKey);
             if (!ignoredSectionsValues.isEmpty()) {
-                if (writeIgnoredSectionValueIfExists(ignoredSectionsValues, writer, fullKey)) continue;
+                if (writeIgnoredSectionValueIfExists(ignoredSectionsValues, writer, fullKey)) {
+                    continue;
+                }
             }
             writeCommentIfExists(comments, writer, fullKey, indents);
             Object currentValue = currentConfig.get(fullKey);
-            if (currentValue == null) currentValue = defaultConfig.get(fullKey);
+            if (currentValue == null) {
+                currentValue = defaultConfig.get(fullKey);
+            }
             String[] splitFullKey = fullKey.split("[" + SEPARATOR + "]");
             String trailingKey = splitFullKey[splitFullKey.length - 1];
             if (currentValue instanceof ConfigurationSection) {
@@ -64,7 +68,9 @@ public class ConfigUpdater {
             writeYamlValue(parserConfig, writer, indents, trailingKey, currentValue);
         }
         String danglingComments = comments.get(null);
-        if (danglingComments != null) writer.write(danglingComments);
+        if (danglingComments != null) {
+            writer.write(danglingComments);
+        }
         writer.close();
     }
 
@@ -78,7 +84,9 @@ public class ConfigUpdater {
         String line;
         while ((line = reader.readLine()) != null) {
             String trimmedLine = line.trim();
-            if (trimmedLine.startsWith("-")) continue;
+            if (trimmedLine.startsWith("-")) {
+                continue;
+            }
             if (trimmedLine.isEmpty() || trimmedLine.startsWith("#")) {
                 commentBuilder.append(trimmedLine).append("\n");
             } else {
@@ -105,7 +113,9 @@ public class ConfigUpdater {
             }
         }
         reader.close();
-        if (commentBuilder.length() > 0) comments.put(null, commentBuilder.toString());
+        if (commentBuilder.length() > 0) {
+            comments.put(null, commentBuilder.toString());
+        }
         return comments;
     }
 
@@ -124,8 +134,9 @@ public class ConfigUpdater {
             StringBuilder keyBuilder = new StringBuilder();
             for (int i = 0; i < split.length; i++) {
                 if (i != split.length - 1) {
-                    if (keyBuilder.length() > 0) keyBuilder.append(SEPARATOR);
-
+                    if (keyBuilder.length() > 0) {
+                        keyBuilder.append(SEPARATOR);
+                    }
                     keyBuilder.append(split[i]);
                 }
             }
@@ -140,11 +151,14 @@ public class ConfigUpdater {
         String key = keys[0];
         Object value = root.get(getKeyAsObject(key, root));
         if (keys.length == 1) {
-            if (value instanceof Map) return root;
+            if (value instanceof Map) {
+                return root;
+            }
             throw new IllegalArgumentException("Ignored sections must be a ConfigurationSection not a value!");
         }
-        if (!(value instanceof Map))
+        if (!(value instanceof Map)) {
             throw new IllegalArgumentException("Invalid ignored ConfigurationSection specified!");
+        }
         return getSection(keys[1], (Map<Object, Object>) value);
     }
 
@@ -153,20 +167,23 @@ public class ConfigUpdater {
         String[] keys = fullKey.split("[" + SEPARATOR + "]", 2);
         String key = keys[0];
         Object originalKey = getKeyAsObject(key, ymlMap);
-        if (keyBuilder.length() > 0) keyBuilder.append(".");
-
+        if (keyBuilder.length() > 0) {
+            keyBuilder.append(".");
+        }
         keyBuilder.append(key);
-        if (!ymlMap.containsKey(originalKey)) {
-            if (keys.length == 1) throw new IllegalArgumentException("Invalid ignored section: " + keyBuilder);
-
+        Object obj = ymlMap.get(originalKey);
+        if (obj == null) {
+            if (keys.length == 1) {
+                throw new IllegalArgumentException("Invalid ignored section: " + keyBuilder);
+            }
             throw new IllegalArgumentException("Invalid ignored section: " + keyBuilder + "." + keys[1]);
         }
         String comment = comments.get(keyBuilder.toString());
         String indents = getIndents(keyBuilder.toString());
-        if (comment != null) ignoredBuilder.append(addIndentation(comment, indents)).append("\n");
-
+        if (comment != null) {
+            ignoredBuilder.append(addIndentation(comment, indents)).append("\n");
+        }
         ignoredBuilder.append(addIndentation(key, indents)).append(":");
-        Object obj = ymlMap.get(originalKey);
         if (obj instanceof Map) {
             Map<Object, Object> map = (Map<Object, Object>) obj;
             if (map.isEmpty()) {
@@ -199,8 +216,9 @@ public class ConfigUpdater {
         StringBuilder builder = new StringBuilder();
         String[] split = s.split("\n");
         for (String value : split) {
-            if (builder.length() > 0) builder.append("\n");
-
+            if (builder.length() > 0) {
+                builder.append("\n");
+            }
             builder.append(indents).append(value);
         }
         return builder.toString();
@@ -213,29 +231,35 @@ public class ConfigUpdater {
     }
 
     private Object getKeyAsObject(String key, Map<Object, Object> sectionContext) {
-        if (sectionContext.containsKey(key)) return key;
+        if (sectionContext.containsKey(key)) {
+            return key;
+        }
         try {
             Float keyFloat = Float.parseFloat(key);
-
-            if (sectionContext.containsKey(keyFloat)) return keyFloat;
+            if (sectionContext.containsKey(keyFloat)) {
+                return keyFloat;
+            }
         } catch (NumberFormatException ignored) {
         }
         try {
             Double keyDouble = Double.parseDouble(key);
-
-            if (sectionContext.containsKey(keyDouble)) return keyDouble;
+            if (sectionContext.containsKey(keyDouble)) {
+                return keyDouble;
+            }
         } catch (NumberFormatException ignored) {
         }
         try {
             Integer keyInteger = Integer.parseInt(key);
-
-            if (sectionContext.containsKey(keyInteger)) return keyInteger;
+            if (sectionContext.containsKey(keyInteger)) {
+                return keyInteger;
+            }
         } catch (NumberFormatException ignored) {
         }
         try {
             Long longKey = Long.parseLong(key);
-
-            if (sectionContext.containsKey(longKey)) return longKey;
+            if (sectionContext.containsKey(longKey)) {
+                return longKey;
+            }
         } catch (NumberFormatException ignored) {
         }
         return null;
@@ -274,7 +298,9 @@ public class ConfigUpdater {
     }
 
     boolean isSubKeyOf(final String parentKey, final String subKey) {
-        if (parentKey.isEmpty()) return false;
+        if (parentKey.isEmpty()) {
+            return false;
+        }
         return subKey.startsWith(parentKey) && subKey.substring(parentKey.length()).startsWith(String.valueOf(SEPARATOR));
     }
 

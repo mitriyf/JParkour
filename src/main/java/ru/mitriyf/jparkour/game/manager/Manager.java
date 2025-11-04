@@ -6,9 +6,9 @@ import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.scheduler.BukkitTask;
 import ru.mitriyf.jparkour.JParkour;
 import ru.mitriyf.jparkour.game.Game;
+import ru.mitriyf.jparkour.game.temp.data.PlayerData;
 import ru.mitriyf.jparkour.utils.Utils;
 import ru.mitriyf.jparkour.values.Values;
-import ru.mitriyf.jparkour.values.info.PlayerData;
 
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
@@ -24,6 +24,8 @@ public class Manager {
     @Getter
     private final Set<UUID> waiters = new HashSet<>();
     @Getter
+    private final Set<String> confirmation = new HashSet<>();
+    @Getter
     private final Map<UUID, BukkitTask> tasks = new HashMap<>();
     @Getter
     private final Map<UUID, PlayerData> players = new HashMap<>();
@@ -36,36 +38,49 @@ public class Manager {
         this.utils = plugin.getUtils();
     }
 
-    public void join(Player p, String mapId) {
-        if (players.containsKey(p.getUniqueId())) {
+    public void join(Player p, String mapId, boolean dev) {
+        if (players.containsKey(p.getUniqueId()) || waiters.contains(p.getUniqueId())) {
             utils.sendMessage(p, values.getInGame());
             return;
-        } else if (mapId != null && !values.getSchematics().containsKey(mapId)) {
+        } else if (mapId != null & !values.getSchematics().containsKey(mapId) || values.getSchematics().isEmpty() & !dev) {
             utils.sendMessage(p, values.getNotfound());
             return;
         }
-        generateRoom(p, mapId);
+        generateRoom(p, mapId, dev);
     }
 
-    private void generateRoom(Player p, String mapId) {
+    private void generateRoom(Player p, String mapId, boolean dev) {
         UUID uuid = p.getUniqueId();
-        String name = values.getWorldStart() + rnd.nextInt(values.getAmount());
+        String name = values.getWorldStart() + (dev ? "E" : "") + rnd.nextInt(values.getAmount());
         if (!values.getRooms().containsKey(name)) {
-            waiters.remove(uuid);
             tasks.remove(uuid);
             String[] replace = {name};
             utils.sendMessage(p, values.getConnect(), search, replace);
             CountDownLatch latch = new CountDownLatch(1);
             values.getRooms().put(name, null);
-            scheduler.runTaskAsynchronously(plugin, () -> values.getRooms().put(name, new Game(plugin, latch, p, mapId, name)));
+            waiters.add(uuid);
+            scheduler.runTaskAsynchronously(plugin, () -> values.getRooms().put(name, new Game(plugin, latch, p, mapId, name, dev)));
         } else {
             tasks.put(uuid, scheduler.runTaskLater(plugin, () -> {
                 if (!waiters.contains(uuid)) {
                     waiters.add(uuid);
                     utils.sendMessage(p, values.getWaiter());
                 }
-                generateRoom(p, mapId);
-            }, 2));
+                generateRoom(p, mapId, dev);
+            }, 10));
         }
+    }
+
+    public Game getGame(UUID uuid) {
+        PlayerData data = players.get(uuid);
+        if (data != null) {
+            String id = data.getGame();
+            return values.getRooms().get(id);
+        }
+        return null;
+    }
+
+    public Game getGame(String world) {
+        return values.getRooms().get(world);
     }
 }

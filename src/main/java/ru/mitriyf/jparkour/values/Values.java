@@ -3,7 +3,6 @@ package ru.mitriyf.jparkour.values;
 import com.google.common.collect.ImmutableList;
 import lombok.Getter;
 import lombok.Setter;
-import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -13,11 +12,12 @@ import ru.mitriyf.jparkour.game.Game;
 import ru.mitriyf.jparkour.utils.Utils;
 import ru.mitriyf.jparkour.utils.actions.Action;
 import ru.mitriyf.jparkour.utils.actions.ActionType;
-import ru.mitriyf.jparkour.utils.colors.CHex;
-import ru.mitriyf.jparkour.utils.colors.CMiniMessage;
 import ru.mitriyf.jparkour.utils.colors.Colorizer;
-import ru.mitriyf.jparkour.values.info.SchematicData;
-import ru.mitriyf.jparkour.values.info.StandData;
+import ru.mitriyf.jparkour.utils.colors.types.CHex;
+import ru.mitriyf.jparkour.utils.colors.types.CMiniMessage;
+import ru.mitriyf.jparkour.values.data.SchematicData;
+import ru.mitriyf.jparkour.values.data.StandData;
+import ru.mitriyf.jparkour.values.updater.Updater;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,10 +35,13 @@ import java.util.regex.Pattern;
 @Getter
 public class Values {
     private final JParkour plugin;
+    private final Updater updater;
     private final Logger logger;
     private final File dataFolder;
     private final File slotsFile;
     private final File configFile;
+    private final String schematicsDir = "schematics/";
+    private final String[] files = new String[]{"hello.txt"};
     private final Pattern action_pattern = Pattern.compile("\\[(\\w+)] ?(.*)");
     private final Map<String, SchematicData> schematics = new HashMap<>();
     private final String[] lcs = new String[]{"de_DE", "en_US", "ru_RU"};
@@ -58,17 +61,24 @@ public class Values {
     private final Map<String, List<Action>> exit = new HashMap<>();
     private final Map<String, List<Action>> end = new HashMap<>();
     private final Map<String, List<Action>> win = new HashMap<>();
+    private final Map<Integer, ItemStack> editorSlots = new HashMap<>();
+    private final Map<ItemStack, String> standsItems = new HashMap<>();
     private final Map<Integer, ItemStack> slots = new HashMap<>();
     private final Map<String, StandData> stands = new HashMap<>();
     private final Map<String, List<Action>> map = new HashMap<>();
     private final Map<String, String> sStart = new HashMap<>();
     private final Map<String, String> sWin = new HashMap<>();
     private final Map<String, String> sWait = new HashMap<>();
+    private final Map<String, String> notClaimed = new HashMap<>();
     private final Map<String, String> right = new HashMap<>();
     private final Map<String, String> left = new HashMap<>();
     private final Map<String, Game> rooms = new HashMap<>();
+    private final Set<ItemStack> restartItems = new HashSet<>();
+    private final Set<ItemStack> exitItems = new HashSet<>();
     private final List<String> maps = new ArrayList<>();
-    private boolean deleteWhenClosing, updaterEnabled, topsEnabled, required, release, placeholderAPI, locale;
+    private boolean updaterEnabled = true, required = true, release = false;
+    private boolean deleteWhenClosing, topsEnabled, placeholderAPI, locale;
+    private ConfigurationSection settings;
     private FileConfiguration config;
     @Setter
     private FileConfiguration itemSlots;
@@ -83,22 +93,49 @@ public class Values {
 
     public Values(JParkour plugin) {
         this.plugin = plugin;
-        this.dataFolder = plugin.getDataFolder();
-        this.configFile = new File(plugin.getDataFolder(), "config.yml");
-        this.slotsFile = new File(plugin.getDataFolder(), "slots.yml");
-        this.logger = plugin.getLogger();
+        updater = new Updater(plugin, this);
+        dataFolder = plugin.getDataFolder();
+        configFile = new File(plugin.getDataFolder(), "config.yml");
+        slotsFile = new File(plugin.getDataFolder(), "slots.yml");
+        logger = plugin.getLogger();
     }
 
-    public void setup() {
-        saveConfigs();
-        config = YamlConfiguration.loadConfiguration(configFile);
-        itemSlots = YamlConfiguration.loadConfiguration(slotsFile);
+    public void setup(boolean onlineUpdates) {
+        getConfigurations();
+        updater.checkUpdates(onlineUpdates);
+        loadConfigurations();
         utils = plugin.getUtils();
         clear();
-        setupSettings();
+        setupSettings(onlineUpdates);
         setupLocales();
         setupSchematics();
         plugin.getSupports().register();
+    }
+
+    private void getConfigurations() {
+        saveConfig("config", configFile);
+        saveConfig("slots", slotsFile);
+        loadConfigurations();
+        if (settings == null) {
+            return;
+        }
+        ConfigurationSection updater = settings.getConfigurationSection("updater");
+        if (updater == null) {
+            return;
+        }
+        updaterEnabled = updater.getBoolean("enabled");
+        ConfigurationSection updaterSettings = updater.getConfigurationSection("settings");
+        if (updaterSettings == null) {
+            return;
+        }
+        required = updaterSettings.getBoolean("required");
+        release = updaterSettings.getBoolean("release");
+    }
+
+    private void loadConfigurations() {
+        config = YamlConfiguration.loadConfiguration(configFile);
+        itemSlots = YamlConfiguration.loadConfiguration(slotsFile);
+        settings = config.getConfigurationSection("settings");
     }
 
     private void setupSchematics() {
@@ -115,8 +152,6 @@ public class Values {
                 logger.warning("A critical error. Error: " + e);
             }
         }
-        ConfigurationSection cfg = config.getConfigurationSection("settings");
-        assert cfg != null;
         File[] files = dir.listFiles();
         if (files == null) {
             logger.warning("No files were found in the schematics folder.");
@@ -124,10 +159,10 @@ public class Values {
             for (File schem : files) {
                 if (schem.getName().contains(".schem")) {
                     String name = schem.getName().split("\\.")[0];
-                    String l = name.toLowerCase();
+                    String id = name.toLowerCase();
                     File file = new File(dir, name + ".yml");
                     if (!file.exists()) {
-                        plugin.saveResource("schematics/default.yml", true);
+                        plugin.saveResource(schematicsDir + "default.yml", true);
                         if (new File(dir, "default.yml").renameTo(file)) {
                             logger.info("The configuration file " + file.getName() + " has been created");
                         } else {
@@ -136,9 +171,9 @@ public class Values {
                         }
                     }
                     YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
-                    maps.add(l);
+                    maps.add(id);
                     String schemName = schem.getName();
-                    schematics.put(l, new SchematicData(this, yaml, schemName, name));
+                    schematics.put(id, new SchematicData(this, yaml, schemName, name));
                     try {
                         utils.getSchematic().generate(schemName, schem);
                     } catch (Exception e) {
@@ -150,14 +185,12 @@ public class Values {
     }
 
     private void exportSchematics() {
-        String[] files = new String[]{"hello.txt"};
-        String schematics = "schematics/";
-        String path = dataFolder + "/" + schematics;
+        String path = dataFolder + "/" + schematicsDir;
         try {
             for (String s : files) {
                 String fullPath = path + s;
                 if (!(new File(fullPath)).exists()) {
-                    plugin.saveResource(schematics + s, true);
+                    plugin.saveResource(schematicsDir + s, true);
                 }
             }
             InputStream in = new URL("https://github.com/mitriyf/JParkour/raw/refs/heads/main/downloads/" + schematicUrl).openStream();
@@ -171,14 +204,9 @@ public class Values {
         }
     }
 
-    private void setupSettings() {
-        ConfigurationSection settings = config.getConfigurationSection("settings");
-        if (settings == null) {
-            logger.warning("No section found in the configuration: settings");
-            return;
-        }
+    private void setupSettings(boolean recovery) {
         String translate = settings.getString("translate").toLowerCase();
-        if (translate.equals("minimessage")) {
+        if (translate.equalsIgnoreCase("minimessage")) {
             colorizer = new CMiniMessage();
         } else {
             colorizer = new CHex();
@@ -188,32 +216,61 @@ public class Values {
         world = games.getString("world");
         amount = games.getInt("amount");
         deleteWhenClosing = games.getBoolean("deleteWhenClosing");
-        ConfigurationSection updater = settings.getConfigurationSection("updater");
-        updaterEnabled = updater.getBoolean("enabled");
-        ConfigurationSection updaterSettings = updater.getConfigurationSection("settings");
-        required = updaterSettings.getBoolean("required");
-        release = updaterSettings.getBoolean("release");
         worldStart = world.replace("XIDX", "");
         ConfigurationSection supports = settings.getConfigurationSection("supports");
         placeholderAPI = supports.getBoolean("placeholderAPI");
-        if (placeholderAPI && Bukkit.getPluginManager().getPlugin("PlaceholderAPI") == null) {
+        if (placeholderAPI && plugin.getServer().getPluginManager().getPlugin("PlaceholderAPI") == null) {
             logger.warning("The PlaceholderAPI was not detected. This feature will be disabled.");
             placeholderAPI = false;
         }
         ConfigurationSection tops = supports.getConfigurationSection("tops");
         topsEnabled = tops.getBoolean("enabled");
         topsInterval = tops.getInt("updateInterval") * 20;
-        ConfigurationSection items = itemSlots.getConfigurationSection("default");
-        for (String s : items.getKeys(false)) {
-            ConfigurationSection slot = items.getConfigurationSection(s);
-            slots.put(slot.getInt("slot"), utils.generateItem(slot));
-        }
         ConfigurationSection armorStands = settings.getConfigurationSection("armor-stands");
         for (String s : armorStands.getKeys(false)) {
             ConfigurationSection id = armorStands.getConfigurationSection(s);
             stands.put(s, new StandData(id, logger));
         }
-        recovery();
+        generateSlots();
+        if (recovery) {
+            recovery();
+        }
+    }
+
+    private void generateSlots() {
+        ConfigurationSection defaultSlots = itemSlots.getConfigurationSection("default");
+        for (String s : defaultSlots.getKeys(false)) {
+            ConfigurationSection slot = defaultSlots.getConfigurationSection(s);
+            ItemStack stack = setItemData(slot, slots);
+            if (slot.getBoolean("exit")) {
+                exitItems.add(stack);
+            } else if (slot.getBoolean("restart")) {
+                restartItems.add(stack);
+            }
+        }
+        ConfigurationSection editSlots = itemSlots.getConfigurationSection("editor");
+        if (editSlots == null) {
+            logger.warning("No editor configuration was found in slots.yml. Please recreate slots.yml or add it yourself near default.");
+            try {
+                backupConfig("", slotsFile, "1.0");
+            } catch (Exception e) {
+                logger.warning("An error occurred while creating a backup for slots.yml .Error: " + e);
+            }
+            return;
+        }
+        for (String s : editSlots.getKeys(false)) {
+            ConfigurationSection slot = editSlots.getConfigurationSection(s);
+            ItemStack stack = setItemData(slot, editorSlots);
+            if (slot.getBoolean("exit")) {
+                exitItems.add(stack);
+            } else if (slot.getBoolean("restart")) {
+                restartItems.add(stack);
+            }
+            String type = slot.getString("stand");
+            if (type != null && (stands.containsKey(type) || type.equals("default"))) {
+                standsItems.put(stack, type);
+            }
+        }
     }
 
     private void setupLocales() {
@@ -258,6 +315,8 @@ public class Values {
             sWin.put(name, status.getString("win"));
             left.put(name, status.getString("left"));
             right.put(name, status.getString("right"));
+            ConfigurationSection placeholders = game.getConfigurationSection("placeholders");
+            notClaimed.put(name, placeholders.getString("notClaimed"));
             ConfigurationSection actions = game.getConfigurationSection("actions");
             joined.put(name, getActionList(actions.getStringList("joined")));
             inGame.put(name, getActionList(actions.getStringList("ingame")));
@@ -297,16 +356,17 @@ public class Values {
         }
     }
 
-    private void delete(File f) {
+    public ItemStack setItemData(ConfigurationSection slot, Map<Integer, ItemStack> slots) {
+        ItemStack item = utils.generateItem(slot);
+        slots.put(slot.getInt("slot"), item);
+        return item;
+    }
+
+    public void delete(File f) {
         try {
             Files.delete(f.toPath());
         } catch (IOException ignored) {
         }
-    }
-
-    private void saveConfigs() {
-        saveConfig("config", configFile);
-        saveConfig("slots", slotsFile);
     }
 
     private void saveConfig(String configName, File file) {
@@ -348,8 +408,18 @@ public class Values {
         return actionListBuilder.build();
     }
 
+    public void backupConfig(String parentPath, File file, String oldVersion) throws IOException {
+        File copied = new File(dataFolder, parentPath + "backups/" + file.getName() + "-" + oldVersion + ".backup");
+        Path copiedPath = copied.toPath();
+        Files.createDirectories(copied.getParentFile().toPath());
+        Files.deleteIfExists(copiedPath);
+        Files.copy(file.toPath(), copiedPath);
+    }
+
     private void clear() {
-        plugin.getSupports().unregister();
+        if (plugin.getSupports() != null) {
+            plugin.getSupports().unregister();
+        }
         schematics.clear();
         map.clear();
         maps.clear();
@@ -360,6 +430,8 @@ public class Values {
         right.clear();
         slots.clear();
         stands.clear();
+        exitItems.clear();
+        editorSlots.clear();
         for (Map<String, List<Action>> map : Arrays.asList(help, noperm, notfound, started, mStarted, joined, damageHeart, connect, exit, waiter, noExit, inGame, kicked, end, win)) {
             map.clear();
         }

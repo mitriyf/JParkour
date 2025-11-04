@@ -11,8 +11,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -20,32 +18,36 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 public class Updater {
+    private final ConfigUpdater configUpdater;
     private final JParkour plugin;
     private final Values values;
-    private final File dataFolder;
     private final Logger logger;
+    private final File dataFolder;
+    private final String sc;
 
-    public Updater(JParkour plugin) {
+    public Updater(JParkour plugin, Values values) {
         this.plugin = plugin;
-        this.values = plugin.getValues();
-        this.dataFolder = plugin.getDataFolder();
-        this.logger = plugin.getLogger();
+        logger = plugin.getLogger();
+        dataFolder = plugin.getDataFolder();
+        this.values = values;
+        sc = values.getSchematicsDir();
+        configUpdater = new ConfigUpdater(plugin);
     }
 
-    public void checkUpdates() {
-        if (values.isUpdaterEnabled()) {
+    public void checkUpdates(boolean onlineUpdates) {
+        if (values.isUpdaterEnabled() && onlineUpdates) {
             checkVersions();
         }
         checkLocales();
         checkSchematics();
     }
 
-    public void checkVersions() {
+    private void checkVersions() {
         try {
             URLConnection connection = new URL("https://github.com/mitriyf/JParkour/raw/refs/heads/main/updater/versions.yml").openConnection();
             connection.setConnectTimeout(5000);
             InputStream in = connection.getInputStream();
-            File cfg = new File(plugin.getDataFolder(), "temp/versions.yml");
+            File cfg = new File(dataFolder, "temp/versions.yml");
             File folder = cfg.getParentFile();
             if (folder.mkdirs()) {
                 copyInputStreamToFile(in, cfg);
@@ -53,9 +55,9 @@ public class Updater {
             YamlConfiguration versions = YamlConfiguration.loadConfiguration(cfg);
             values.deleteDirectory(folder);
             List<String> versionsList = versions.getStringList("versions");
+            String pluginVersion = plugin.getDescription().getVersion();
             for (String ver : versionsList) {
                 String[] info = ver.split(";");
-                String pluginVersion = plugin.getDescription().getVersion();
                 if (pluginVersion.equals(info[0])) {
                     logger.info("This is the correct version of the plugin, as reviewed by Updater.");
                     return;
@@ -76,52 +78,55 @@ public class Updater {
 
     private void checkLocales() {
         File folderLocales = new File(dataFolder, "locales");
-        String ver = plugin.getConfigVersion();
         File cfg = new File(dataFolder, "config.yml");
-        Set<File> locales = new HashSet<>();
         File[] lFiles = folderLocales.listFiles();
+        String ver = plugin.getConfigsVersion();
+        Set<File> locales = new HashSet<>();
         locales.add(cfg);
         if (lFiles != null) {
             locales.addAll(Arrays.asList(lFiles));
         }
         for (File locale : locales) {
             String parentPath, updatePath;
+            String localeName = locale.getName();
             parentPath = "locales/";
+            String ignoreSection = "";
             if (locale.getParentFile().getName().equals(plugin.getName())) {
                 parentPath = "";
+                ignoreSection = "settings.armor-stands";
+                localeName = localeName.substring(0, localeName.indexOf(".")) + values.getDefaultId() + ".yml";
             }
-            updatePath = parentPath + locale.getName();
+            updatePath = parentPath + localeName;
             if (plugin.getResource(updatePath) == null) {
                 updatePath = parentPath + "en_US.yml";
             }
-            updateConfig(locale, ver, parentPath, updatePath);
+            updateConfig(locale, ver, parentPath, updatePath, ignoreSection);
         }
     }
 
     private void checkSchematics() {
-        File sch = new File(dataFolder, "schematics");
-        String schemVer = plugin.getSchematicVersion();
+        File sch = new File(dataFolder, sc);
+        String schemVer = plugin.getConfigsVersion();
         File[] files = sch.listFiles();
         if (files == null) {
             plugin.getLogger().warning("No files were found in the schematics folder.");
         } else {
-            String sc = "schematics/";
             for (File schem : files) {
-                updateConfig(schem, schemVer, sc, sc + "default.yml");
+                updateConfig(schem, schemVer, sc, sc + "default.yml", null);
             }
         }
     }
 
-    private void updateConfig(File cfg, String ver, String parentPath, String updatePath) {
+    private void updateConfig(File cfg, String ver, String parentPath, String updatePath, String ignoreSection) {
         if (cfg.getName().contains(".yml")) {
             try {
                 YamlConfiguration yml = YamlConfiguration.loadConfiguration(cfg);
                 String oldVersion = yml.getString("version") == null ? "1.0" : yml.getString("version");
                 if (!oldVersion.equals(ver)) {
-                    backupConfig(parentPath, cfg, oldVersion);
+                    values.backupConfig(parentPath, cfg, oldVersion);
                     yml.set("version", ver);
                     yml.save(cfg);
-                    new ConfigUpdater(plugin).update(updatePath, cfg);
+                    configUpdater.update(updatePath, cfg, ignoreSection);
                     plugin.getLogger().info("The " + cfg.getName() + " has been successfully updated to version " + ver);
                 }
             } catch (IOException e) {
@@ -138,13 +143,5 @@ public class Updater {
                 outputStream.write(buffer, 0, bytesRead);
             }
         }
-    }
-
-    private void backupConfig(String parentPath, File file, String oldVersion) throws IOException {
-        File copied = new File(dataFolder, parentPath + "backups/" + file.getName() + "-" + oldVersion + ".backup");
-        Path copiedPath = copied.toPath();
-        Files.createDirectories(copied.getParentFile().toPath());
-        Files.deleteIfExists(copiedPath);
-        Files.copy(file.toPath(), copiedPath);
     }
 }

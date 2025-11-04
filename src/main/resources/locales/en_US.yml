@@ -17,6 +17,8 @@ messages:
   # // Replace $version$ with the version of your server, for example: https://helpch.at/docs/1.8.8/org/bukkit/Sound.html
   # [effect] type;duration;amplifier;delay - Give the effect to the player. The delay and duration is measured in ticks.
   # Find the types of effects here: https://helpch.at/docs/$version$/org/bukkit/potion/PotionEffectType.html
+  # [explosion] power;setFire;breakBlocks;delay;addX;addY;addZ - Create an explosion. The delay is measured in ticks.
+  # setFire, breakBlocks - set to false or true. addX, addY, addZ - double values that are added to the player's explosion location.
   # [bossbar] message;color;type;time;style;flag - Send a bossbar to a player with a message for a specific time. For 1.9+
   # Types:
   # stop - The bossbar will disappear after the time you specified in time (seconds)
@@ -33,11 +35,15 @@ messages:
   # %jparkour_maxlefts% - Displays the maximum number of clicks on the stand.
   # %jparkour_rights% - Displays the number of clicks on the bomb.
   # %jparkour_maxrights% - Displays the maximum number of bomb clicks.
-  # %jparkour_tops_SchematicName_Number_name% - Ruft den Namen eines Spielers ab, der sich in einem bestimmten Top befindet.
-  # %jparkour_tops_SchematicName_Number_accuracy% - Ruft die Genauigkeit eines Spielers ab, der sich in einem bestimmten Top befindet.
-  # %jparkour_tops_SchematicName_Number_time% - Ruft die exakte Abschlusszeit eines Spielers ab, der sich in einem bestimmten Top befindet.
+  # %jparkour_tops_SchematicName_Number_name% - Get the name of a player who is on a specific top.
+  # %jparkour_tops_SchematicName_Number_top% - Get a player's place in the top.
+  # %jparkour_tops_SchematicName_Number_accuracy% - Get the accuracy of a player who is on a specific top.
+  # %jparkour_tops_SchematicName_Number_time% - Get the exact completion time of a player who is on a specific top.
   #
-  # Ersetze "SchematicName" durch die ID des Schematics und "Number" durch die gewünschte Position in der Bestenliste.
+  # Change "SchematicName" to the schematics' ID, and "Number" to the number in the top that you require.
+  # If you don't know the player's position in the top, you can get it by replacing "Number" with "name=PlayerName".
+  # Enter the player's nickname in PlayerName. Examples: %jparkour_tops_nether_1_top%,
+  # %jparkour_tops_nether_name=Mitriyf_top%, %jparkour_tops_nether_name=%player%_top%.
   #
   # Built-in placeholders:
   # %accuracy% - Display the player's execution accuracy.
@@ -58,7 +64,6 @@ messages:
       - "[message] &a/jparkour join &f- Create or join any available room."
       - "[message] &a/jparkour join roomid &f- Attempt to connect to the room (if it is free)."
       - "[message] &a/jparkour exit &f- Exit the game/queue."
-      - "[message] &a/jparkour item &f- Get a Item Help."
       - "[message] &a/jparkour admin &f- Get a Admin Help."
       - "[message] &a/jparkour reload &f- Reload the plugin configuration."
       - ""
@@ -85,6 +90,8 @@ messages:
       win: "&aVictory"
       left: "&fBlocks destroyed: &e%blocks%/&e%blocks_all%"
       right: "&fBombs repelled: &e%bombs%&f/&e%bombs_all%"
+    placeholders:
+      notClaimed: "Not claimed"
     actions:
       joined:
         - "[message] &aYou are connected to the game: &e%game%"
@@ -100,5 +107,6 @@ messages:
         - "[message] &cThe game is over."
       damageHeart:
         - "[message] &c-1 &l♥"
+        - "[explosion] 1"
       win:
         - "[title] &aVictory;&e%star_win%&7%star_loss% &f- &e%accuracy%%"

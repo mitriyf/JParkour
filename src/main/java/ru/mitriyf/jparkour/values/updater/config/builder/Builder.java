@@ -22,14 +22,18 @@ public class Builder implements Cloneable {
     public void parseLine(String line, boolean checkIfExists) {
         line = line.trim();
         String[] currentSplitLine = line.split(":");
-        if (currentSplitLine.length > 2) currentSplitLine = line.split(": ");
+        if (currentSplitLine.length > 2) {
+            currentSplitLine = line.split(": ");
+        }
         String key = currentSplitLine[0].replace("'", "").replace("\"", "");
         if (checkIfExists) {
             while (builder.length() > 0 && !config.contains(builder.toString() + separator + key)) {
                 removeLastKey();
             }
         }
-        if (builder.length() > 0) builder.append(separator);
+        if (builder.length() > 0) {
+            builder.append(separator);
+        }
         builder.append(key);
     }
 
@@ -42,7 +46,9 @@ public class Builder implements Cloneable {
     }
 
     public void removeLastKey() {
-        if (builder.length() == 0) return;
+        if (builder.length() == 0) {
+            return;
+        }
         String keyString = builder.toString();
         String[] split = keyString.split("[" + separator + "]");
         int minIndex = Math.max(0, builder.length() - split[split.length - 1].length() - 1);

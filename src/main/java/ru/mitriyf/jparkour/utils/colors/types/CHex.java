@@ -1,15 +1,17 @@
-package ru.mitriyf.jparkour.utils.colors;
+package ru.mitriyf.jparkour.utils.colors.types;
+
+import ru.mitriyf.jparkour.utils.colors.Colorizer;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class CHex implements Colorizer {
-    private final Pattern PATTERN = Pattern.compile("&#([A-Fa-f0-9]{6})");
+    private final Pattern pattern = Pattern.compile("&#([A-Fa-f0-9]{6})");
 
     @Override
     public String colorize(String message) {
         StringBuffer buffer = new StringBuffer();
-        Matcher matcher = PATTERN.matcher(message);
+        Matcher matcher = pattern.matcher(message);
         while (matcher.find()) {
             String color = matcher.group(1);
             StringBuilder replacement = new StringBuilder("§x");

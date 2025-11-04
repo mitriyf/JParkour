@@ -3,12 +3,16 @@ package ru.mitriyf.jparkour.cmd.admin;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import ru.mitriyf.jparkour.JParkour;
+import ru.mitriyf.jparkour.cmd.admin.editor.GameEditor;
+import ru.mitriyf.jparkour.cmd.admin.item.ItemEditor;
 import ru.mitriyf.jparkour.game.Game;
 import ru.mitriyf.jparkour.game.manager.Manager;
 import ru.mitriyf.jparkour.utils.Utils;
 import ru.mitriyf.jparkour.values.Values;
 
 public class AdminEditor {
+    private final GameEditor gameEditor;
+    private final ItemEditor itemEditor;
     private final JParkour plugin;
     private final Manager manager;
     private final Values values;
@@ -16,9 +20,11 @@ public class AdminEditor {
 
     public AdminEditor(JParkour plugin) {
         this.plugin = plugin;
-        manager = plugin.getManager();
         values = plugin.getValues();
         utils = plugin.getUtils();
+        manager = plugin.getManager();
+        itemEditor = new ItemEditor(plugin);
+        gameEditor = new GameEditor(plugin);
     }
 
     public void checkAdminCommand(CommandSender s, String[] args) {
@@ -26,72 +32,93 @@ public class AdminEditor {
             utils.sendMessage(s, values.getNoperm());
             return;
         }
-        if (args.length == 3 || args.length == 4) {
-            if (plugin.getServer().getPlayer(args[2]) == null) {
-                s.sendMessage("§cThis player is not found.");
-                return;
-            }
-            Player p = plugin.getServer().getPlayer(args[2]);
+        if (args.length > 1 && args.length < 7) {
             switch (args[1].toLowerCase()) {
                 case "add": {
-                    addGame(s, p, args);
+                    addGame(s, args);
+                    return;
+                }
+                case "item": {
+                    itemEditor.checkItemCommand(s, args);
+                    return;
+                }
+                case "gameeditor": {
+                    gameEditor.checkGameEditorCommand(s, args);
+                    return;
+                }
+                case "game": {
+                    gameEditor.checkGameCommand(s, args);
                     return;
                 }
                 case "restart": {
-                    restartGame(s, p);
+                    restartGame(s, args);
+                    return;
+                }
+                case "updatetops": {
+                    updateTops(s);
                     return;
                 }
                 case "kick": {
-                    closeGame(s, p);
-                    return;
-                }
-                default: {
-                    sendAdminHelp(s);
+                    closeGame(s, args);
                     return;
                 }
             }
-        } else if (args.length == 2 && args[1].equalsIgnoreCase("updatetops")) {
-            updateTops();
-            s.sendMessage("§aSuccessfully!");
-            return;
         }
         sendAdminHelp(s);
     }
 
-    private void addGame(CommandSender s, Player p, String[] args) {
-        manager.join(p, args.length == 4 ? args[3] : null);
+    private void addGame(CommandSender s, String[] args) {
+        if (args.length < 3 || plugin.getServer().getPlayer(args[2]) == null) {
+            s.sendMessage("§cThis player is not found.\n§c/jparkour admin add playerName Map");
+            return;
+        }
+        Player p = plugin.getServer().getPlayer(args[2]);
+        manager.join(p, args.length == 4 ? args[3] : null, false);
         s.sendMessage("§aConnection attempt has been sent.");
     }
 
-    private void restartGame(CommandSender s, Player p) {
-        if (manager.getPlayers().get(p.getUniqueId()) == null) {
-            s.sendMessage("§cThe player is not in the game.");
-            return;
+    private void restartGame(CommandSender s, String[] args) {
+        Game game = getGame(s, args);
+        if (game != null) {
+            game.restart();
+            s.sendMessage("§aSuccessfully!");
         }
-        String id = manager.getPlayers().get(p.getUniqueId()).getGame();
-        Game game = values.getRooms().get(id);
-        game.restart();
     }
 
-    private void updateTops() {
-        plugin.getSupports().getTops().getTask().cancel();
+    private void updateTops(CommandSender s) {
         plugin.getSupports().getTops().startTimer();
+        s.sendMessage("§aSuccessfully!");
     }
 
-    private void closeGame(CommandSender s, Player p) {
-        if (manager.getPlayers().get(p.getUniqueId()) == null) {
-            s.sendMessage("§cThe player is not in the game.");
-            return;
+    private void closeGame(CommandSender s, String[] args) {
+        Game game = getGame(s, args);
+        if (game != null) {
+            game.close(true, false);
+            s.sendMessage("§aSuccessfully!");
         }
-        String id = manager.getPlayers().get(p.getUniqueId()).getGame();
-        Game game = values.getRooms().get(id);
-        game.close(true, false);
+    }
+
+    private Game getGame(CommandSender s, String[] args) {
+        if (args.length < 3 || plugin.getServer().getPlayer(args[2]) == null) {
+            s.sendMessage("§cThis player is not found/The command was executed incorrectly.");
+            return null;
+        }
+        Player p = plugin.getServer().getPlayer(args[2]);
+        Game game = manager.getGame(p.getUniqueId());
+        if (game == null) {
+            s.sendMessage("§cThe player is not in the game.");
+            return null;
+        }
+        return game;
     }
 
     private void sendAdminHelp(CommandSender s) {
         s.sendMessage("§aJParkour Admin Help:\n");
         s.sendMessage("§a/jparkour admin add playerName §f- Add a player to a random game.");
         s.sendMessage("§a/jparkour admin add playerName Map §f- Add a player to a specific game.");
+        s.sendMessage("§a/jparkour admin item §f- Get a Item Help.");
+        s.sendMessage("§a/jparkour admin gameeditor §f- Get a GameEditor Help.");
+        s.sendMessage("§a/jparkour admin game §f- Set a GameEditor Settings.");
         s.sendMessage("§a/jparkour admin restart playerName §f- Restart the player's game.");
         s.sendMessage("§a/jparkour admin updatetops §f- Update the tops.");
         s.sendMessage("§a/jparkour admin kick playerName §f- Kick the player out of the game.");

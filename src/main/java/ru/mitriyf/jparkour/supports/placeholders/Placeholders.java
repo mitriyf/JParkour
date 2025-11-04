@@ -8,17 +8,23 @@ import ru.mitriyf.jparkour.JParkour;
 import ru.mitriyf.jparkour.game.Game;
 import ru.mitriyf.jparkour.game.manager.Manager;
 import ru.mitriyf.jparkour.supports.tops.Tops;
+import ru.mitriyf.jparkour.supports.tops.schematic.Schematic;
 import ru.mitriyf.jparkour.supports.tops.schematic.player.SPlayerData;
+import ru.mitriyf.jparkour.utils.Utils;
 import ru.mitriyf.jparkour.values.Values;
 
 public class Placeholders extends PlaceholderExpansion {
+    private final String fals = PlaceholderAPIPlugin.booleanFalse();
+    private final String tru = PlaceholderAPIPlugin.booleanTrue();
     private final Manager manager;
     private final Values values;
+    private final Utils utils;
     private final Tops tops;
 
     public Placeholders(JParkour plugin) {
         manager = plugin.getManager();
         values = plugin.getValues();
+        utils = plugin.getUtils();
         tops = plugin.getSupports().getTops();
     }
 
@@ -27,26 +33,43 @@ public class Placeholders extends PlaceholderExpansion {
         String[] args = ind.split("_");
         if (args.length >= 1) {
             if (args[0].equalsIgnoreCase("tops")) {
-                return tops(args);
+                return tops(p, args);
             }
             return player(p, args);
         }
         return null;
     }
 
-    private String tops(String[] args) {
+    private String tops(Player p, String[] args) {
         if (args.length == 4) {
-            int i = Integer.parseInt(args[2]);
-            if (tops.getSchematic().get(args[1]) == null) {
+            Schematic schematic = tops.getSchematic().get(args[1]);
+            if (schematic == null) {
                 return "Schematic not found.";
             }
-            SPlayerData playerData = tops.getSchematic().get(args[1]).getTop().get(i);
+            int topPlace;
+            try {
+                topPlace = Integer.parseInt(args[2]);
+            } catch (Exception e) {
+                String name = args[2].replace("name=", "");
+                topPlace = schematic.getTopName().getOrDefault(name, -404);
+                if (topPlace == -404) {
+                    return fals;
+                }
+            }
+            SPlayerData playerData = schematic.getTop().get(topPlace);
             if (playerData == null) {
-                return "Not claimed.";
+                if (args[3].equalsIgnoreCase("name")) {
+                    String text = values.getNotClaimed().getOrDefault(utils.getLocale().player(p), values.getNotClaimed().get(""));
+                    return values.getColorizer().colorize(text);
+                }
+                return "";
             }
             switch (args[3].toLowerCase()) {
                 case "name": {
                     return playerData.getName();
+                }
+                case "top": {
+                    return "" + topPlace;
                 }
                 case "accuracy": {
                     return "" + playerData.getAccuracy();
@@ -60,14 +83,7 @@ public class Placeholders extends PlaceholderExpansion {
     }
 
     private String player(Player p, String[] args) {
-        String tru = PlaceholderAPIPlugin.booleanTrue();
-        String fals = PlaceholderAPIPlugin.booleanFalse();
-        Game game = null;
-        String gameId;
-        if (manager.getPlayers().containsKey(p.getUniqueId())) {
-            gameId = manager.getPlayers().get(p.getUniqueId()).getGame();
-            game = values.getRooms().get(gameId);
-        }
+        Game game = manager.getGame(p.getUniqueId());
         if (args[0].equalsIgnoreCase("active")) {
             return game != null ? tru : fals;
         } else if (game != null) {
@@ -113,6 +129,6 @@ public class Placeholders extends PlaceholderExpansion {
 
     @Override
     public @NotNull String getVersion() {
-        return "1.0";
+        return "1.5";
     }
 }

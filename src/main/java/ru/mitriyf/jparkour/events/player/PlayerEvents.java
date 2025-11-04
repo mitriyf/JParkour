@@ -1,9 +1,9 @@
 package ru.mitriyf.jparkour.events.player;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -15,16 +15,20 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.*;
+import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.scheduler.BukkitTask;
 import ru.mitriyf.jparkour.JParkour;
 import ru.mitriyf.jparkour.game.Game;
 import ru.mitriyf.jparkour.game.manager.Manager;
+import ru.mitriyf.jparkour.game.temp.editor.Editor;
+import ru.mitriyf.jparkour.game.temp.task.stand.StandActive;
 import ru.mitriyf.jparkour.utils.Utils;
 import ru.mitriyf.jparkour.values.Values;
 
 import java.util.Map;
-import java.util.Set;
+import java.util.UUID;
 
 public class PlayerEvents implements Listener {
     private final EntityDamageEvent.DamageCause cause = EntityDamageEvent.DamageCause.VOID;
@@ -46,14 +50,15 @@ public class PlayerEvents implements Listener {
     public void playerMove(PlayerMoveEvent e) {
         if (startWithWorld(e.getPlayer().getWorld())) {
             Player p = e.getPlayer();
-            if (manager.getPlayers().get(p.getUniqueId()) == null) {
-                p.teleport(new Location(Bukkit.getWorld("world"), 0, 80, 0));
+            Game game = manager.getGame(p.getUniqueId());
+            if (game == null) {
+                if (!p.isOp()) {
+                    p.teleport(new Location(plugin.getServer().getWorld("world"), 0, 80, 0));
+                }
                 return;
             }
-            String id = manager.getPlayers().get(p.getUniqueId()).getGame();
-            Game game = values.getRooms().get(id);
             Material m = game.getTrigger();
-            if (!game.isStarted() && p.getLocation().getBlock().getType() == m) {
+            if (!game.isStarted() && game.isTriggerEnabled() && p.getLocation().getBlock().getType() == m) {
                 game.start();
             }
         }
@@ -63,21 +68,25 @@ public class PlayerEvents implements Listener {
     public void playerRespawn(PlayerRespawnEvent e) {
         Player p = e.getPlayer();
         if (startWithWorld(p.getWorld())) {
-            String id = manager.getPlayers().get(p.getUniqueId()).getGame();
-            Game game = values.getRooms().get(id);
-            e.setRespawnLocation(game.getLocs().getSpawn());
+            Game game = manager.getGame(e.getPlayer().getUniqueId());
+            if (game != null) {
+                e.setRespawnLocation(game.getLocs().getSpawn());
+            }
         }
     }
 
     @EventHandler
     public void entityDamage(EntityDamageEvent e) {
         if (startWithWorld(e.getEntity().getWorld())) {
-            if (e.getCause() == cause && manager.getPlayers().containsKey(e.getEntity().getUniqueId()) && !e.getEntity().leaveVehicle()) {
-                String id = manager.getPlayers().get(e.getEntity().getUniqueId()).getGame();
-                Game game = values.getRooms().get(id);
-                game.restart();
+            Game game = manager.getGame(e.getEntity().getWorld().getName());
+            if (game != null) {
+                if (e.getCause() == cause && !e.getEntity().leaveVehicle()) {
+                    game.restartActive();
+                }
+                if (!game.getInfo().isEntityDamage()) {
+                    e.setCancelled(true);
+                }
             }
-            e.setCancelled(true);
         }
     }
 
@@ -87,7 +96,8 @@ public class PlayerEvents implements Listener {
         if (p.isOp() || e.getMessage().equalsIgnoreCase("/jparkour exit")) {
             return;
         }
-        if (manager.getPlayers().containsKey(p.getUniqueId()) || manager.getWaiters().contains(p.getUniqueId())) {
+        UUID uuid = p.getUniqueId();
+        if (manager.getPlayers().containsKey(uuid) || manager.getWaiters().contains(uuid)) {
             utils.sendMessage(p, values.getInGame());
             e.setCancelled(true);
         }
@@ -96,13 +106,14 @@ public class PlayerEvents implements Listener {
     @EventHandler
     public void playerDeath(PlayerDeathEvent e) {
         if (startWithWorld(e.getEntity().getWorld())) {
-            String id = manager.getPlayers().get(e.getEntity().getUniqueId()).getGame();
-            Game game = values.getRooms().get(id);
-            game.getRun().getTask().cancel();
-            scheduler.runTaskLater(plugin, () -> {
-                e.getEntity().spigot().respawn();
-                game.restart();
-            }, 1);
+            Game game = manager.getGame(e.getEntity().getUniqueId());
+            if (game != null) {
+                game.getRun().getTask().cancel();
+                scheduler.runTaskLater(plugin, () -> {
+                    e.getEntity().spigot().respawn();
+                    game.restart();
+                }, 1);
+            }
         }
     }
 
@@ -110,10 +121,43 @@ public class PlayerEvents implements Listener {
     @SuppressWarnings("deprecation")
     public void playerInteract(PlayerInteractEvent e) {
         Player p = e.getPlayer();
-        if (manager.getPlayers().containsKey(p.getUniqueId())) {
-            if (p.getItemInHand().getType() == Material.BARRIER) {
-                String game = manager.getPlayers().get(p.getUniqueId()).getGame();
-                values.getRooms().get(game).close(true, false);
+        Game game = manager.getGame(p.getUniqueId());
+        if (game != null) {
+            ItemStack stack = p.getItemInHand();
+            boolean defaultExits = values.getExitItems().contains(stack);
+            boolean infoExits = game.getInfo().getExitItems().contains(stack);
+            if (defaultExits || infoExits) {
+                e.setCancelled(true);
+                game.close(true, false);
+                return;
+            }
+            boolean defaultRestarts = values.getRestartItems().contains(stack);
+            boolean infoRestarts = game.getInfo().getRestartItems().contains(stack);
+            if (defaultRestarts || infoRestarts) {
+                e.setCancelled(true);
+                game.restartActive();
+                return;
+            }
+            Block b = e.getClickedBlock();
+            if (e.getClickedBlock() != null && game.isDev() && (utils.isBar() || e.getHand() == EquipmentSlot.HAND)) {
+                String typeStack = values.getStandsItems().get(stack);
+                if (typeStack != null) {
+                    e.setCancelled(true);
+                    Editor editor = game.getEditor();
+                    if (typeStack.equalsIgnoreCase("default")) {
+                        editor.setSelectedBlockAxe(b);
+                        p.sendMessage("§aYou have successfully selected a block.");
+                    } else {
+                        Location bLoc = b.getLocation();
+                        String id = editor.getStands().get(bLoc);
+                        if (id == null) {
+                            editor.setBlockStand(bLoc, typeStack);
+                            p.sendMessage("§aYou have successfully set a stand: §e" + typeStack);
+                        } else {
+                            p.sendMessage("§cThis block is already linked to " + id);
+                        }
+                    }
+                }
             }
         }
     }
@@ -122,72 +166,92 @@ public class PlayerEvents implements Listener {
     public void playerQuit(PlayerQuitEvent e) {
         manager.getWaiters().remove(e.getPlayer().getUniqueId());
         if (startWithWorld(e.getPlayer().getWorld())) {
-            String id = manager.getPlayers().get(e.getPlayer().getUniqueId()).getGame();
-            Game game = values.getRooms().get(id);
+            Game game = manager.getGame(e.getPlayer().getUniqueId());
             game.close(true, false);
         }
     }
 
     @EventHandler
     public void entityDamageByEntity(EntityDamageByEntityEvent e) {
-        if (startWithWorld(e.getEntity().getWorld()) && manager.getPlayers().containsKey(e.getDamager().getUniqueId()) && e.getDamager().getType() == EntityType.PLAYER) {
+        if (startWithWorld(e.getEntity().getWorld()) && e.getDamager().getType() == EntityType.PLAYER) {
             removeStands(e.getEntity(), (Player) e.getDamager(), "LEFT_CLICK");
         }
     }
 
     @EventHandler
     public void playerInteractAtEntity(PlayerInteractAtEntityEvent e) {
-        if (startWithWorld(e.getPlayer().getWorld()) && manager.getPlayers().containsKey(e.getPlayer().getUniqueId())) {
+        if (startWithWorld(e.getPlayer().getWorld())) {
             removeStands(e.getRightClicked(), e.getPlayer(), "RIGHT_CLICK");
         }
     }
 
     @EventHandler
     public void playerDropItem(PlayerDropItemEvent e) {
-        if (startWithWorld(e.getPlayer().getWorld()) && manager.getPlayers().containsKey(e.getPlayer().getUniqueId())) {
-            e.setCancelled(true);
+        if (startWithWorld(e.getPlayer().getWorld())) {
+            Game game = manager.getGame(e.getPlayer().getWorld().getName());
+            if (game != null && !game.getInfo().isDropItem()) {
+                e.setCancelled(true);
+            }
         }
     }
 
     @EventHandler
     public void foodLevelChange(FoodLevelChangeEvent e) {
-        if (startWithWorld(e.getEntity().getWorld()) && e.getFoodLevel() != 10) {
-            e.setCancelled(true);
+        if (startWithWorld(e.getEntity().getWorld())) {
+            Game game = manager.getGame(e.getEntity().getWorld().getName());
+            if (game != null && e.getFoodLevel() != game.getFoodLevel() && !game.getInfo().isFoodLevelChange()) {
+                e.setCancelled(true);
+            }
         }
     }
 
     @EventHandler
     @SuppressWarnings("deprecation")
     public void playerPickupItem(PlayerPickupItemEvent e) {
-        e.setCancelled(startWithWorld(e.getPlayer().getWorld()));
+        if (startWithWorld(e.getPlayer().getWorld())) {
+            Game game = manager.getGame(e.getPlayer().getWorld().getName());
+            if (game != null && !game.getInfo().isPickupItem()) {
+                e.setCancelled(true);
+            }
+        }
     }
 
     @EventHandler
     public void playerItemConsume(PlayerItemConsumeEvent e) {
-        e.setCancelled(startWithWorld(e.getPlayer().getWorld()));
+        if (startWithWorld(e.getPlayer().getWorld())) {
+            Game game = manager.getGame(e.getPlayer().getWorld().getName());
+            if (game != null && !game.getInfo().isConsumeItem()) {
+                e.setCancelled(true);
+            }
+        }
     }
 
     @SuppressWarnings("deprecation")
     private void removeStands(Entity e, Player p, String click) {
         if (e.getType() == EntityType.ARMOR_STAND) {
             ArmorStand entity = (ArmorStand) e;
-            String id = manager.getPlayers().get(p.getUniqueId()).getGame();
-            Game game = values.getRooms().get(id);
-            for (Map.Entry<Location, Set<ArmorStand>> a : game.getRun().getStands().entrySet()) {
-                if (a.getValue().contains(entity) && entity.getCustomName().equalsIgnoreCase(click)) {
+            Game game = manager.getGame(p.getUniqueId());
+            if (game == null) {
+                return;
+            }
+            for (Map.Entry<Location, StandActive> stands : game.getRun().getStands().entrySet()) {
+                StandActive standActive = stands.getValue();
+                if (standActive.contains(entity.getUniqueId()) && entity.getCustomName().equalsIgnoreCase(click)) {
                     Map<Location, BukkitTask> bombs = game.getRun().getBombs();
+                    Location loc = stands.getKey();
                     if (p.getItemInHand().getType() == entity.getBoots().getType()) {
-                        a.getValue().forEach(ArmorStand::remove);
-                        if (game.getRun().getBombs().get(a.getKey()) != null) {
-                            bombs.get(a.getKey()).cancel();
-                            bombs.remove(a.getKey());
+                        standActive.teleportToSpawn();
+                        BukkitTask task = bombs.get(loc);
+                        if (task != null) {
+                            task.cancel();
+                            bombs.remove(loc);
                             game.setRights(game.getRights() + 1);
                         } else {
                             game.setLefts(game.getLefts() + 1);
                         }
-                    } else if (bombs.get(a.getKey()) != null) {
-                        bombs.remove(a.getKey());
-                        a.getValue().forEach(ArmorStand::remove);
+                    } else if (game.getInfo().isFailedDefuseBomb() && bombs.containsKey(loc)) {
+                        bombs.remove(loc);
+                        standActive.teleportToSpawn();
                     }
                 }
             }
