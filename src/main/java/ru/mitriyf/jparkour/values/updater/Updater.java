@@ -56,19 +56,27 @@ public class Updater {
             values.deleteDirectory(folder);
             List<String> versionsList = versions.getStringList("versions");
             String pluginVersion = plugin.getDescription().getVersion();
+            String updaterMessage = null;
+            boolean versionFound = false;
             for (String ver : versionsList) {
                 String[] info = ver.split(";");
                 if (pluginVersion.equals(info[0])) {
-                    logger.info("This is the correct version of the plugin, as reviewed by Updater.");
-                    return;
-                } else if (values.isRequired() & info[1].equals("REQUIRED") || values.isRelease()) {
-                    if (!versionsList.contains(pluginVersion)) {
-                        logger.warning("No version was found. This is a developer version.");
+                    if (updaterMessage == null) {
+                        logger.info("This is the correct version of the plugin, as reviewed by Updater.");
                         return;
                     }
-                    logger.warning("Download the new plugin update: " + info[2]);
-                    return;
+                    versionFound = true;
+                    break;
+                } else if ((values.isRequired() && info[1].equals("REQUIRED")) || values.isRelease()) {
+                    if (updaterMessage == null) {
+                        updaterMessage = "Download the new plugin update: " + info[2];
+                    }
                 }
+            }
+            if (!versionFound) {
+                logger.warning("No version was found. This is a developer version.");
+            } else {
+                logger.warning(updaterMessage);
             }
         } catch (Exception e) {
             logger.warning("An error occurred while checking for updates. Please check your network connection.");
