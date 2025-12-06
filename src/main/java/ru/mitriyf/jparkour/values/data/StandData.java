@@ -24,8 +24,8 @@ public class StandData {
     public StandData(ConfigurationSection id, Logger logger) {
         this.logger = logger;
         type = id.getString("type");
-        click_type = id.getString("click_type");
         item = getStack(id.getString("item"), 0);
+        click_type = id.getString("click_type").toUpperCase();
         block = getStack(id.getString("block"), id.getInt("blockData"));
         in_block = getStack(id.getString("in_block"), id.getInt("in_blockData"));
         if (!type.equalsIgnoreCase("use")) {
@@ -49,11 +49,10 @@ public class StandData {
     }
 
     private void setSettings(ArmorStand stand) {
-        stand.setCustomName(click_type);
-        stand.setBoots(item);
-        stand.setGravity(false);
         stand.setVisible(false);
         stand.setArms(false);
+        stand.setCustomName(click_type);
+        stand.setGravity(false);
     }
 
     @SuppressWarnings("deprecation")

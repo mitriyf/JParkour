@@ -1,5 +1,5 @@
 # Не удалять настройку version.
-version: 1.4
+version: 1.5-RELEASE
 
 messages:
   # Действия:
@@ -103,6 +103,8 @@ messages:
         - "[message] &cИгра окончена."
       restarted:
         - "[message] &aИгра была перезапущена."
+      cooldownRestart:
+        - "[message] &cВы не можете перезагрузить игру так быстро."
       kicked:
         - "[message] &cИгра окончена."
       damageHeart:

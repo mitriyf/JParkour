@@ -10,9 +10,10 @@ import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitScheduler;
 import ru.mitriyf.jparkour.JParkour;
 import ru.mitriyf.jparkour.game.Game;
-import ru.mitriyf.jparkour.game.temp.task.stand.StandActive;
+import ru.mitriyf.jparkour.game.temp.task.data.StandActive;
 import ru.mitriyf.jparkour.utils.Utils;
-import ru.mitriyf.jparkour.values.data.SchematicData;
+import ru.mitriyf.jparkour.values.data.schematic.SchematicData;
+import ru.mitriyf.jparkour.values.data.schematic.point.SchematicPoint;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -21,6 +22,8 @@ import java.util.concurrent.CountDownLatch;
 public class LocationsData {
     @Getter
     private final Map<Location, StandActive> stands = new HashMap<>();
+    @Getter
+    private final Map<Integer, Location> points = new HashMap<>();
     private final BukkitScheduler scheduler;
     private final CountDownLatch latch;
     private final SchematicData info;
@@ -34,11 +37,11 @@ public class LocationsData {
 
     public LocationsData(JParkour plugin, Game game, CountDownLatch latch, boolean dev) {
         this.plugin = plugin;
-        this.utils = plugin.getUtils();
-        this.game = game;
         this.latch = latch;
+        this.game = game;
         this.dev = dev;
-        scheduler = plugin.getServer().getScheduler();
+        scheduler = game.getScheduler();
+        utils = plugin.getUtils();
         info = game.getInfo();
         name = game.getName();
         generateLocation();
@@ -46,10 +49,10 @@ public class LocationsData {
 
     @SuppressWarnings("deprecation")
     private void generateLocation() {
-        game.getScheduler().runTask(plugin, () -> {
+        scheduler.runTask(plugin, () -> {
             World w = plugin.getServer().getWorld(name);
             if (w == null) {
-                w = game.generateWorld(name);
+                w = utils.getWorldGenerator().generateWorld(name);
             }
             for (Entity e : w.getEntities()) {
                 if (!(e instanceof Player) && !(e instanceof ItemFrame)) {
@@ -63,7 +66,7 @@ public class LocationsData {
                 }
                 defaultLocation = w.getBlockAt(info.getX(), info.getY(), info.getZ()).getLocation();
                 defaultLocation.setYaw(info.getYaw());
-                defaultLocation.setPitch(info.getNorth());
+                defaultLocation.setPitch(info.getPitch());
             } else {
                 defaultLocation = w.getBlockAt(0, 100, 0).getLocation();
             }
@@ -75,7 +78,7 @@ public class LocationsData {
         }
         setLocations();
         if (info != null) {
-            game.paste(defaultLocation, info.getSchematic());
+            utils.paste(defaultLocation, info.getSchematic(), info.isPasteAir());
             scheduler.runTask(plugin, () -> game.setTrigger(!dev ? portal.getBlock().getType() : null));
         } else {
             scheduler.runTask(plugin, () -> defaultLocation.getBlock().setType(Material.STONE));
@@ -88,17 +91,27 @@ public class LocationsData {
             spawn = getLocation(info.getSpawn());
             portal = getLocation(info.getPortal());
             end = getLocation(info.getEnd());
-            World world = defaultLocation.getWorld();
-            scheduler.runTask(plugin, () -> {
-                for (Map.Entry<double[], String> stand : info.getStands().entrySet()) {
-                    stands.put(getLocation(stand.getKey()), new StandActive(utils, game, world, stand.getValue()));
+            for (Map.Entry<Integer, SchematicPoint> point : info.getPoints().entrySet()) {
+                SchematicPoint schematicPoint = point.getValue();
+                Location location = getLocation(schematicPoint.getLocation());
+                if (schematicPoint.isTeleport()) {
+                    location.setYaw(schematicPoint.getYaw());
+                    location.setPitch(schematicPoint.getPitch());
                 }
-            });
+                points.put(point.getKey(), location);
+            }
         } else {
             start = defaultLocation;
             spawn = defaultLocation;
             portal = defaultLocation;
             end = defaultLocation;
+        }
+    }
+
+    public void generateStands() {
+        Location loc = spawn.clone().add(0, 100400, 0);
+        for (Map.Entry<double[], String> stand : info.getStands().entrySet()) {
+            stands.put(getLocation(stand.getKey()), new StandActive(utils, game, loc, stand.getValue()));
         }
     }
 

@@ -2,7 +2,7 @@ package ru.mitriyf.jparkour;
 
 import lombok.Getter;
 import org.bukkit.plugin.java.JavaPlugin;
-import ru.mitriyf.jparkour.cmd.CJParkour;
+import ru.mitriyf.jparkour.cmd.JParkourCommand;
 import ru.mitriyf.jparkour.events.Events;
 import ru.mitriyf.jparkour.game.Game;
 import ru.mitriyf.jparkour.game.manager.Manager;
@@ -16,7 +16,7 @@ import java.util.concurrent.ThreadLocalRandom;
 @Getter
 public final class JParkour extends JavaPlugin {
     private final ThreadLocalRandom rnd = ThreadLocalRandom.current();
-    private final String configsVersion = "1.5";
+    private final String configsVersion = "1.5-RELEASE";
     private int version = 13;
     private Values values;
     private Utils utils;
@@ -34,7 +34,7 @@ public final class JParkour extends JavaPlugin {
         supports = new Supports(this);
         utils.setup();
         values.setup(true);
-        getCommand("jparkour").setExecutor(new CJParkour(this));
+        getCommand("jparkour").setExecutor(new JParkourCommand(this));
         events = new Events(this);
         events.setup();
     }
@@ -46,6 +46,9 @@ public final class JParkour extends JavaPlugin {
         }
         for (Game game : new HashMap<>(values.getRooms()).values()) {
             game.close(true, true);
+        }
+        if (supports != null) {
+            supports.unregister();
         }
     }
 

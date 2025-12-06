@@ -23,7 +23,7 @@ public class BlockEvents implements Listener {
     }
 
     @EventHandler
-    public void onBlock(BlockPlaceEvent e) {
+    public void onBlockPlace(BlockPlaceEvent e) {
         if (startWithWorldAndOp(e.getBlock(), e.getPlayer())) {
             Game game = manager.getGame(e.getPlayer().getWorld().getName());
             if (game != null && !game.getInfo().isPlaceBlock()) {
@@ -33,7 +33,7 @@ public class BlockEvents implements Listener {
     }
 
     @EventHandler
-    public void onBlock(BlockBreakEvent e) {
+    public void onBlockBreak(BlockBreakEvent e) {
         if (startWithWorld(e.getBlock())) {
             Game game = manager.getGame(e.getPlayer().getWorld().getName());
             if (game != null) {
@@ -49,13 +49,13 @@ public class BlockEvents implements Listener {
                     if (type != null) {
                         message = "Stand";
                         editor.removeBlockStand(loc);
-                    } else if (editor.getSpawn().equals(loc)) {
+                    } else if (loc.equals(editor.getSpawn())) {
                         type = "spawn";
                         editor.setSpawn(null);
-                    } else if (editor.getStart().equals(loc)) {
+                    } else if (loc.equals(editor.getStart())) {
                         type = "start";
                         editor.setStart(null);
-                    } else if (editor.getEnd().equals(loc)) {
+                    } else if (loc.equals(editor.getEnd())) {
                         type = "end";
                         editor.setEnd(null);
                     } else {
@@ -68,7 +68,7 @@ public class BlockEvents implements Listener {
     }
 
     @EventHandler
-    public void onBlock(BlockBurnEvent e) {
+    public void onBlockBurn(BlockBurnEvent e) {
         if (startWithWorld(e.getBlock())) {
             Game game = manager.getGame(e.getBlock().getWorld().getName());
             if (game != null && !game.getInfo().isBurnBlock()) {
@@ -88,7 +88,7 @@ public class BlockEvents implements Listener {
     }
 
     @EventHandler
-    public void waterLava(BlockFromToEvent e) {
+    public void onBlockFromTo(BlockFromToEvent e) {
         if (startWithWorld(e.getBlock())) {
             Game game = manager.getGame(e.getBlock().getWorld().getName());
             if (game != null && !game.getInfo().isFromToBlock()) {
@@ -98,7 +98,7 @@ public class BlockEvents implements Listener {
     }
 
     @EventHandler
-    public void block(EntityChangeBlockEvent e) {
+    public void onEntityChangeBlock(EntityChangeBlockEvent e) {
         if (startWithWorld(e.getBlock())) {
             Game game = manager.getGame(e.getBlock().getWorld().getName());
             if (game != null && !game.getInfo().isEntityChangeBlock()) {
@@ -108,7 +108,7 @@ public class BlockEvents implements Listener {
     }
 
     @EventHandler
-    public void block(BlockPhysicsEvent e) {
+    public void onBlockPhysics(BlockPhysicsEvent e) {
         if (startWithWorld(e.getBlock())) {
             Game game = manager.getGame(e.getBlock().getWorld().getName());
             if (game != null && !game.getInfo().isPhysicsBlock()) {
@@ -118,7 +118,7 @@ public class BlockEvents implements Listener {
     }
 
     @EventHandler
-    public void block(BlockFadeEvent e) {
+    public void onBlockFade(BlockFadeEvent e) {
         if (startWithWorld(e.getBlock())) {
             Game game = manager.getGame(e.getBlock().getWorld().getName());
             if (game != null && !game.getInfo().isFadeBlock()) {
@@ -128,7 +128,7 @@ public class BlockEvents implements Listener {
     }
 
     @EventHandler
-    public void block(LeavesDecayEvent e) {
+    public void onLeavesDecay(LeavesDecayEvent e) {
         if (startWithWorld(e.getBlock())) {
             Game game = manager.getGame(e.getBlock().getWorld().getName());
             if (game != null && !game.getInfo().isLeavesDecay()) {
@@ -138,7 +138,7 @@ public class BlockEvents implements Listener {
     }
 
     @EventHandler
-    public void block(BlockMultiPlaceEvent e) {
+    public void onBlockMultiPlace(BlockMultiPlaceEvent e) {
         if (startWithWorld(e.getBlock())) {
             Game game = manager.getGame(e.getBlock().getWorld().getName());
             if (game != null && !game.getInfo().isMultiPlaceBlock()) {

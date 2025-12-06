@@ -23,7 +23,7 @@ import ru.mitriyf.jparkour.JParkour;
 import ru.mitriyf.jparkour.game.Game;
 import ru.mitriyf.jparkour.game.manager.Manager;
 import ru.mitriyf.jparkour.game.temp.editor.Editor;
-import ru.mitriyf.jparkour.game.temp.task.stand.StandActive;
+import ru.mitriyf.jparkour.game.temp.task.data.StandActive;
 import ru.mitriyf.jparkour.utils.Utils;
 import ru.mitriyf.jparkour.values.Values;
 
@@ -47,9 +47,9 @@ public class PlayerEvents implements Listener {
     }
 
     @EventHandler
-    public void playerMove(PlayerMoveEvent e) {
-        if (startWithWorld(e.getPlayer().getWorld())) {
-            Player p = e.getPlayer();
+    public void onPlayerMove(PlayerMoveEvent e) {
+        Player p = e.getPlayer();
+        if (startWithWorld(p.getWorld())) {
             Game game = manager.getGame(p.getUniqueId());
             if (game == null) {
                 if (!p.isOp()) {
@@ -65,10 +65,10 @@ public class PlayerEvents implements Listener {
     }
 
     @EventHandler
-    public void playerRespawn(PlayerRespawnEvent e) {
+    public void onPlayerRespawn(PlayerRespawnEvent e) {
         Player p = e.getPlayer();
         if (startWithWorld(p.getWorld())) {
-            Game game = manager.getGame(e.getPlayer().getUniqueId());
+            Game game = manager.getGame(p.getUniqueId());
             if (game != null) {
                 e.setRespawnLocation(game.getLocs().getSpawn());
             }
@@ -76,7 +76,7 @@ public class PlayerEvents implements Listener {
     }
 
     @EventHandler
-    public void entityDamage(EntityDamageEvent e) {
+    public void onEntityDamage(EntityDamageEvent e) {
         if (startWithWorld(e.getEntity().getWorld())) {
             Game game = manager.getGame(e.getEntity().getWorld().getName());
             if (game != null) {
@@ -91,7 +91,7 @@ public class PlayerEvents implements Listener {
     }
 
     @EventHandler
-    public void onCommand(PlayerCommandPreprocessEvent e) {
+    public void onPlayerCommandPreprocess(PlayerCommandPreprocessEvent e) {
         Player p = e.getPlayer();
         if (p.isOp() || e.getMessage().equalsIgnoreCase("/jparkour exit")) {
             return;
@@ -104,7 +104,7 @@ public class PlayerEvents implements Listener {
     }
 
     @EventHandler
-    public void playerDeath(PlayerDeathEvent e) {
+    public void onPlayerDeath(PlayerDeathEvent e) {
         if (startWithWorld(e.getEntity().getWorld())) {
             Game game = manager.getGame(e.getEntity().getUniqueId());
             if (game != null) {
@@ -119,7 +119,7 @@ public class PlayerEvents implements Listener {
 
     @EventHandler
     @SuppressWarnings("deprecation")
-    public void playerInteract(PlayerInteractEvent e) {
+    public void onPlayerInteract(PlayerInteractEvent e) {
         Player p = e.getPlayer();
         Game game = manager.getGame(p.getUniqueId());
         if (game != null) {
@@ -135,7 +135,7 @@ public class PlayerEvents implements Listener {
             boolean infoRestarts = game.getInfo().getRestartItems().contains(stack);
             if (defaultRestarts || infoRestarts) {
                 e.setCancelled(true);
-                game.restartActive();
+                game.playerRestart();
                 return;
             }
             Block b = e.getClickedBlock();
@@ -149,7 +149,7 @@ public class PlayerEvents implements Listener {
                         p.sendMessage("§aYou have successfully selected a block.");
                     } else {
                         Location bLoc = b.getLocation();
-                        String id = editor.getStands().get(bLoc);
+                        String id = editor.contains(bLoc);
                         if (id == null) {
                             editor.setBlockStand(bLoc, typeStack);
                             p.sendMessage("§aYou have successfully set a stand: §e" + typeStack);
@@ -163,32 +163,48 @@ public class PlayerEvents implements Listener {
     }
 
     @EventHandler
-    public void playerQuit(PlayerQuitEvent e) {
-        manager.getWaiters().remove(e.getPlayer().getUniqueId());
-        if (startWithWorld(e.getPlayer().getWorld())) {
-            Game game = manager.getGame(e.getPlayer().getUniqueId());
-            game.close(true, false);
+    public void onPlayerQuit(PlayerQuitEvent e) {
+        Player p = e.getPlayer();
+        UUID uuid = p.getUniqueId();
+        manager.getWaiters().remove(uuid);
+        BukkitTask task = manager.getTasks().get(uuid);
+        if (task != null) {
+            task.cancel();
+        }
+        if (startWithWorld(p.getWorld())) {
+            Game game = manager.getGame(uuid);
+            if (game != null) {
+                game.close(true, false);
+            }
         }
     }
 
     @EventHandler
-    public void entityDamageByEntity(EntityDamageByEntityEvent e) {
-        if (startWithWorld(e.getEntity().getWorld()) && e.getDamager().getType() == EntityType.PLAYER) {
-            removeStands(e.getEntity(), (Player) e.getDamager(), "LEFT_CLICK");
+    public void onEntityDamageByEntity(EntityDamageByEntityEvent e) {
+        Entity entity = e.getEntity();
+        Entity damage = e.getDamager();
+        if (startWithWorld(entity.getWorld()) && damage.getType() == EntityType.PLAYER) {
+            removeStands(entity, (Player) damage, "LEFT_CLICK");
+        } else if (!values.isDamageWaiters()) {
+            if ((damage instanceof Player && manager.getWaiters().contains(damage.getUniqueId())) || (entity instanceof Player && manager.getWaiters().contains(entity.getUniqueId()))) {
+                e.setCancelled(true);
+            }
         }
     }
 
     @EventHandler
-    public void playerInteractAtEntity(PlayerInteractAtEntityEvent e) {
-        if (startWithWorld(e.getPlayer().getWorld())) {
-            removeStands(e.getRightClicked(), e.getPlayer(), "RIGHT_CLICK");
+    public void onPlayerInteractAtEntity(PlayerInteractAtEntityEvent e) {
+        Player p = e.getPlayer();
+        if (startWithWorld(p.getWorld())) {
+            removeStands(e.getRightClicked(), p, "RIGHT_CLICK");
         }
     }
 
     @EventHandler
-    public void playerDropItem(PlayerDropItemEvent e) {
-        if (startWithWorld(e.getPlayer().getWorld())) {
-            Game game = manager.getGame(e.getPlayer().getWorld().getName());
+    public void onPlayerDropItem(PlayerDropItemEvent e) {
+        Player p = e.getPlayer();
+        if (startWithWorld(p.getWorld())) {
+            Game game = manager.getGame(p.getWorld().getName());
             if (game != null && !game.getInfo().isDropItem()) {
                 e.setCancelled(true);
             }
@@ -196,9 +212,10 @@ public class PlayerEvents implements Listener {
     }
 
     @EventHandler
-    public void foodLevelChange(FoodLevelChangeEvent e) {
-        if (startWithWorld(e.getEntity().getWorld())) {
-            Game game = manager.getGame(e.getEntity().getWorld().getName());
+    public void onFoodLevelChange(FoodLevelChangeEvent e) {
+        World world = e.getEntity().getWorld();
+        if (startWithWorld(world)) {
+            Game game = manager.getGame(world.getName());
             if (game != null && e.getFoodLevel() != game.getFoodLevel() && !game.getInfo().isFoodLevelChange()) {
                 e.setCancelled(true);
             }
@@ -207,9 +224,10 @@ public class PlayerEvents implements Listener {
 
     @EventHandler
     @SuppressWarnings("deprecation")
-    public void playerPickupItem(PlayerPickupItemEvent e) {
-        if (startWithWorld(e.getPlayer().getWorld())) {
-            Game game = manager.getGame(e.getPlayer().getWorld().getName());
+    public void onPlayerPickupItem(PlayerPickupItemEvent e) {
+        World world = e.getPlayer().getWorld();
+        if (startWithWorld(world)) {
+            Game game = manager.getGame(world.getName());
             if (game != null && !game.getInfo().isPickupItem()) {
                 e.setCancelled(true);
             }
@@ -217,9 +235,10 @@ public class PlayerEvents implements Listener {
     }
 
     @EventHandler
-    public void playerItemConsume(PlayerItemConsumeEvent e) {
-        if (startWithWorld(e.getPlayer().getWorld())) {
-            Game game = manager.getGame(e.getPlayer().getWorld().getName());
+    public void onPlayerItemConsume(PlayerItemConsumeEvent e) {
+        World world = e.getPlayer().getWorld();
+        if (startWithWorld(world)) {
+            Game game = manager.getGame(world.getName());
             if (game != null && !game.getInfo().isConsumeItem()) {
                 e.setCancelled(true);
             }
@@ -229,17 +248,17 @@ public class PlayerEvents implements Listener {
     @SuppressWarnings("deprecation")
     private void removeStands(Entity e, Player p, String click) {
         if (e.getType() == EntityType.ARMOR_STAND) {
-            ArmorStand entity = (ArmorStand) e;
             Game game = manager.getGame(p.getUniqueId());
             if (game == null) {
                 return;
             }
             for (Map.Entry<Location, StandActive> stands : game.getRun().getStands().entrySet()) {
                 StandActive standActive = stands.getValue();
-                if (standActive.contains(entity.getUniqueId()) && entity.getCustomName().equalsIgnoreCase(click)) {
+                ArmorStand entity = standActive.get(e.getUniqueId());
+                if (entity != null && entity.getCustomName().equals(click)) {
                     Map<Location, BukkitTask> bombs = game.getRun().getBombs();
                     Location loc = stands.getKey();
-                    if (p.getItemInHand().getType() == entity.getBoots().getType()) {
+                    if (p.getItemInHand().getType() == standActive.getTrigger().getType()) {
                         standActive.teleportToSpawn();
                         BukkitTask task = bombs.get(loc);
                         if (task != null) {

@@ -1,5 +1,5 @@
 # Die Version-Einstellung nicht bereinigen.
-version: 1.4
+version: 1.5-RELEASE
 
 messages:
   # Aktionen:
@@ -103,6 +103,8 @@ messages:
         - "[message] &cDas Spiel ist vorbei."
       restarted:
         - "[message] &aDas Spiel wurde neu gestartet."
+      cooldownRestart:
+        - "[message] &cSie können das Spiel nicht so schnell neu starten."
       kicked:
         - "[message] &cDas Spiel ist vorbei."
       damageHeart:

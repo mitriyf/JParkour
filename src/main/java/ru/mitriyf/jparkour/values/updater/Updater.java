@@ -112,7 +112,7 @@ public class Updater {
             plugin.getLogger().warning("No files were found in the schematics folder.");
         } else {
             for (File schem : files) {
-                updateConfig(schem, schemVer, sc, sc + "default.yml", null);
+                updateConfig(schem, schemVer, sc, sc + "default.yml", "locs.points");
             }
         }
     }
@@ -125,6 +125,9 @@ public class Updater {
                 if (!oldVersion.equals(ver)) {
                     values.backupConfig(parentPath, cfg, oldVersion);
                     yml.set("version", ver);
+                    if (yml.getConfigurationSection(ignoreSection) == null) {
+                        yml.createSection(ignoreSection);
+                    }
                     yml.save(cfg);
                     configUpdater.update(updatePath, cfg, ignoreSection);
                     plugin.getLogger().info("The " + cfg.getName() + " has been successfully updated to version " + ver);

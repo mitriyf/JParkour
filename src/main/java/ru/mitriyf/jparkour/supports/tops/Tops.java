@@ -42,6 +42,7 @@ public class Tops {
             task.cancel();
         }
         task = scheduler.runTaskTimerAsynchronously(plugin, () -> {
+            schematic.clear();
             File[] schematics = playerData.listFiles();
             if (schematics != null) {
                 for (File f : schematics) {
@@ -49,6 +50,13 @@ public class Tops {
                 }
             }
         }, 0, values.getTopsInterval());
+    }
+
+    public void stopTimer() {
+        if (task != null) {
+            task.cancel();
+            task = null;
+        }
     }
 
     public void setData(Player p, String mapId, int accuracy) {

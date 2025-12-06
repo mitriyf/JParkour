@@ -4,7 +4,7 @@
 ############################################################
 
 # Don't remove the version setting.
-version: 1.5
+version: 1.5-RELEASE
 
 # Plugin settings.
 settings:
@@ -29,6 +29,8 @@ settings:
     # Set it to false if you are concerned about errors in the game console.
     # When set to true, it may cause server crashes! The plugin automatically deletes worlds after launch.
     deleteWhenClosing: false
+    # Specify in ticks the amount of delay for pressing the item marked restart. 1 second = 20 ticks.
+    restartCooldown: 100
   # Notification of updates.
   updater:
     # Is it enabled?
@@ -71,6 +73,8 @@ settings:
       # The type of stand.
       type: bomb
       # An item that can defeat a stand.
+      # Only an object with this material can defeat this stand!
+      # This is because versions 1.8 and above do not have CustomModelData.
       item: GOLDEN_SWORD
       # Which key should I press?
       click_type: RIGHT_CLICK
@@ -205,6 +209,8 @@ messages:
       restarted:
         - "[delay] 5"
         - "[message] &aThe game has been restarted."
+      cooldownRestart:
+        - "[message] &cYou can't reload the game that quickly."
       kicked:
         - "[message] &cThe game is over."
       damageHeart:

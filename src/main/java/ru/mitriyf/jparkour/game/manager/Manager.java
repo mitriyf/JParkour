@@ -32,27 +32,30 @@ public class Manager {
 
     public Manager(JParkour plugin) {
         this.plugin = plugin;
-        this.rnd = plugin.getRnd();
-        this.scheduler = plugin.getServer().getScheduler();
-        this.values = plugin.getValues();
-        this.utils = plugin.getUtils();
+        rnd = plugin.getRnd();
+        utils = plugin.getUtils();
+        values = plugin.getValues();
+        scheduler = plugin.getServer().getScheduler();
     }
 
     public void join(Player p, String mapId, boolean dev) {
         if (players.containsKey(p.getUniqueId()) || waiters.contains(p.getUniqueId())) {
             utils.sendMessage(p, values.getInGame());
             return;
-        } else if (mapId != null & !values.getSchematics().containsKey(mapId) || values.getSchematics().isEmpty() & !dev) {
-            utils.sendMessage(p, values.getNotfound());
-            return;
+        } else if (mapId != null && !dev) {
+            if (values.getSchematics().isEmpty() || !values.getSchematics().containsKey(mapId)) {
+                utils.sendMessage(p, values.getNotfound());
+                return;
+            }
         }
         generateRoom(p, mapId, dev);
     }
 
     private void generateRoom(Player p, String mapId, boolean dev) {
         UUID uuid = p.getUniqueId();
-        String name = values.getWorldStart() + (dev ? "E" : "") + rnd.nextInt(values.getAmount());
-        if (!values.getRooms().containsKey(name)) {
+        int amount = values.getAmount();
+        String name = values.getWorldStart() + (dev ? "E" : "") + (amount < 1 ? 1 : rnd.nextInt(amount));
+        if (amount > 0 && !values.getRooms().containsKey(name)) {
             tasks.remove(uuid);
             String[] replace = {name};
             utils.sendMessage(p, values.getConnect(), search, replace);

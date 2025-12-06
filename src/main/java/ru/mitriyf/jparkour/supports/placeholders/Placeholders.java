@@ -9,13 +9,13 @@ import ru.mitriyf.jparkour.game.Game;
 import ru.mitriyf.jparkour.game.manager.Manager;
 import ru.mitriyf.jparkour.supports.tops.Tops;
 import ru.mitriyf.jparkour.supports.tops.schematic.Schematic;
-import ru.mitriyf.jparkour.supports.tops.schematic.player.SPlayerData;
+import ru.mitriyf.jparkour.supports.tops.schematic.player.PlayerDataSchematic;
 import ru.mitriyf.jparkour.utils.Utils;
 import ru.mitriyf.jparkour.values.Values;
 
 public class Placeholders extends PlaceholderExpansion {
-    private final String fals = PlaceholderAPIPlugin.booleanFalse();
-    private final String tru = PlaceholderAPIPlugin.booleanTrue();
+    private final String falseString = PlaceholderAPIPlugin.booleanFalse();
+    private final String trueString = PlaceholderAPIPlugin.booleanTrue();
     private final Manager manager;
     private final Values values;
     private final Utils utils;
@@ -31,7 +31,7 @@ public class Placeholders extends PlaceholderExpansion {
     @Override
     public String onPlaceholderRequest(Player p, @NotNull String ind) {
         String[] args = ind.split("_");
-        if (args.length >= 1) {
+        if (p != null && args.length >= 1) {
             if (args[0].equalsIgnoreCase("tops")) {
                 return tops(p, args);
             }
@@ -53,10 +53,10 @@ public class Placeholders extends PlaceholderExpansion {
                 String name = args[2].replace("name=", "");
                 topPlace = schematic.getTopName().getOrDefault(name, -404);
                 if (topPlace == -404) {
-                    return fals;
+                    return falseString;
                 }
             }
-            SPlayerData playerData = schematic.getTop().get(topPlace);
+            PlayerDataSchematic playerData = schematic.getTop().get(topPlace);
             if (playerData == null) {
                 if (args[3].equalsIgnoreCase("name")) {
                     String text = values.getNotClaimed().getOrDefault(utils.getLocale().player(p), values.getNotClaimed().get(""));
@@ -85,7 +85,7 @@ public class Placeholders extends PlaceholderExpansion {
     private String player(Player p, String[] args) {
         Game game = manager.getGame(p.getUniqueId());
         if (args[0].equalsIgnoreCase("active")) {
-            return game != null ? tru : fals;
+            return game != null ? trueString : falseString;
         } else if (game != null) {
             switch (args[0].toLowerCase()) {
                 case "status": {

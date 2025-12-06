@@ -66,12 +66,23 @@ public class ItemEditor {
             if (p.getItemInHand().getType() == Material.AIR) {
                 p.sendMessage("§cYour hand is empty. The item is accepted.");
             }
-            if (!args[3].equals("default") && !values.getItemSlots().getConfigurationSection("schematics").getKeys(false).contains(args[3])) {
+            boolean args3Default = args[3].equals("default");
+            if (!args3Default && !values.getItemSlots().getConfigurationSection("schematics").getKeys(false).contains(args[3])) {
                 p.sendMessage("§aList schematics:\n§f" + values.getSchematics().keySet());
                 return;
             }
-            String sPath = args[3].equals("default") ? "default." : "schematics." + args[3];
-            int slot = Integer.parseInt(args[4]);
+            String sPath = args3Default ? "default." : "schematics." + args[3];
+            int slot;
+            try {
+                slot = Integer.parseInt(args[4]);
+                if (slot < 0) {
+                    p.sendMessage("§cInsert a number > 0!");
+                    return;
+                }
+            } catch (Exception e) {
+                p.sendMessage("§cInsert a number, not a string");
+                return;
+            }
             Set<String> items = values.getItemSlots().getConfigurationSection(sPath).getKeys(false);
             if (items.contains(args[5])) {
                 p.sendMessage("§cThe item name is already taken. Change the name or delete that item.");
@@ -91,8 +102,9 @@ public class ItemEditor {
 
     private void listItems(CommandSender s, String[] args) {
         if (args.length == 4) {
-            if (args[3].equals("default") || values.getItemSlots().getConfigurationSection("schematics").getKeys(false).contains(args[3])) {
-                String id = args[3].equals("default") ? values.getItemSlots().getConfigurationSection("default").getKeys(false).toString() : values.getItemSlots().getConfigurationSection("schematics." + args[3]).getKeys(false).toString();
+            boolean args3Default = args[3].equals("default");
+            if (args3Default || values.getItemSlots().createSection("schematics").getKeys(false).contains(args[3])) {
+                String id = args3Default ? values.getItemSlots().getConfigurationSection("default").getKeys(false).toString() : values.getItemSlots().getConfigurationSection("schematics." + args[3]).getKeys(false).toString();
                 s.sendMessage("§aList items " + args[3] + " schematic:\n§f" + id);
                 return;
             }
@@ -102,8 +114,9 @@ public class ItemEditor {
 
     private void infoItem(CommandSender s, String[] args) {
         if (args.length == 5) {
-            if (args[3].equals("default") || values.getItemSlots().getConfigurationSection("schematics").getKeys(false).contains(args[3])) {
-                ConfigurationSection schematics = args[3].equals("default") ? values.getItemSlots().getConfigurationSection("default") : values.getItemSlots().getConfigurationSection("schematics." + args[3]);
+            boolean args3Default = args[3].equals("default");
+            if (args3Default || values.getItemSlots().getConfigurationSection("schematics").getKeys(false).contains(args[3])) {
+                ConfigurationSection schematics = args3Default ? values.getItemSlots().getConfigurationSection("default") : values.getItemSlots().getConfigurationSection("schematics." + args[3]);
                 ConfigurationSection item = schematics.getConfigurationSection(args[4]);
                 if (item != null) {
                     s.sendMessage("§aItem " + args[4] + ":\n");
@@ -123,8 +136,9 @@ public class ItemEditor {
 
     private void removeItem(CommandSender s, String[] args) {
         if (args.length == 5) {
-            if (args[3].equals("default") || values.getItemSlots().getConfigurationSection("schematics").getKeys(false).contains(args[3])) {
-                ConfigurationSection schematics = args[3].equals("default") ? values.getItemSlots().getConfigurationSection("default") : values.getItemSlots().getConfigurationSection("schematics." + args[3]);
+            boolean args3Default = args[3].equals("default");
+            if (args3Default || values.getItemSlots().getConfigurationSection("schematics").getKeys(false).contains(args[3])) {
+                ConfigurationSection schematics = args3Default ? values.getItemSlots().getConfigurationSection("default") : values.getItemSlots().getConfigurationSection("schematics." + args[3]);
                 ConfigurationSection item = schematics.getConfigurationSection(args[4]);
                 if (item != null) {
                     FileConfiguration slots = values.getItemSlots();

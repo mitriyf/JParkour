@@ -1,6 +1,5 @@
 package ru.mitriyf.jparkour.events;
 
-import org.bukkit.event.Listener;
 import org.bukkit.plugin.PluginManager;
 import ru.mitriyf.jparkour.JParkour;
 import ru.mitriyf.jparkour.events.block.BlockEvents;
@@ -8,7 +7,7 @@ import ru.mitriyf.jparkour.events.entity.EntityEvents;
 import ru.mitriyf.jparkour.events.player.PlayerEvents;
 import ru.mitriyf.jparkour.events.world.WorldEvents;
 
-public class Events implements Listener {
+public class Events {
     private final WorldEvents worldEvents;
     private final BlockEvents blockEvents;
     private final EntityEvents entityEvents;

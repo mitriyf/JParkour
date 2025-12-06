@@ -25,7 +25,6 @@ default:
         - ""
         - "&cExit&f, and what is it?"
         - ""
-      # Specify BARRIER so that the plugin can detect that this is an exit button.
       type: BARRIER
   restart:
     slot: 7

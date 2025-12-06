@@ -1,7 +1,7 @@
 package ru.mitriyf.jparkour.supports.tops.schematic;
 
 import lombok.Getter;
-import ru.mitriyf.jparkour.supports.tops.schematic.player.SPlayerData;
+import ru.mitriyf.jparkour.supports.tops.schematic.player.PlayerDataSchematic;
 
 import java.io.File;
 import java.sql.Timestamp;
@@ -12,21 +12,21 @@ import java.util.*;
 @Getter
 public class Schematic {
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yy.MM.dd HH:mm:ss");
-    private final Map<Integer, SPlayerData> top = new HashMap<>();
+    private final Map<Integer, PlayerDataSchematic> top = new HashMap<>();
     private final Map<String, Integer> topName = new HashMap<>();
 
     public Schematic(File schematics) {
         File[] files = schematics.listFiles();
         if (files != null) {
-            List<SPlayerData> playersData = new ArrayList<>();
+            List<PlayerDataSchematic> playersData = new ArrayList<>();
             for (File file : files) {
-                playersData.add(new SPlayerData(file));
+                playersData.add(new PlayerDataSchematic(file));
             }
             updateTop(playersData);
         }
     }
 
-    private void updateTop(List<SPlayerData> playersData) {
+    private void updateTop(List<PlayerDataSchematic> playersData) {
         top.clear();
         playersData.sort((p1, p2) -> {
             int dCompare = Double.compare(p2.getAccuracy(), p1.getAccuracy());
@@ -40,14 +40,14 @@ public class Schematic {
             }
         });
         for (int i = 0; i < playersData.size(); i++) {
-            SPlayerData playerData = playersData.get(i);
+            PlayerDataSchematic playerData = playersData.get(i);
             int topPlace = i + 1;
             top.put(topPlace, playerData);
             topName.put(playerData.getName(), topPlace);
         }
     }
 
-    private Date getDate(SPlayerData data) {
+    private Date getDate(PlayerDataSchematic data) {
         return Timestamp.valueOf(LocalDateTime.parse(data.getTime(), formatter));
     }
 }

@@ -2,74 +2,63 @@ package ru.mitriyf.jparkour.utils;
 
 import lombok.Getter;
 import me.clip.placeholderapi.PlaceholderAPI;
-import net.md_5.bungee.api.ChatMessageType;
-import net.md_5.bungee.api.chat.TextComponent;
-import org.bukkit.*;
-import org.bukkit.boss.BarColor;
-import org.bukkit.boss.BarFlag;
-import org.bukkit.boss.BarStyle;
-import org.bukkit.boss.BossBar;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scheduler.BukkitScheduler;
+import org.bukkit.scheduler.BukkitTask;
 import ru.mitriyf.jparkour.JParkour;
 import ru.mitriyf.jparkour.utils.actions.Action;
 import ru.mitriyf.jparkour.utils.actions.ActionType;
+import ru.mitriyf.jparkour.utils.actions.ActionUtils;
 import ru.mitriyf.jparkour.utils.actions.titles.Title;
-import ru.mitriyf.jparkour.utils.actions.titles.versions.Title10;
-import ru.mitriyf.jparkour.utils.actions.titles.versions.Title11;
+import ru.mitriyf.jparkour.utils.actions.titles.impl.Title10;
+import ru.mitriyf.jparkour.utils.actions.titles.impl.Title11;
+import ru.mitriyf.jparkour.utils.common.CommonUtils;
 import ru.mitriyf.jparkour.utils.locales.Locale;
-import ru.mitriyf.jparkour.utils.locales.versions.Locale12;
-import ru.mitriyf.jparkour.utils.locales.versions.Locale13;
+import ru.mitriyf.jparkour.utils.locales.impl.Locale12;
+import ru.mitriyf.jparkour.utils.locales.impl.Locale13;
 import ru.mitriyf.jparkour.utils.schematic.Paste;
-import ru.mitriyf.jparkour.utils.schematic.versions.Paste12;
-import ru.mitriyf.jparkour.utils.schematic.versions.Paste13;
+import ru.mitriyf.jparkour.utils.schematic.impl.Paste12;
+import ru.mitriyf.jparkour.utils.schematic.impl.Paste13;
 import ru.mitriyf.jparkour.utils.worlds.WorldGenerator;
-import ru.mitriyf.jparkour.utils.worlds.versions.Generator12;
-import ru.mitriyf.jparkour.utils.worlds.versions.Generator13;
+import ru.mitriyf.jparkour.utils.worlds.impl.Generator12;
+import ru.mitriyf.jparkour.utils.worlds.impl.Generator13;
 import ru.mitriyf.jparkour.values.Values;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+@Getter
 public class Utils {
-    private final BukkitScheduler scheduler;
-    private final CountDownLatch latch;
-    private final JParkour plugin;
     private final Values values;
     private final Logger logger;
-    @Getter
-    public Paste schematic;
-    @Getter
+    private final JParkour plugin;
+    private final CountDownLatch latch;
+    private final CommonUtils commonUtils;
+    private final ActionUtils actionUtils;
+    private final Set<Integer> tasks = new HashSet<>();
     private boolean actionBar = false, bar = false, tit = false;
-    @Getter
     private WorldGenerator worldGenerator;
-    @Getter
     private Material gSword;
-    @Getter
+    private Paste schematic;
     private Locale locale;
     private Title title;
 
     public Utils(JParkour plugin) {
         this.plugin = plugin;
-        this.values = plugin.getValues();
-        this.logger = plugin.getLogger();
-        this.latch = new CountDownLatch(1);
-        this.scheduler = plugin.getServer().getScheduler();
+        values = plugin.getValues();
+        logger = plugin.getLogger();
+        latch = new CountDownLatch(1);
+        actionUtils = new ActionUtils(this, plugin);
+        commonUtils = new CommonUtils(this, plugin);
     }
 
     public void setup() {
@@ -104,40 +93,53 @@ public class Utils {
         }
     }
 
-    public void sendMessage(Player p, List<Action> actions) {
-        scheduler.runTaskAsynchronously(plugin, () -> {
-            for (Action action : actions) {
-                sendPlayer(p, action, null, null);
-            }
-        });
+    public BukkitTask sendMessage(Player p, List<Action> actions) {
+        return sendMessage(p, actions, null, null);
     }
 
-    public void sendMessage(Player p, List<Action> actions, String[] search, String[] replace) {
-        scheduler.runTaskAsynchronously(plugin, () -> {
-            for (Action action : actions) {
-                sendPlayer(p, action, search, replace);
-            }
-        });
-    }
-
-
-    public void sendMessage(CommandSender sender, Map<String, List<Action>> actions) {
-        scheduler.runTaskAsynchronously(plugin, () -> sendMessage(sender, actions, null, null));
-    }
-
-    public void sendMessage(CommandSender sender, Map<String, List<Action>> actions, String[] search, String[] replace) {
-        scheduler.runTaskAsynchronously(plugin, () -> {
-            if (sender instanceof Player) {
-                Player p = (Player) sender;
-                for (Action action : actions.getOrDefault(locale.player(p), actions.get(""))) {
+    public BukkitTask sendMessage(Player p, List<Action> actions, String[] search, String[] replace) {
+        return new BukkitRunnable() {
+            @Override
+            public void run() {
+                tasks.add(getTaskId());
+                for (Action action : actions) {
+                    if (!tasks.contains(getTaskId())) {
+                        return;
+                    }
                     sendPlayer(p, action, search, replace);
                 }
-                return;
             }
-            for (Action action : actions.get("")) {
-                sendSender(sender, action, search, replace);
+        }.runTaskAsynchronously(plugin);
+    }
+
+
+    public BukkitTask sendMessage(CommandSender sender, Map<String, List<Action>> actions) {
+        return sendMessage(sender, actions, null, null);
+    }
+
+    public BukkitTask sendMessage(CommandSender sender, Map<String, List<Action>> actions, String[] search, String[] replace) {
+        return new BukkitRunnable() {
+            @Override
+            public void run() {
+                tasks.add(getTaskId());
+                if (sender instanceof Player) {
+                    Player p = (Player) sender;
+                    for (Action action : actions.getOrDefault(locale.player(p), actions.get(""))) {
+                        if (!tasks.contains(getTaskId())) {
+                            return;
+                        }
+                        sendPlayer(p, action, search, replace);
+                    }
+                    return;
+                }
+                for (Action action : actions.get("")) {
+                    if (!tasks.contains(getTaskId())) {
+                        return;
+                    }
+                    sendSender(sender, action, search, replace);
+                }
             }
-        });
+        }.runTaskAsynchronously(plugin);
     }
 
     private void sendPlayer(Player p, Action action, String[] search, String[] replace) {
@@ -148,34 +150,34 @@ public class Utils {
         }
         switch (type) {
             case PLAYER:
-                dispatchPlayer(p, context);
+                actionUtils.dispatchPlayer(p, context);
                 break;
             case TELEPORT:
-                teleport(p, context);
+                actionUtils.teleportPlayer(p, context);
                 break;
             case CONSOLE:
-                dispatchConsole(context);
+                commonUtils.dispatchConsole(context);
                 break;
             case ACTIONBAR:
-                sendActionBar(p, context);
+                actionUtils.sendActionBar(p, context);
                 break;
             case BOSSBAR:
-                sendBossbar(p, context);
+                actionUtils.sendBossbar(p, context);
                 break;
             case BROADCAST:
-                broadcast(context);
+                commonUtils.broadcast(context);
                 break;
             case TITLE:
-                title(p, context);
+                actionUtils.sendTitle(p, context);
                 break;
             case SOUND:
-                playSound(p, context);
+                actionUtils.playSound(p, context);
                 break;
             case EFFECT:
-                giveEffect(p, context);
+                actionUtils.giveEffect(p, context);
                 break;
             case EXPLOSION:
-                createExplosion(p, context);
+                actionUtils.createExplosion(p, context);
                 break;
             case LOG:
                 log(context);
@@ -199,10 +201,10 @@ public class Utils {
         String context = replaceEach(action.getContext(), search, replace);
         switch (type) {
             case CONSOLE:
-                dispatchConsole(context);
+                commonUtils.dispatchConsole(context);
                 break;
             case BROADCAST:
-                broadcast(context);
+                commonUtils.broadcast(context);
                 break;
             case LOG:
                 log(context);
@@ -230,273 +232,6 @@ public class Utils {
         }
     }
 
-    private void playSound(Player p, String s) {
-        try {
-            String[] spl = s.split(";");
-            if (spl.length == 0 || spl.length > 4) {
-                logger.warning("Invalid sound. [sound;volume;pitch;delay], error: " + s);
-                return;
-            }
-            int later = spl.length == 4 ? fInt(spl[3]) : 0;
-            Sound sound = Sound.valueOf(spl[0]);
-            float volume = spl.length >= 2 ? fFloat(spl[1]) : 1.0F;
-            float pitch = spl.length >= 3 ? fFloat(spl[2]) : 1.0F;
-            scheduler.runTaskLaterAsynchronously(plugin, () -> p.playSound(p.getLocation(), sound, volume, pitch), later);
-        } catch (Exception e) {
-            logger.warning("Sound error: " + e);
-        }
-    }
-
-    private void giveEffect(Player p, String s) {
-        try {
-            String[] spl = s.split(";");
-            if (spl.length == 0 || spl.length > 4) {
-                logger.warning("Invalid effect. [type;duration;amplifier;delay], error: " + s);
-                return;
-            }
-            int later = spl.length == 4 ? fInt(spl[3]) : 0;
-            PotionEffectType type = PotionEffectType.getByName(spl[0]);
-            int duration = spl.length >= 2 ? fInt(spl[1]) : 1;
-            int amplifier = spl.length >= 3 ? fInt(spl[2]) : 1;
-            PotionEffect effect = new PotionEffect(type, duration, amplifier);
-            scheduler.runTaskLater(plugin, () -> p.addPotionEffect(effect), later);
-        } catch (Exception e) {
-            logger.warning("Effect error: " + e);
-        }
-    }
-
-    private void teleport(Player p, String s) {
-        try {
-            String[] spl = s.split(";");
-            if (spl.length == 0 || spl.length > 7) {
-                logger.warning("Invalid location. [world;x;y;z;yaw;pitch;delay], error: " + s);
-                return;
-            }
-            int later = spl.length == 7 ? fInt(spl[6]) : 0;
-            World w = Bukkit.getWorld(spl[0]);
-            if (w == null) {
-                w = Bukkit.getWorld("world");
-            }
-            double x = spl.length >= 2 ? fDouble(spl[1]) : 0;
-            double y = spl.length >= 3 ? fDouble(spl[2]) : 80;
-            double z = spl.length >= 4 ? fDouble(spl[3]) : 0;
-            float yaw = spl.length >= 5 ? fFloat(spl[4]) : 180;
-            float pitch = spl.length >= 6 ? fFloat(spl[5]) : 0;
-            Location loc = new Location(w, x, y, z, yaw, pitch);
-            scheduler.runTaskLater(plugin, () -> p.teleport(loc), later);
-        } catch (Exception e) {
-            logger.warning("Teleport error: " + e);
-        }
-    }
-
-    // PLAYEFFECT, FIREWORK, PARTICLE. FIX 1.13-1.14 light.
-    // больше слотов в эдиторе.
-    private void createExplosion(Player p, String s) {
-        try {
-            String[] spl = s.split(";");
-            if (spl.length == 0 || spl.length > 7) {
-                logger.warning("Invalid explosion. [power;setFire;breakBlocks;delay;addX;addY;addZ], error: " + s);
-                return;
-            }
-            int later = spl.length >= 4 ? fInt(spl[3]) : 0;
-            float power = fFloat(spl[0]);
-            boolean setFire = spl.length >= 2 && fBoolean(spl[1]);
-            boolean breakBlocks = spl.length >= 3 && fBoolean(spl[2]);
-            Location loc = p.getLocation().clone();
-            double addX = spl.length >= 5 ? fDouble(spl[4]) : 0;
-            double addY = spl.length >= 6 ? fDouble(spl[5]) : 0;
-            double addZ = spl.length == 7 ? fDouble(spl[6]) : 0;
-            loc.add(addX, addY, addZ);
-            scheduler.runTaskLater(plugin, () -> p.getWorld().createExplosion(loc.getX(), loc.getY(), loc.getZ(), power, setFire, breakBlocks), later);
-        } catch (Exception e) {
-            logger.warning("Explosion error: " + e);
-        }
-    }
-
-    private void dispatchConsole(String cmd) {
-        scheduler.runTaskLater(plugin, () -> plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), cmd), 0);
-    }
-
-    private void dispatchPlayer(Player p, String cmd) {
-        scheduler.runTaskLater(plugin, () -> p.chat(cmd), 0);
-    }
-
-    @SuppressWarnings("deprecation")
-    private void sendActionBar(Player p, String bar) {
-        try {
-            if (actionBar) {
-                logger.warning("Invalid actionbar. [message]. For 1.11+, error: " + bar);
-                return;
-            }
-            p.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(fStr(bar)));
-        } catch (Exception e) {
-            logger.warning("ActionBar error: " + e);
-        }
-    }
-
-    private void broadcast(String message) {
-        String formatted = fStr(message);
-        for (Player onlinePlayer : plugin.getServer().getOnlinePlayers()) {
-            onlinePlayer.sendMessage(formatted);
-        }
-    }
-
-    private void title(Player p, String titleS) {
-        scheduler.runTaskAsynchronously(plugin, () -> {
-            try {
-                String[] t = titleS.split(";");
-                if (t.length == 0 || t.length > 5 || tit) {
-                    logger.warning("Invalid title. [title;subtitle;int;int1;int2]. For 1.8+, error: " + title);
-                    return;
-                }
-                String titleF = fStr(t[0]);
-                String subtitle = t.length >= 2 ? fStr(t[1]) : "";
-                int fadeIn = t.length >= 3 ? fInt(t[2]) : 10;
-                int stay = t.length >= 4 ? fInt(t[3]) : 60;
-                int fadeOut = t.length == 5 ? fInt(t[4]) : 20;
-                title.send(p, titleF, subtitle, fadeIn, stay, fadeOut);
-            } catch (Exception e) {
-                logger.warning("Title error: " + e);
-            }
-        });
-
-    }
-
-    private void sendBossbar(Player p, String bossbar) {
-        try {
-            String[] b = bossbar.split(";");
-            if (b.length == 0 || b.length > 6 || bar) {
-                logger.warning("Invalid bossbar. [message;color;type;time;style;flag]. For 1.9+, error: " + bossbar);
-                return;
-            }
-            BarColor color = b.length >= 2 ? BarColor.valueOf(b[1].toUpperCase()) : BarColor.WHITE;
-            String type = b.length >= 3 ? b[2].toLowerCase() : "time";
-            long time = b.length >= 4 ? fInt(b[3]) : 5;
-            long ticks = time * 20L;
-            BarStyle style = b.length >= 5 ? BarStyle.valueOf(b[4].toUpperCase()) : BarStyle.SEGMENTED_6;
-            BarFlag flag = b.length == 6 ? BarFlag.valueOf(b[5].toUpperCase()) : null;
-            boolean update = b[0].contains("%time%");
-            String text = fStr(b[0].replace("%time%", time + ""));
-            BossBar bossBar = flag == null ? plugin.getServer().createBossBar(text, color, style) : plugin.getServer().createBossBar(text, color, style, flag);
-            bossBar.addPlayer(p);
-            if (type.equalsIgnoreCase("stop")) {
-                scheduler.runTaskLaterAsynchronously(plugin, () -> {
-                    bossBar.removeAll();
-                    bossBar.setVisible(false);
-                }, ticks);
-            } else {
-                new BukkitRunnable() {
-                    private int t = 0;
-
-                    @Override
-                    public void run() {
-                        t++;
-                        if (t == ticks) {
-                            bossBar.removeAll();
-                            bossBar.setVisible(false);
-                            cancel();
-                            return;
-                        }
-                        int left = (int) (time - Math.floor((double) t / 20));
-                        if (update) {
-                            bossBar.setTitle(fStr(b[0].replace("%time%", left + "")));
-                        }
-                        bossBar.setProgress(1 - ((double) t / ticks));
-                    }
-                }.runTaskTimerAsynchronously(plugin, 1, 1);
-            }
-        } catch (Exception e) {
-            logger.warning("Bossbar error: " + e);
-        }
-    }
-
-    private void sendMessage(CommandSender s, String text) {
-        s.sendMessage(fStr(text));
-    }
-
-    private void log(String log) {
-        logger.info(log);
-    }
-
-    private String fStr(String s) {
-        return values.getColorizer().colorize(s);
-    }
-
-    private Float fFloat(String s) {
-        return Float.parseFloat(s);
-    }
-
-    private int fInt(String s) {
-        return Integer.parseInt(s);
-    }
-
-    private double fDouble(String s) {
-        return Double.parseDouble(s);
-    }
-
-    private boolean fBoolean(String s) {
-        return Boolean.parseBoolean(s);
-    }
-
-    @SuppressWarnings("all")
-    public void paste(Location loc, String schematicId, boolean pasteAir) {
-        try {
-            schematic.paste(loc, schematicId, pasteAir);
-        } catch (Exception error) {
-            logger.warning("An error occurred while inserting the diagram. Please contact the administrator.\nError: " + error);
-        }
-    }
-
-    @SuppressWarnings("deprecation")
-    public void saveItem(Player p, String sPath, int slot, String itemName, Material material) {
-        String item = sPath + "." + itemName;
-        FileConfiguration slots = values.getItemSlots();
-        slots.set(item + ".slot", slot);
-        if (p != null) {
-            slots.set(item + ".type", "itemstack");
-            slots.set(item + ".item", p.getItemInHand());
-        } else {
-            slots.set(item + ".type", "default");
-            slots.set(item + ".item.type", material.toString());
-        }
-        try {
-            slots.save(values.getSlotsFile());
-            if (p != null) {
-                p.sendMessage("§aThe " + itemName + " item was created successfully!\nUse: /jparkour reload - Apply the new settings.");
-            }
-        } catch (Exception e) {
-            plugin.getLogger().warning("Error item " + itemName + " save slots.yml: " + e);
-        }
-    }
-
-    public ItemStack generateItem(ConfigurationSection slot) {
-        try {
-            String type = slot.getString("type");
-            if (type != null && type.equalsIgnoreCase("itemstack")) {
-                return slot.getItemStack("item");
-            }
-            slot = slot.getConfigurationSection("item");
-            ItemStack item = new ItemStack(Material.valueOf(slot.getString("type")));
-            ItemMeta meta = item.getItemMeta();
-            meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
-            if (slot.getString("name") != null) {
-                meta.setDisplayName(values.getColorizer().colorize(slot.getString("name")));
-            }
-            if (slot.getString("lore") != null) {
-                List<String> l = new ArrayList<>();
-                for (String t : slot.getStringList("lore")) {
-                    l.add(values.getColorizer().colorize(t));
-                }
-                meta.setLore(l);
-            }
-            item.setItemMeta(meta);
-            return item;
-        } catch (Exception e) {
-            logger.warning("Error generate item " + slot.toString() + ": " + e);
-            return new ItemStack(Material.AIR);
-        }
-    }
-
     private String replaceEach(String text, String[] searchList, String[] replacementList) {
         if (text.isEmpty() || searchList == null || replacementList == null) {
             return text;
@@ -515,15 +250,6 @@ public class Utils {
         return result.toString();
     }
 
-    public Entity getEntity(World world, UUID uuid) {
-        for (Entity entity : world.getEntities()) {
-            if (entity.getUniqueId().equals(uuid)) {
-                return entity;
-            }
-        }
-        return null;
-    }
-
     public String repeat(String str, int count) {
         if (count <= 0) {
             return "";
@@ -533,5 +259,62 @@ public class Utils {
             sb.append(str);
         }
         return sb.toString();
+    }
+
+    public Entity getEntity(World world, UUID uuid) {
+        for (Entity entity : world.getEntities()) {
+            if (entity.getUniqueId().equals(uuid)) {
+                return entity;
+            }
+        }
+        return null;
+    }
+
+    public void paste(Location loc, String schematicId, boolean pasteAir) {
+        try {
+            schematic.paste(loc, schematicId, pasteAir);
+        } catch (Exception error) {
+            logger.warning("An error occurred while inserting the diagram. Please contact the administrator.\nError: " + error);
+        }
+    }
+
+    public void saveItem(Player p, String sPath, int slot, String itemName, Material material) {
+        commonUtils.saveItem(p, sPath, slot, itemName, material);
+    }
+
+    public ItemStack generateItem(ConfigurationSection slot) {
+        return commonUtils.generateItem(slot);
+    }
+
+    private void sendMessage(CommandSender sender, String text) {
+        sender.sendMessage(formatString(text));
+    }
+
+    private void sendMessage(Player player, String text) {
+        player.sendMessage(formatString(text));
+    }
+
+    public String formatString(String s) {
+        return values.getColorizer().colorize(s);
+    }
+
+    public Float formatFloat(String s) {
+        return Float.parseFloat(s);
+    }
+
+    public int formatInt(String s) {
+        return Integer.parseInt(s);
+    }
+
+    public double formatDouble(String s) {
+        return Double.parseDouble(s);
+    }
+
+    public boolean formatBoolean(String s) {
+        return Boolean.parseBoolean(s);
+    }
+
+    private void log(String log) {
+        logger.info(log);
     }
 }

@@ -5,7 +5,6 @@ import lombok.Setter;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitScheduler;
@@ -16,12 +15,12 @@ import ru.mitriyf.jparkour.game.temp.data.LocationsData;
 import ru.mitriyf.jparkour.game.temp.data.PlayerData;
 import ru.mitriyf.jparkour.game.temp.editor.Editor;
 import ru.mitriyf.jparkour.game.temp.task.Run;
-import ru.mitriyf.jparkour.game.temp.task.stand.StandActive;
+import ru.mitriyf.jparkour.game.temp.task.data.StandActive;
 import ru.mitriyf.jparkour.utils.Utils;
 import ru.mitriyf.jparkour.utils.actions.Action;
 import ru.mitriyf.jparkour.values.Values;
-import ru.mitriyf.jparkour.values.data.SchematicData;
 import ru.mitriyf.jparkour.values.data.StandData;
+import ru.mitriyf.jparkour.values.data.schematic.SchematicData;
 
 import java.io.File;
 import java.util.*;
@@ -30,38 +29,38 @@ import java.util.concurrent.ThreadLocalRandom;
 
 @Getter
 public class Game {
-    private final JParkour plugin;
-    private final Utils utils;
-    private final Values values;
-    private final Manager manager;
-    private final Player player;
     private final UUID uuid;
-    private final ThreadLocalRandom rnd;
-    private final String[] searchGame = {"%game%"};
-    private final String[] search = {"%game%", "%accuracy%", "%star_win%", "%star_loss%"};
-    private final List<BukkitTask> tasks = new ArrayList<>();
-    private final Set<String> actives = new HashSet<>();
-    private final Map<String, StandData> stands;
-    private final BukkitScheduler scheduler;
-    private final Location start;
-    private final String locale;
-    private final boolean dev;
-    private final String name;
     private final String map;
+    private final boolean dev;
+    private final Utils utils;
+    private final String name;
+    private final Values values;
+    private final Player player;
+    private final String locale;
+    private final Location start;
+    private final JParkour plugin;
+    private final Manager manager;
+    private final ThreadLocalRandom rnd;
+    private final BukkitScheduler scheduler;
+    private final Map<String, StandData> stands;
+    private final String[] searchGame = {"%game%"};
+    private final Set<String> actives = new HashSet<>();
+    private final List<BukkitTask> tasks = new ArrayList<>();
+    private final String[] search = {"%game%", "%accuracy%", "%star_win%", "%star_loss%"};
     private int maxLefts, maxRights, health = 20, foodLevel = 10, exitTime;
-    private boolean fullSlots, started, restartActive;
-    private String mapName;
-    private SchematicData info;
-    private LocationsData locs;
-    private Editor editor;
-    private Run run;
-    private String status;
-    @Setter
-    private Material trigger;
+    private boolean fullSlots, started, restartActive, restartCooldown;
     @Setter
     private boolean triggerEnabled = true;
+    private SchematicData info;
+    private LocationsData locs;
     @Setter
     private int lefts, rights;
+    @Setter
+    private Material trigger;
+    private String mapName;
+    private Editor editor;
+    private String status;
+    private Run run;
 
     public Game(JParkour plugin, CountDownLatch latch, Player p, String mapId, String name, boolean dev) {
         this.plugin = plugin;
@@ -114,112 +113,16 @@ public class Game {
                 manager.getPlayers().remove(uuid);
                 close(true, false);
             } else {
+                locs.generateStands();
+                if (dev) {
+                    editor.setup();
+                }
                 setDefault();
                 if (info != null) {
                     sendMessage(values.getJoined(), info.getJoined(), searchGame, new String[]{name});
                 }
             }
         });
-    }
-
-    public World generateWorld(String name) {
-        return utils.getWorldGenerator().generateWorld(name);
-    }
-
-    public void kickPlayer(boolean force, boolean isPluginStop) {
-        PlayerData data = manager.getPlayers().get(uuid);
-        if (data != null) {
-            data.apply();
-        }
-        manager.getPlayers().remove(uuid);
-        if (!isPluginStop && info != null) {
-            if (force) {
-                sendMessage(values.getKicked(), info.getKicked(), searchGame, new String[]{name});
-            } else {
-                sendMessage(values.getEnd(), info.getMEnd(), searchGame, new String[]{name});
-            }
-        }
-    }
-
-    public void finish() {
-        status = values.getSWin().getOrDefault(locale, values.getSWin().get(""));
-        player.setAllowFlight(true);
-        player.setFlying(true);
-        double accuracy = info.getAccuracy(lefts, rights);
-        int accuracyFull = (int) Math.round(accuracy * 100);
-        int stars = info.getStars(accuracy);
-        String[] replace;
-        if (info.getStar().isEmpty()) {
-            replace = new String[]{name, String.valueOf(accuracyFull), String.valueOf(stars), "5"};
-        } else {
-            String star = info.getStar();
-            String fill = utils.repeat(star, stars);
-            String empty = utils.repeat(star, 5 - stars);
-            replace = new String[]{name, String.valueOf(accuracyFull), fill, empty};
-        }
-        plugin.getSupports().getTops().setData(player, map, accuracyFull);
-        sendMessage(values.getWin(), info.getWin(), search, replace);
-        info.sendMessage(player, stars);
-        tasks.add(scheduler.runTaskLater(plugin, () -> close(false, false), exitTime));
-    }
-
-    public void start() {
-        clear();
-        started = true;
-        start.setYaw(info.getYaw());
-        start.setPitch(info.getNorth());
-        player.teleport(start);
-        status = values.getSStart().getOrDefault(locale, values.getSStart().get(""));
-        if (!fullSlots) {
-            setSlots(info.getSlots());
-        }
-        run.startMove();
-    }
-
-    public void sendMessage(Map<String, List<Action>> msg, List<Action> msgSchem, String[] s, String[] r) {
-        utils.sendMessage(player, msg, s, r);
-        utils.sendMessage(player, msgSchem, s, r);
-    }
-
-    public void sendMessage(Map<String, List<Action>> msg, List<Action> msgSchem) {
-        utils.sendMessage(player, msg);
-        utils.sendMessage(player, msgSchem);
-    }
-
-    public void restart() {
-        clear();
-        setDefault();
-        started = false;
-        status = values.getSWait().getOrDefault(locale, values.getSWait().get(""));
-        player.teleport(locs.getSpawn());
-        if (info != null) {
-            sendMessage(values.getRestarted(), info.getRestarted());
-        }
-    }
-
-    public void restartActive() {
-        if (restartActive) {
-            return;
-        }
-        restartActive = true;
-        restart();
-        scheduler.runTaskLater(plugin, () -> restartActive = false, 2);
-    }
-
-    public void close(boolean force, boolean isPluginStop) {
-        clear();
-        removeStands();
-        kickPlayer(force, isPluginStop);
-        plugin.getServer().unloadWorld(name, false);
-        manager.getConfirmation().remove(name);
-        values.getRooms().remove(name);
-        if (values.isDeleteWhenClosing()) {
-            values.deleteDirectory(new File(name));
-        }
-    }
-
-    private String setMap(String mapId) {
-        return mapId != null ? mapId : values.getMaps().get(rnd.nextInt(values.getMaps().size()));
     }
 
     @SuppressWarnings("deprecation")
@@ -244,13 +147,104 @@ public class Game {
         }
     }
 
-    public void paste(Location loc, String schematic) {
-        utils.paste(loc, schematic, info.isPasteAir());
+    public void start() {
+        clear();
+        started = true;
+        start.setYaw(info.getYaw());
+        start.setPitch(info.getPitch());
+        player.teleport(start);
+        status = values.getSStart().getOrDefault(locale, values.getSStart().get(""));
+        if (!fullSlots) {
+            setSlots(info.getSlots());
+        }
+        run.startMove();
     }
 
-    private void setSlots(Map<Integer, ItemStack> slots) {
-        for (Map.Entry<Integer, ItemStack> s : slots.entrySet()) {
-            player.getInventory().setItem(s.getKey(), s.getValue());
+    public void finish() {
+        status = values.getSWin().getOrDefault(locale, values.getSWin().get(""));
+        player.setAllowFlight(true);
+        player.setFlying(true);
+        double accuracy = info.getAccuracy(lefts, rights);
+        int accuracyFull = (int) Math.round(accuracy * 100);
+        int stars = info.getStars(accuracy);
+        String[] replace;
+        if (info.getStar().isEmpty()) {
+            replace = new String[]{name, String.valueOf(accuracyFull), String.valueOf(stars), "5"};
+        } else {
+            String star = info.getStar();
+            String fill = utils.repeat(star, stars);
+            String empty = utils.repeat(star, 5 - stars);
+            replace = new String[]{name, String.valueOf(accuracyFull), fill, empty};
+        }
+        plugin.getSupports().getTops().setData(player, map, accuracyFull);
+        sendMessage(values.getWin(), info.getWin(), search, replace);
+        info.sendMessage(player, stars);
+        tasks.add(scheduler.runTaskLater(plugin, () -> close(false, false), exitTime));
+    }
+
+    public void restart() {
+        clear();
+        setDefault();
+        started = false;
+        status = values.getSWait().getOrDefault(locale, values.getSWait().get(""));
+        player.teleport(locs.getSpawn());
+        if (info != null) {
+            sendMessage(values.getRestarted(), info.getRestarted());
+        }
+    }
+
+    public void restartActive() {
+        if (active()) {
+            return;
+        }
+        restart();
+    }
+
+    public void playerRestart() {
+        if (active()) {
+            return;
+        } else if (restartCooldown) {
+            sendMessage(values.getCooldownRestart(), info.getCooldownRestart());
+            return;
+        }
+        restartCooldown = true;
+        restart();
+        scheduler.runTaskLater(plugin, () -> restartCooldown = false, values.getRestartCooldown());
+    }
+
+    private boolean active() {
+        if (restartActive) {
+            return true;
+        }
+        restartActive = true;
+        scheduler.runTaskLater(plugin, () -> restartActive = false, 2);
+        return false;
+    }
+
+    private void kickPlayer(boolean force, boolean isPluginStop) {
+        PlayerData data = manager.getPlayers().get(uuid);
+        if (data != null) {
+            data.apply();
+        }
+        manager.getPlayers().remove(uuid);
+        if (!isPluginStop && info != null) {
+            if (force) {
+                sendMessage(values.getKicked(), info.getKicked(), searchGame, new String[]{name});
+            } else {
+                sendMessage(values.getEnd(), info.getMEnd(), searchGame, new String[]{name});
+            }
+        }
+    }
+
+    public void close(boolean force, boolean isPluginStop) {
+        clear();
+        removeStands();
+        kickPlayer(force, isPluginStop);
+        plugin.getServer().unloadWorld(name, false);
+        manager.getConfirmation().remove(name);
+        values.getRooms().remove(name);
+        if (values.isDeleteWhenClosing()) {
+            values.deleteDirectory(new File(name));
         }
     }
 
@@ -278,9 +272,30 @@ public class Game {
         lefts = 0;
         rights = 0;
         for (BukkitTask task : tasks) {
+            utils.getTasks().remove(task.getTaskId());
             task.cancel();
         }
         tasks.clear();
         actives.clear();
+    }
+
+    private String setMap(String mapId) {
+        return mapId != null ? mapId : values.getMaps().get(rnd.nextInt(values.getMaps().size()));
+    }
+
+    private void setSlots(Map<Integer, ItemStack> slots) {
+        for (Map.Entry<Integer, ItemStack> s : slots.entrySet()) {
+            player.getInventory().setItem(s.getKey(), s.getValue());
+        }
+    }
+
+    public void sendMessage(Map<String, List<Action>> msg, List<Action> msgSchem, String[] s, String[] r) {
+        tasks.add(utils.sendMessage(player, msg, s, r));
+        tasks.add(utils.sendMessage(player, msgSchem, s, r));
+    }
+
+    public void sendMessage(Map<String, List<Action>> msg, List<Action> msgSchem) {
+        tasks.add(utils.sendMessage(player, msg));
+        tasks.add(utils.sendMessage(player, msgSchem));
     }
 }

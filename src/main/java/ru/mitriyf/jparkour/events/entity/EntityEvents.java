@@ -24,9 +24,10 @@ public class EntityEvents implements Listener {
     }
 
     @EventHandler
-    public void creatureSpawn(CreatureSpawnEvent e) {
-        if (startWithWorld(e.getEntity())) {
-            Game game = manager.getGame(e.getEntity().getWorld().getName());
+    public void onCreatureSpawn(CreatureSpawnEvent e) {
+        Entity entity = e.getEntity();
+        if (startWithWorld(entity)) {
+            Game game = getGame(entity);
             if (game != null && e.getSpawnReason() != reason && !game.getInfo().isCreatureSpawn()) {
                 e.setCancelled(true);
             }
@@ -34,14 +35,15 @@ public class EntityEvents implements Listener {
     }
 
     @EventHandler
-    public void playerArmorStandManipulate(PlayerArmorStandManipulateEvent e) {
+    public void onPlayerArmorStandManipulate(PlayerArmorStandManipulateEvent e) {
         e.setCancelled(startWithWorld(e.getPlayer()));
     }
 
     @EventHandler
-    public void entityExplode(EntityExplodeEvent e) {
-        if (startWithWorld(e.getEntity())) {
-            Game game = manager.getGame(e.getEntity().getWorld().getName());
+    public void onEntityExplode(EntityExplodeEvent e) {
+        Entity entity = e.getEntity();
+        if (startWithWorld(entity)) {
+            Game game = getGame(entity);
             if (game != null && !game.getInfo().isEntityExplode()) {
                 e.setCancelled(true);
             }
@@ -49,9 +51,10 @@ public class EntityEvents implements Listener {
     }
 
     @EventHandler
-    public void entityTarget(EntityTargetEvent e) {
-        if (startWithWorld(e.getEntity())) {
-            Game game = manager.getGame(e.getEntity().getWorld().getName());
+    public void onEntityTarget(EntityTargetEvent e) {
+        Entity entity = e.getEntity();
+        if (startWithWorld(entity)) {
+            Game game = getGame(entity);
             if (game != null && !game.getInfo().isEntityTarget()) {
                 e.setCancelled(true);
             }
@@ -59,13 +62,18 @@ public class EntityEvents implements Listener {
     }
 
     @EventHandler
-    public void itemSpawn(ItemSpawnEvent e) {
-        if (startWithWorld(e.getEntity())) {
-            Game game = manager.getGame(e.getEntity().getWorld().getName());
+    public void onItemSpawn(ItemSpawnEvent e) {
+        Entity entity = e.getEntity();
+        if (startWithWorld(entity)) {
+            Game game = getGame(entity);
             if (game != null && !game.getInfo().isItemSpawn()) {
                 e.setCancelled(true);
             }
         }
+    }
+
+    private Game getGame(Entity entity) {
+        return manager.getGame(entity.getWorld().getName());
     }
 
     private boolean startWithWorld(Entity e) {

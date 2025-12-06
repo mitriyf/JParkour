@@ -54,7 +54,7 @@ editor:
       # Description of the item.
       lore:
         - ""
-        - "&aSet stand."
+        - "&aSet stand/loc/point."
         - ""
       # Specify BARRIER so that the plugin can detect that this is an exit button.
       type: IRON_AXE

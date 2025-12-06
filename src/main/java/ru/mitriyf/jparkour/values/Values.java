@@ -13,10 +13,10 @@ import ru.mitriyf.jparkour.utils.Utils;
 import ru.mitriyf.jparkour.utils.actions.Action;
 import ru.mitriyf.jparkour.utils.actions.ActionType;
 import ru.mitriyf.jparkour.utils.colors.Colorizer;
-import ru.mitriyf.jparkour.utils.colors.types.CHex;
-import ru.mitriyf.jparkour.utils.colors.types.CMiniMessage;
-import ru.mitriyf.jparkour.values.data.SchematicData;
+import ru.mitriyf.jparkour.utils.colors.impl.LegacyColorizer;
+import ru.mitriyf.jparkour.utils.colors.impl.MiniMessageColorizer;
 import ru.mitriyf.jparkour.values.data.StandData;
+import ru.mitriyf.jparkour.values.data.schematic.SchematicData;
 import ru.mitriyf.jparkour.values.updater.Updater;
 
 import java.io.File;
@@ -34,62 +34,63 @@ import java.util.regex.Pattern;
 
 @Getter
 public class Values {
+    private final Logger logger;
+    private final File slotsFile;
     private final JParkour plugin;
     private final Updater updater;
-    private final Logger logger;
     private final File dataFolder;
-    private final File slotsFile;
     private final File configFile;
     private final String schematicsDir = "schematics/";
+    private final List<String> maps = new ArrayList<>();
+    private final Map<String, Game> rooms = new HashMap<>();
     private final String[] files = new String[]{"hello.txt"};
-    private final Pattern action_pattern = Pattern.compile("\\[(\\w+)] ?(.*)");
-    private final Map<String, SchematicData> schematics = new HashMap<>();
-    private final String[] lcs = new String[]{"de_DE", "en_US", "ru_RU"};
-    private final Map<String, List<Action>> damageHeart = new HashMap<>();
-    private final Map<String, List<Action>> notfound = new HashMap<>();
-    private final Map<String, List<Action>> started = new HashMap<>();
-    private final Map<String, List<Action>> connect = new HashMap<>();
-    private final Map<String, List<Action>> waiter = new HashMap<>();
-    private final Map<String, List<Action>> noExit = new HashMap<>();
-    private final Map<String, List<Action>> noperm = new HashMap<>();
-    private final Map<String, List<Action>> mStarted = new HashMap<>();
-    private final Map<String, List<Action>> restarted = new HashMap<>();
-    private final Map<String, List<Action>> kicked = new HashMap<>();
-    private final Map<String, List<Action>> joined = new HashMap<>();
-    private final Map<String, List<Action>> inGame = new HashMap<>();
-    private final Map<String, List<Action>> help = new HashMap<>();
-    private final Map<String, List<Action>> exit = new HashMap<>();
+    private final Map<String, String> left = new HashMap<>();
+    private final Set<ItemStack> exitItems = new HashSet<>();
+    private final Map<String, String> sWin = new HashMap<>();
+    private final Map<String, String> sWait = new HashMap<>();
+    private final Map<String, String> right = new HashMap<>();
+    private final Map<String, String> sStart = new HashMap<>();
+    private final Set<ItemStack> restartItems = new HashSet<>();
     private final Map<String, List<Action>> end = new HashMap<>();
     private final Map<String, List<Action>> win = new HashMap<>();
-    private final Map<Integer, ItemStack> editorSlots = new HashMap<>();
-    private final Map<ItemStack, String> standsItems = new HashMap<>();
     private final Map<Integer, ItemStack> slots = new HashMap<>();
     private final Map<String, StandData> stands = new HashMap<>();
     private final Map<String, List<Action>> map = new HashMap<>();
-    private final Map<String, String> sStart = new HashMap<>();
-    private final Map<String, String> sWin = new HashMap<>();
-    private final Map<String, String> sWait = new HashMap<>();
     private final Map<String, String> notClaimed = new HashMap<>();
-    private final Map<String, String> right = new HashMap<>();
-    private final Map<String, String> left = new HashMap<>();
-    private final Map<String, Game> rooms = new HashMap<>();
-    private final Set<ItemStack> restartItems = new HashSet<>();
-    private final Set<ItemStack> exitItems = new HashSet<>();
-    private final List<String> maps = new ArrayList<>();
+    private final Map<String, List<Action>> help = new HashMap<>();
+    private final Map<String, List<Action>> exit = new HashMap<>();
+    private final Map<String, List<Action>> waiter = new HashMap<>();
+    private final Map<String, List<Action>> noExit = new HashMap<>();
+    private final Map<String, List<Action>> noperm = new HashMap<>();
+    private final Map<String, List<Action>> kicked = new HashMap<>();
+    private final Map<String, List<Action>> joined = new HashMap<>();
+    private final Map<String, List<Action>> inGame = new HashMap<>();
+    private final Map<String, List<Action>> started = new HashMap<>();
+    private final Map<String, List<Action>> connect = new HashMap<>();
+    private final Map<String, List<Action>> mStarted = new HashMap<>();
+    private final Map<ItemStack, String> standsItems = new HashMap<>();
+    private final Map<String, List<Action>> notfound = new HashMap<>();
+    private final Map<String, List<Action>> restarted = new HashMap<>();
+    private final Map<Integer, ItemStack> editorSlots = new HashMap<>();
+    private final String[] lcs = new String[]{"de_DE", "en_US", "ru_RU"};
+    private final Map<String, List<Action>> damageHeart = new HashMap<>();
+    private final Map<String, SchematicData> schematics = new HashMap<>();
+    private final Map<String, List<Action>> cooldownRestart = new HashMap<>();
+    private final Pattern action_pattern = Pattern.compile("\\[(\\w+)] ?(.*)");
+    private boolean deleteWhenClosing, topsEnabled, placeholderAPI, locale, damageWaiters, miniMessage;
     private boolean updaterEnabled = true, required = true, release = false;
-    private boolean deleteWhenClosing, topsEnabled, placeholderAPI, locale;
+    private int topsInterval, amount, restartCooldown;
     private ConfigurationSection settings;
-    private FileConfiguration config;
     @Setter
     private FileConfiguration itemSlots;
+    private FileConfiguration config;
+    private String world, worldStart;
     @Setter
     private String defaultId = "";
     @Setter
     private String schematicUrl;
-    private String world, worldStart;
     private Colorizer colorizer;
     private Utils utils;
-    private int topsInterval, amount;
 
     public Values(JParkour plugin) {
         this.plugin = plugin;
@@ -98,6 +99,12 @@ public class Values {
         configFile = new File(plugin.getDataFolder(), "config.yml");
         slotsFile = new File(plugin.getDataFolder(), "slots.yml");
         logger = plugin.getLogger();
+        try {
+            Class.forName("net.kyori.adventure.text.minimessage.MiniMessage");
+            miniMessage = true;
+        } catch (Exception e) {
+            miniMessage = false;
+        }
     }
 
     public void setup(boolean onlineUpdates) {
@@ -206,17 +213,19 @@ public class Values {
 
     private void setupSettings(boolean recovery) {
         String translate = settings.getString("translate").toLowerCase();
-        if (translate.equalsIgnoreCase("minimessage")) {
-            colorizer = new CMiniMessage();
+        if (miniMessage && translate.equalsIgnoreCase("minimessage")) {
+            colorizer = new MiniMessageColorizer();
         } else {
-            colorizer = new CHex();
+            colorizer = new LegacyColorizer();
         }
         locale = settings.getBoolean("locales");
         ConfigurationSection games = settings.getConfigurationSection("games");
         world = games.getString("world");
         amount = games.getInt("amount");
+        damageWaiters = games.getBoolean("damageWaiters");
         deleteWhenClosing = games.getBoolean("deleteWhenClosing");
         worldStart = world.replace("XIDX", "");
+        restartCooldown = games.getInt("restartCooldown");
         ConfigurationSection supports = settings.getConfigurationSection("supports");
         placeholderAPI = supports.getBoolean("placeholderAPI");
         if (placeholderAPI && plugin.getServer().getPluginManager().getPlugin("PlaceholderAPI") == null) {
@@ -322,6 +331,7 @@ public class Values {
             inGame.put(name, getActionList(actions.getStringList("ingame")));
             mStarted.put(name, getActionList(actions.getStringList("started")));
             restarted.put(name, getActionList(actions.getStringList("restarted")));
+            cooldownRestart.put(name, getActionList(actions.getStringList("cooldownRestart")));
             kicked.put(name, getActionList(actions.getStringList("kicked")));
             end.put(name, getActionList(actions.getStringList("end")));
             damageHeart.put(name, getActionList(actions.getStringList("damageHeart")));
@@ -360,13 +370,6 @@ public class Values {
         ItemStack item = utils.generateItem(slot);
         slots.put(slot.getInt("slot"), item);
         return item;
-    }
-
-    public void delete(File f) {
-        try {
-            Files.delete(f.toPath());
-        } catch (IOException ignored) {
-        }
     }
 
     private void saveConfig(String configName, File file) {
@@ -408,14 +411,6 @@ public class Values {
         return actionListBuilder.build();
     }
 
-    public void backupConfig(String parentPath, File file, String oldVersion) throws IOException {
-        File copied = new File(dataFolder, parentPath + "backups/" + file.getName() + "-" + oldVersion + ".backup");
-        Path copiedPath = copied.toPath();
-        Files.createDirectories(copied.getParentFile().toPath());
-        Files.deleteIfExists(copiedPath);
-        Files.copy(file.toPath(), copiedPath);
-    }
-
     private void clear() {
         if (plugin.getSupports() != null) {
             plugin.getSupports().unregister();
@@ -434,6 +429,21 @@ public class Values {
         editorSlots.clear();
         for (Map<String, List<Action>> map : Arrays.asList(help, noperm, notfound, started, mStarted, joined, damageHeart, connect, exit, waiter, noExit, inGame, kicked, end, win)) {
             map.clear();
+        }
+    }
+
+    public void backupConfig(String parentPath, File file, String oldVersion) throws IOException {
+        File copied = new File(dataFolder, parentPath + "backups/" + file.getName() + "-" + oldVersion + ".backup");
+        Path copiedPath = copied.toPath();
+        Files.createDirectories(copied.getParentFile().toPath());
+        Files.deleteIfExists(copiedPath);
+        Files.copy(file.toPath(), copiedPath);
+    }
+
+    public void delete(File f) {
+        try {
+            Files.delete(f.toPath());
+        } catch (IOException ignored) {
         }
     }
 }

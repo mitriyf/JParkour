@@ -1,5 +1,5 @@
 # Don't remove the version setting.
-version: 1.4
+version: 1.5-RELEASE
 
 messages:
   # Actions:
@@ -103,6 +103,8 @@ messages:
         - "[message] &cThe game is over."
       restarted:
         - "[message] &aThe game has been restarted."
+      cooldownRestart:
+        - "[message] &ct reload the game that quickly."
       kicked:
         - "[message] &cThe game is over."
       damageHeart:

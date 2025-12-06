@@ -32,7 +32,7 @@ public class AdminEditor {
             utils.sendMessage(s, values.getNoperm());
             return;
         }
-        if (args.length > 1 && args.length < 7) {
+        if (args.length > 1 && args.length < 13) {
             switch (args[1].toLowerCase()) {
                 case "add": {
                     addGame(s, args);

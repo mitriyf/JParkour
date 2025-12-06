@@ -1,5 +1,5 @@
 # Don't remove the version setting.
-version: 1.5
+version: 1.5-RELEASE
 
 # Specify the name of the map. It will be displayed in the Scoreboard.
 schematic:
@@ -110,8 +110,8 @@ coords:
 location:
   # What yaw will be assigned during teleportation?
   yaw: 180
-  # Which north will be assigned during teleportation?
-  north: 0
+  # Which pitch will be assigned during teleportation?
+  pitch: 0
 locs:
   # Specify through: ";" - X, Y, Z from the location of the schematic.
   spawn: "0.5;0;0.5"
@@ -122,6 +122,40 @@ locs:
   start: "0.5;0;-11.5"
   # End.
   end: "0.5;0;-101.5"
+  # Points. Don't start with 0, only with 1! And always follow the order of numbers.
+  points:
+    1:
+      # Specify the radius within which the point will be detected.
+      radiusStartPoint: 0.5
+      # Specify the location of the point.
+      location:
+        # Specify through: ";" - X, Y, Z from the location of the schematic.
+        start: "0;0;-15"
+        # Is it possible to teleport the chicken's and the player's heads to the coordinates below?
+        # Otherwise, there will be some kind of drift.
+        teleport:
+          # Is it enabled?
+          enabled: false
+          # Yaw.
+          yaw: 0
+          # pitch.
+          pitch: 0
+    2:
+      radiusStartPoint: 0.5
+      location:
+        start: "1;0;-21.5"
+        teleport:
+          enabled: false
+          yaw: 0
+          pitch: 0
+    3:
+      radiusStartPoint: 0.5
+      location:
+        start: "0.5;0;-28"
+        teleport:
+          enabled: false
+          yaw: 0
+          pitch: 0
 stars:
   # 1 - 100%.
   # 0.8 - 80%.
@@ -142,13 +176,13 @@ stands:
   # Specify where the stands will appear.
   # Order: type;X;Y;Z (from the location of the schematic)
   locs:
-  - "gold_block;-1.5;1;-23.5"
-  - "bomb_diamond;0.5;1;-35.5"
-  - "diamond_block;2.5;2;-46.5"
-  - "gold_block;-1.5;2;-56.5"
-  - "diamond_block;2.5;1;-68.5"
-  - "bomb_diamond;0.5;1;-78.5"
-  - "bomb_gold;0.5;0;-93.5"
+    - "gold_block;-1.5;1;-23.5"
+    - "bomb_diamond;0.5;1;-35.5"
+    - "diamond_block;2.5;2;-46.5"
+    - "gold_block;-1.5;2;-56.5"
+    - "diamond_block;2.5;1;-68.5"
+    - "bomb_diamond;0.5;1;-78.5"
+    - "bomb_gold;0.5;0;-93.5"
 # Set up the message.
 # This will only work if you have selected the plugin configuration mode.
 messages:
@@ -165,6 +199,8 @@ messages:
       - "[log] [SCHEMATIC] The %player% was kicked out of the game."
     restarted:
       - "[log] [SCHEMATIC] The game has been restarted."
+    cooldownRestart:
+      - "[explosion] 1"
     damageHeart:
       - "[log] [SCHEMATIC] The %player% lost a heart."
     win:
