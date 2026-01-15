@@ -89,6 +89,7 @@ You can view the configurations by going to src/main/resources/:
 - config13.yml
 - slots.yml
 - slots13.yml
+
 or by following the link:
 - https://github.com/mitriyf/JParkour/blob/main/src/main/resources/locales/ru_RU.yml
 - https://github.com/mitriyf/JParkour/blob/main/src/main/resources/locales/en_US.yml
