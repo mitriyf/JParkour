@@ -47,8 +47,8 @@ public class Game {
     private final Set<String> actives = new HashSet<>();
     private final List<BukkitTask> tasks = new ArrayList<>();
     private final String[] search = {"%game%", "%accuracy%", "%star_win%", "%star_loss%"};
+    private boolean fullSlots, started, restartActive, restartCooldown, infoExists = true;
     private int maxLefts, maxRights, health = 20, foodLevel = 10, exitTime;
-    private boolean fullSlots, started, restartActive, restartCooldown;
     @Setter
     private boolean triggerEnabled = true;
     private SchematicData info;
@@ -80,6 +80,7 @@ public class Game {
         } else {
             map = mapId;
             if (mapId == null) {
+                infoExists = false;
                 locs = new LocationsData(plugin, this, latch, true);
             } else {
                 setupSchematic(latch, true);
@@ -113,14 +114,14 @@ public class Game {
                 manager.getPlayers().remove(uuid);
                 close(true, false);
             } else {
-                locs.generateStands();
-                if (dev) {
-                    editor.setup();
+                if (infoExists) {
+                    locs.generateStands();
+                    sendMessage(values.getJoined(), info.getJoined(), searchGame, new String[]{name});
+                    if (dev) {
+                        editor.setup();
+                    }
                 }
                 setDefault();
-                if (info != null) {
-                    sendMessage(values.getJoined(), info.getJoined(), searchGame, new String[]{name});
-                }
             }
         });
     }
@@ -188,7 +189,7 @@ public class Game {
         started = false;
         status = values.getSWait().getOrDefault(locale, values.getSWait().get(""));
         player.teleport(locs.getSpawn());
-        if (info != null) {
+        if (infoExists) {
             sendMessage(values.getRestarted(), info.getRestarted());
         }
     }
@@ -227,7 +228,7 @@ public class Game {
             data.apply();
         }
         manager.getPlayers().remove(uuid);
-        if (!isPluginStop && info != null) {
+        if (!isPluginStop && infoExists) {
             if (force) {
                 sendMessage(values.getKicked(), info.getKicked(), searchGame, new String[]{name});
             } else {
@@ -283,7 +284,7 @@ public class Game {
         return mapId != null ? mapId : values.getMaps().get(rnd.nextInt(values.getMaps().size()));
     }
 
-    private void setSlots(Map<Integer, ItemStack> slots) {
+    public void setSlots(Map<Integer, ItemStack> slots) {
         for (Map.Entry<Integer, ItemStack> s : slots.entrySet()) {
             player.getInventory().setItem(s.getKey(), s.getValue());
         }

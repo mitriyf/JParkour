@@ -73,7 +73,7 @@ public class AdminEditor {
             return;
         }
         Player p = plugin.getServer().getPlayer(args[2]);
-        manager.join(p, args.length == 4 ? args[3] : null, false);
+        manager.join(p, args.length == 4 ? args[3].toLowerCase() : null, false);
         s.sendMessage("§aConnection attempt has been sent.");
     }
 

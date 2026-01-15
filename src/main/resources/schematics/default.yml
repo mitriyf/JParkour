@@ -1,5 +1,5 @@
 # Don't remove the version setting.
-version: 1.5-RELEASE
+version: 1.6
 
 # Specify the name of the map. It will be displayed in the Scoreboard.
 schematic:

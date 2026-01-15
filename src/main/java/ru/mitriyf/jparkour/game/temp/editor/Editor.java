@@ -9,6 +9,7 @@ import org.bukkit.block.Block;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitScheduler;
@@ -62,7 +63,7 @@ public class Editor {
         values = game.getValues();
         scheduler = game.getScheduler();
         world = locs.getDefaultLocation().getWorld();
-        if (info != null) {
+        if (game.isInfoExists()) {
             game.getScheduler().runTask(game.getPlugin(), () -> setPose3(locs.getDefaultLocation()));
         }
     }
@@ -104,15 +105,15 @@ public class Editor {
         scheduler.runTask(plugin, () -> {
             for (Location loc : stands.keySet()) {
                 loc.getBlock().setType(material);
-                createGlowStand(loc, standCustomName);
+                createGlowStand(loc, standCustomName, false);
             }
             spawn.getBlock().setType(glass);
-            createGlowStand(spawn, spawnCustomName);
-            createGlowStand(portal, portalCustomName);
+            createGlowStand(spawn, spawnCustomName, false);
+            createGlowStand(portal, portalCustomName, false);
             start.getBlock().setType(glass);
-            createGlowStand(start, startCustomName);
+            createGlowStand(start, startCustomName, false);
             end.getBlock().setType(glass);
-            createGlowStand(end, endCustomName);
+            createGlowStand(end, endCustomName, false);
             for (Map.Entry<Integer, PointData> point : points.entrySet()) {
                 PointData pointData = point.getValue();
                 setPoint(point.getKey(), pointData.getRadiusStartPoint(), pointData.isTeleportEnabled(), pointData.getLocation());
@@ -159,7 +160,7 @@ public class Editor {
 
     public void setBlockStand(Location loc, String typeStack) {
         stands.put(loc, typeStack);
-        createGlowStand(loc, standCustomName);
+        createGlowStand(loc, standCustomName, false);
     }
 
     public void setPoint(int id, double radiusStartPoint, boolean teleport, Location loc) {
@@ -213,24 +214,24 @@ public class Editor {
             removeBlockStand(loc);
         }
         if (newLoc != null) {
-            createGlowStand(newLoc, name);
+            createGlowStand(newLoc, name, false);
         }
     }
 
-    private void createGlowStand(Location loc, String customName, boolean... point) {
+    private void createGlowStand(Location loc, String customName, boolean point) {
         ArmorStand stand = createArmorStand(loc, customName, point);
         glowStands.put(loc, stand.getUniqueId());
     }
 
-    private void createPoseStand(Location loc, String customName, boolean... point) {
-        ArmorStand stand = createArmorStand(loc, customName, point);
+    private void createPoseStand(Location loc, String customName) {
+        ArmorStand stand = createArmorStand(loc, customName, false);
         poseStands.put(loc, stand.getUniqueId());
     }
 
-    private ArmorStand createArmorStand(Location loc, String customName, boolean... point) {
+    private ArmorStand createArmorStand(Location loc, String customName, boolean point) {
         ItemStack stack = null;
         Location locStand;
-        if (point.length != 0) {
+        if (point) {
             stack = new ItemStack(Material.TORCH);
             locStand = loc;
         } else {
@@ -300,12 +301,12 @@ public class Editor {
     public void clear() {
         for (Map.Entry<Location, UUID> stand : new HashSet<>(glowStands.entrySet())) {
             Location loc = stand.getKey();
-            utils.getEntity(loc.getWorld(), stand.getValue()).remove();
+            removeEntity(stand, loc);
             glowStands.remove(loc);
         }
         for (Map.Entry<Location, UUID> stand : new HashSet<>(poseStands.entrySet())) {
             Location loc = stand.getKey();
-            utils.getEntity(loc.getWorld(), stand.getValue()).remove();
+            removeEntity(stand, loc);
             poseStands.remove(loc);
         }
         for (Location loc : new HashSet<>(stands.keySet())) {
@@ -314,5 +315,12 @@ public class Editor {
         spawn.getBlock().setType(Material.AIR);
         start.getBlock().setType(Material.AIR);
         end.getBlock().setType(Material.AIR);
+    }
+
+    private void removeEntity(Map.Entry<Location, UUID> stand, Location loc) {
+        Entity entity = utils.getEntity(loc.getWorld(), stand.getValue());
+        if (entity != null) {
+            entity.remove();
+        }
     }
 }

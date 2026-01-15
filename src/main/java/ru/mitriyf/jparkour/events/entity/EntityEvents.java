@@ -12,6 +12,7 @@ import ru.mitriyf.jparkour.JParkour;
 import ru.mitriyf.jparkour.game.Game;
 import ru.mitriyf.jparkour.game.manager.Manager;
 import ru.mitriyf.jparkour.values.Values;
+import ru.mitriyf.jparkour.values.data.schematic.SchematicData;
 
 public class EntityEvents implements Listener {
     private final CreatureSpawnEvent.SpawnReason reason = CreatureSpawnEvent.SpawnReason.CUSTOM;
@@ -27,8 +28,8 @@ public class EntityEvents implements Listener {
     public void onCreatureSpawn(CreatureSpawnEvent e) {
         Entity entity = e.getEntity();
         if (startWithWorld(entity)) {
-            Game game = getGame(entity);
-            if (game != null && e.getSpawnReason() != reason && !game.getInfo().isCreatureSpawn()) {
+            SchematicData info = getInfo(entity);
+            if (info != null && e.getSpawnReason() != reason && !info.isCreatureSpawn()) {
                 e.setCancelled(true);
             }
         }
@@ -43,8 +44,8 @@ public class EntityEvents implements Listener {
     public void onEntityExplode(EntityExplodeEvent e) {
         Entity entity = e.getEntity();
         if (startWithWorld(entity)) {
-            Game game = getGame(entity);
-            if (game != null && !game.getInfo().isEntityExplode()) {
+            SchematicData info = getInfo(entity);
+            if (info != null && !info.isEntityExplode()) {
                 e.setCancelled(true);
             }
         }
@@ -54,8 +55,8 @@ public class EntityEvents implements Listener {
     public void onEntityTarget(EntityTargetEvent e) {
         Entity entity = e.getEntity();
         if (startWithWorld(entity)) {
-            Game game = getGame(entity);
-            if (game != null && !game.getInfo().isEntityTarget()) {
+            SchematicData info = getInfo(entity);
+            if (info != null && !info.isEntityTarget()) {
                 e.setCancelled(true);
             }
         }
@@ -65,15 +66,19 @@ public class EntityEvents implements Listener {
     public void onItemSpawn(ItemSpawnEvent e) {
         Entity entity = e.getEntity();
         if (startWithWorld(entity)) {
-            Game game = getGame(entity);
-            if (game != null && !game.getInfo().isItemSpawn()) {
+            SchematicData info = getInfo(entity);
+            if (info != null && !info.isItemSpawn()) {
                 e.setCancelled(true);
             }
         }
     }
 
-    private Game getGame(Entity entity) {
-        return manager.getGame(entity.getWorld().getName());
+    private SchematicData getInfo(Entity entity) {
+        Game game = manager.getGame(entity.getWorld().getName());
+        if (game == null) {
+            return null;
+        }
+        return game.getInfo();
     }
 
     private boolean startWithWorld(Entity e) {

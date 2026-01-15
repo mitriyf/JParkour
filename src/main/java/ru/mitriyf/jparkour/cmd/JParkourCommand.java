@@ -42,8 +42,9 @@ public class JParkourCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command cmd, @NotNull String s, @NotNull String[] args) {
-        if (!sender.hasPermission("jparkour.help") || args.length == 0 || args.length >= 13 || args[0].equalsIgnoreCase("help")) {
-            if (sender.hasPermission("jparkour.help")) {
+        boolean permission = sender.hasPermission("jparkour.help");
+        if (!permission || args.length == 0 || args.length >= 13 || args[0].equalsIgnoreCase("help")) {
+            if (permission) {
                 sendMessage(sender, values.getHelp());
             } else {
                 sendMessage(sender, values.getNoperm());

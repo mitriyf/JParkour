@@ -25,10 +25,10 @@ public class LocationsData {
     @Getter
     private final Map<Integer, Location> points = new HashMap<>();
     private final BukkitScheduler scheduler;
+    private final boolean dev, infoExists;
     private final CountDownLatch latch;
     private final SchematicData info;
     private final JParkour plugin;
-    private final boolean dev;
     private final String name;
     private final Utils utils;
     private final Game game;
@@ -43,6 +43,7 @@ public class LocationsData {
         scheduler = game.getScheduler();
         utils = plugin.getUtils();
         info = game.getInfo();
+        infoExists = game.isInfoExists();
         name = game.getName();
         generateLocation();
     }
@@ -59,7 +60,7 @@ public class LocationsData {
                     e.remove();
                 }
             }
-            if (info != null) {
+            if (infoExists) {
                 for (String s : info.getGameRules()) {
                     String[] gameRule = s.split(":");
                     w.setGameRuleValue(gameRule[0], gameRule[1]);
@@ -77,7 +78,7 @@ public class LocationsData {
         } catch (Exception ignored) {
         }
         setLocations();
-        if (info != null) {
+        if (infoExists) {
             utils.paste(defaultLocation, info.getSchematic(), info.isPasteAir());
             scheduler.runTask(plugin, () -> game.setTrigger(!dev ? portal.getBlock().getType() : null));
         } else {
@@ -86,7 +87,7 @@ public class LocationsData {
     }
 
     private void setLocations() {
-        if (info != null) {
+        if (infoExists) {
             start = getLocation(info.getStart());
             spawn = getLocation(info.getSpawn());
             portal = getLocation(info.getPortal());

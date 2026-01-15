@@ -16,7 +16,7 @@ import java.util.concurrent.ThreadLocalRandom;
 @Getter
 public final class JParkour extends JavaPlugin {
     private final ThreadLocalRandom rnd = ThreadLocalRandom.current();
-    private final String configsVersion = "1.5-RELEASE";
+    private final String configsVersion = "1.6";
     private int version = 13;
     private Values values;
     private Utils utils;

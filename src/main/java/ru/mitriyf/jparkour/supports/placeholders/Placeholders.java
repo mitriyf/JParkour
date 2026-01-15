@@ -129,6 +129,6 @@ public class Placeholders extends PlaceholderExpansion {
 
     @Override
     public @NotNull String getVersion() {
-        return "1.5";
+        return "1.6";
     }
 }

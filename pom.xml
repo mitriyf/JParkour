@@ -6,7 +6,7 @@
 
     <groupId>ru.mitriyf</groupId>
     <artifactId>JParkour</artifactId>
-    <version>1.0</version>
+    <version>1.6</version>
     <packaging>jar</packaging>
 
     <name>JParkour</name>
@@ -125,6 +125,13 @@
             <artifactId>placeholderapi</artifactId>
             <version>2.11.6</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.boydti.fawe</groupId>
+            <artifactId>FastAsyncWorldEdit-Bukkit</artifactId>
+            <version>1.13.134</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/FastAsyncWorldEdit-bukkit-1.13.134.jar</systemPath>
         </dependency>
     </dependencies>
 </project>

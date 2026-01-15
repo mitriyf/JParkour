@@ -42,8 +42,8 @@ public class Manager {
         if (players.containsKey(p.getUniqueId()) || waiters.contains(p.getUniqueId())) {
             utils.sendMessage(p, values.getInGame());
             return;
-        } else if (mapId != null && !dev) {
-            if (values.getSchematics().isEmpty() || !values.getSchematics().containsKey(mapId)) {
+        } else if (mapId != null) {
+            if ((!dev && values.getSchematics().isEmpty()) || !values.getSchematics().containsKey(mapId)) {
                 utils.sendMessage(p, values.getNotfound());
                 return;
             }

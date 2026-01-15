@@ -26,6 +26,7 @@ import ru.mitriyf.jparkour.game.temp.editor.Editor;
 import ru.mitriyf.jparkour.game.temp.task.data.StandActive;
 import ru.mitriyf.jparkour.utils.Utils;
 import ru.mitriyf.jparkour.values.Values;
+import ru.mitriyf.jparkour.values.data.schematic.SchematicData;
 
 import java.util.Map;
 import java.util.UUID;
@@ -50,10 +51,10 @@ public class PlayerEvents implements Listener {
     public void onPlayerMove(PlayerMoveEvent e) {
         Player p = e.getPlayer();
         if (startWithWorld(p.getWorld())) {
-            Game game = manager.getGame(p.getUniqueId());
+            Game game = getGame(p.getUniqueId());
             if (game == null) {
-                if (!p.isOp()) {
-                    p.teleport(new Location(plugin.getServer().getWorld("world"), 0, 80, 0));
+                if (!p.hasPermission("jparkour.admin")) {
+                    p.teleport(new Location(plugin.getServer().getWorld("world"), 0, 100, 0));
                 }
                 return;
             }
@@ -68,7 +69,7 @@ public class PlayerEvents implements Listener {
     public void onPlayerRespawn(PlayerRespawnEvent e) {
         Player p = e.getPlayer();
         if (startWithWorld(p.getWorld())) {
-            Game game = manager.getGame(p.getUniqueId());
+            Game game = getGame(p.getUniqueId());
             if (game != null) {
                 e.setRespawnLocation(game.getLocs().getSpawn());
             }
@@ -83,7 +84,8 @@ public class PlayerEvents implements Listener {
                 if (e.getCause() == cause && !e.getEntity().leaveVehicle()) {
                     game.restartActive();
                 }
-                if (!game.getInfo().isEntityDamage()) {
+                SchematicData info = game.getInfo();
+                if (info != null && !info.isEntityDamage()) {
                     e.setCancelled(true);
                 }
             }
@@ -93,7 +95,7 @@ public class PlayerEvents implements Listener {
     @EventHandler
     public void onPlayerCommandPreprocess(PlayerCommandPreprocessEvent e) {
         Player p = e.getPlayer();
-        if (p.isOp() || e.getMessage().equalsIgnoreCase("/jparkour exit")) {
+        if (p.hasPermission("jparkour.admin") || e.getMessage().equalsIgnoreCase("/jparkour exit")) {
             return;
         }
         UUID uuid = p.getUniqueId();
@@ -105,12 +107,13 @@ public class PlayerEvents implements Listener {
 
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent e) {
-        if (startWithWorld(e.getEntity().getWorld())) {
-            Game game = manager.getGame(e.getEntity().getUniqueId());
+        Player player = e.getEntity();
+        if (startWithWorld(player.getWorld())) {
+            Game game = manager.getGame(player.getUniqueId());
             if (game != null) {
                 game.getRun().getTask().cancel();
                 scheduler.runTaskLater(plugin, () -> {
-                    e.getEntity().spigot().respawn();
+                    player.spigot().respawn();
                     game.restart();
                 }, 1);
             }
@@ -121,41 +124,45 @@ public class PlayerEvents implements Listener {
     @SuppressWarnings("deprecation")
     public void onPlayerInteract(PlayerInteractEvent e) {
         Player p = e.getPlayer();
-        Game game = manager.getGame(p.getUniqueId());
+        Game game = getGame(p.getUniqueId());
         if (game != null) {
             ItemStack stack = p.getItemInHand();
-            boolean defaultExits = values.getExitItems().contains(stack);
-            boolean infoExits = game.getInfo().getExitItems().contains(stack);
-            if (defaultExits || infoExits) {
-                e.setCancelled(true);
-                game.close(true, false);
-                return;
-            }
-            boolean defaultRestarts = values.getRestartItems().contains(stack);
-            boolean infoRestarts = game.getInfo().getRestartItems().contains(stack);
-            if (defaultRestarts || infoRestarts) {
-                e.setCancelled(true);
-                game.playerRestart();
-                return;
+            SchematicData info = game.getInfo();
+            if (info != null) {
+                boolean defaultExits = values.getExitItems().contains(stack);
+                boolean infoExits = info.getExitItems().contains(stack);
+                if (defaultExits || infoExits) {
+                    e.setCancelled(true);
+                    game.close(true, false);
+                    return;
+                }
+                boolean defaultRestarts = values.getRestartItems().contains(stack);
+                boolean infoRestarts = info.getRestartItems().contains(stack);
+                if (defaultRestarts || infoRestarts) {
+                    e.setCancelled(true);
+                    game.playerRestart();
+                    return;
+                }
             }
             Block b = e.getClickedBlock();
             if (e.getClickedBlock() != null && game.isDev() && (utils.isBar() || e.getHand() == EquipmentSlot.HAND)) {
                 String typeStack = values.getStandsItems().get(stack);
-                if (typeStack != null) {
-                    e.setCancelled(true);
-                    Editor editor = game.getEditor();
-                    if (typeStack.equalsIgnoreCase("default")) {
-                        editor.setSelectedBlockAxe(b);
-                        p.sendMessage("§aYou have successfully selected a block.");
+                if (typeStack == null) {
+                    return;
+                }
+                e.setCancelled(true);
+                Editor editor = game.getEditor();
+                if (typeStack.equalsIgnoreCase("default")) {
+                    editor.setSelectedBlockAxe(b);
+                    p.sendMessage("§aYou have successfully selected a block.");
+                } else {
+                    Location bLoc = b.getLocation();
+                    String id = editor.contains(bLoc);
+                    if (id == null) {
+                        editor.setBlockStand(bLoc, typeStack);
+                        p.sendMessage("§aYou have successfully set a stand: §e" + typeStack);
                     } else {
-                        Location bLoc = b.getLocation();
-                        String id = editor.contains(bLoc);
-                        if (id == null) {
-                            editor.setBlockStand(bLoc, typeStack);
-                            p.sendMessage("§aYou have successfully set a stand: §e" + typeStack);
-                        } else {
-                            p.sendMessage("§cThis block is already linked to " + id);
-                        }
+                        p.sendMessage("§cThis block is already linked to " + id);
                     }
                 }
             }
@@ -172,7 +179,7 @@ public class PlayerEvents implements Listener {
             task.cancel();
         }
         if (startWithWorld(p.getWorld())) {
-            Game game = manager.getGame(uuid);
+            Game game = getGame(uuid);
             if (game != null) {
                 game.close(true, false);
             }
@@ -202,10 +209,10 @@ public class PlayerEvents implements Listener {
 
     @EventHandler
     public void onPlayerDropItem(PlayerDropItemEvent e) {
-        Player p = e.getPlayer();
-        if (startWithWorld(p.getWorld())) {
-            Game game = manager.getGame(p.getWorld().getName());
-            if (game != null && !game.getInfo().isDropItem()) {
+        World world = e.getPlayer().getWorld();
+        if (startWithWorld(world)) {
+            SchematicData info = getInfo(world);
+            if (info != null && !info.isDropItem()) {
                 e.setCancelled(true);
             }
         }
@@ -215,9 +222,12 @@ public class PlayerEvents implements Listener {
     public void onFoodLevelChange(FoodLevelChangeEvent e) {
         World world = e.getEntity().getWorld();
         if (startWithWorld(world)) {
-            Game game = manager.getGame(world.getName());
-            if (game != null && e.getFoodLevel() != game.getFoodLevel() && !game.getInfo().isFoodLevelChange()) {
-                e.setCancelled(true);
+            Game game = getGame(world);
+            if (game != null && e.getFoodLevel() != game.getFoodLevel()) {
+                SchematicData info = game.getInfo();
+                if (info != null && !info.isFoodLevelChange()) {
+                    e.setCancelled(true);
+                }
             }
         }
     }
@@ -227,8 +237,8 @@ public class PlayerEvents implements Listener {
     public void onPlayerPickupItem(PlayerPickupItemEvent e) {
         World world = e.getPlayer().getWorld();
         if (startWithWorld(world)) {
-            Game game = manager.getGame(world.getName());
-            if (game != null && !game.getInfo().isPickupItem()) {
+            SchematicData info = getInfo(world);
+            if (info != null && !info.isPickupItem()) {
                 e.setCancelled(true);
             }
         }
@@ -238,8 +248,8 @@ public class PlayerEvents implements Listener {
     public void onPlayerItemConsume(PlayerItemConsumeEvent e) {
         World world = e.getPlayer().getWorld();
         if (startWithWorld(world)) {
-            Game game = manager.getGame(world.getName());
-            if (game != null && !game.getInfo().isConsumeItem()) {
+            SchematicData info = getInfo(world);
+            if (info != null && !info.isConsumeItem()) {
                 e.setCancelled(true);
             }
         }
@@ -248,8 +258,8 @@ public class PlayerEvents implements Listener {
     @SuppressWarnings("deprecation")
     private void removeStands(Entity e, Player p, String click) {
         if (e.getType() == EntityType.ARMOR_STAND) {
-            Game game = manager.getGame(p.getUniqueId());
-            if (game == null) {
+            Game game = getGame(p.getUniqueId());
+            if (game == null || game.isDev()) {
                 return;
             }
             for (Map.Entry<Location, StandActive> stands : game.getRun().getStands().entrySet()) {
@@ -277,7 +287,23 @@ public class PlayerEvents implements Listener {
         }
     }
 
+    private SchematicData getInfo(World world) {
+        Game game = manager.getGame(world.getName());
+        if (game == null) {
+            return null;
+        }
+        return game.getInfo();
+    }
+
     private boolean startWithWorld(World w) {
         return w.getName().startsWith(values.getWorldStart());
+    }
+
+    private Game getGame(World world) {
+        return manager.getGame(world.getName());
+    }
+
+    private Game getGame(UUID uuid) {
+        return manager.getGame(uuid);
     }
 }

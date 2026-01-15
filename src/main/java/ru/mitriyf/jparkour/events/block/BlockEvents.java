@@ -12,6 +12,7 @@ import ru.mitriyf.jparkour.game.Game;
 import ru.mitriyf.jparkour.game.manager.Manager;
 import ru.mitriyf.jparkour.game.temp.editor.Editor;
 import ru.mitriyf.jparkour.values.Values;
+import ru.mitriyf.jparkour.values.data.schematic.SchematicData;
 
 public class BlockEvents implements Listener {
     private final Values values;
@@ -24,9 +25,11 @@ public class BlockEvents implements Listener {
 
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent e) {
-        if (startWithWorldAndOp(e.getBlock(), e.getPlayer())) {
-            Game game = manager.getGame(e.getPlayer().getWorld().getName());
-            if (game != null && !game.getInfo().isPlaceBlock()) {
+        Player player = e.getPlayer();
+        Block block = e.getBlock();
+        if (startWithWorldAndOp(block, player)) {
+            SchematicData info = getInfo(block);
+            if (info != null && !info.isPlaceBlock()) {
                 e.setCancelled(true);
             }
         }
@@ -34,14 +37,17 @@ public class BlockEvents implements Listener {
 
     @EventHandler
     public void onBlockBreak(BlockBreakEvent e) {
-        if (startWithWorld(e.getBlock())) {
-            Game game = manager.getGame(e.getPlayer().getWorld().getName());
+        Block block = e.getBlock();
+        if (startWithWorld(block)) {
+            Player player = e.getPlayer();
+            Game game = manager.getGame(block.getWorld().getName());
             if (game != null) {
-                if (!e.getPlayer().isOp() && !game.getInfo().isBreakBlock()) {
+                SchematicData info = game.getInfo();
+                if (!player.hasPermission("jparkour.admin") && info != null && !info.isBreakBlock()) {
                     e.setCancelled(true);
                     return;
                 }
-                Location loc = e.getBlock().getLocation();
+                Location loc = block.getLocation();
                 Editor editor = game.getEditor();
                 if (editor != null) {
                     String message = "Loc";
@@ -61,7 +67,7 @@ public class BlockEvents implements Listener {
                     } else {
                         return;
                     }
-                    e.getPlayer().sendMessage("§c" + message + " " + type + " deleted.\nLocation: " + loc);
+                    player.sendMessage("§c" + message + " " + type + " deleted.\nLocation: " + loc);
                 }
             }
         }
@@ -69,9 +75,10 @@ public class BlockEvents implements Listener {
 
     @EventHandler
     public void onBlockBurn(BlockBurnEvent e) {
-        if (startWithWorld(e.getBlock())) {
-            Game game = manager.getGame(e.getBlock().getWorld().getName());
-            if (game != null && !game.getInfo().isBurnBlock()) {
+        Block block = e.getBlock();
+        if (startWithWorld(block)) {
+            SchematicData info = getInfo(block);
+            if (info != null && !info.isBurnBlock()) {
                 e.setCancelled(true);
             }
         }
@@ -79,9 +86,10 @@ public class BlockEvents implements Listener {
 
     @EventHandler
     public void onBlockIgnite(BlockIgniteEvent e) {
-        if (startWithWorld(e.getBlock())) {
-            Game game = manager.getGame(e.getBlock().getWorld().getName());
-            if (game != null && !game.getInfo().isIgniteBlock()) {
+        Block block = e.getBlock();
+        if (startWithWorld(block)) {
+            SchematicData info = getInfo(block);
+            if (info != null && !info.isIgniteBlock()) {
                 e.setCancelled(true);
             }
         }
@@ -89,9 +97,10 @@ public class BlockEvents implements Listener {
 
     @EventHandler
     public void onBlockFromTo(BlockFromToEvent e) {
-        if (startWithWorld(e.getBlock())) {
-            Game game = manager.getGame(e.getBlock().getWorld().getName());
-            if (game != null && !game.getInfo().isFromToBlock()) {
+        Block block = e.getBlock();
+        if (startWithWorld(block)) {
+            SchematicData info = getInfo(block);
+            if (info != null && !info.isFromToBlock()) {
                 e.setCancelled(true);
             }
         }
@@ -99,9 +108,10 @@ public class BlockEvents implements Listener {
 
     @EventHandler
     public void onEntityChangeBlock(EntityChangeBlockEvent e) {
-        if (startWithWorld(e.getBlock())) {
-            Game game = manager.getGame(e.getBlock().getWorld().getName());
-            if (game != null && !game.getInfo().isEntityChangeBlock()) {
+        Block block = e.getBlock();
+        if (startWithWorld(block)) {
+            SchematicData info = getInfo(block);
+            if (info != null && !info.isEntityChangeBlock()) {
                 e.setCancelled(true);
             }
         }
@@ -109,9 +119,10 @@ public class BlockEvents implements Listener {
 
     @EventHandler
     public void onBlockPhysics(BlockPhysicsEvent e) {
-        if (startWithWorld(e.getBlock())) {
-            Game game = manager.getGame(e.getBlock().getWorld().getName());
-            if (game != null && !game.getInfo().isPhysicsBlock()) {
+        Block block = e.getBlock();
+        if (startWithWorld(block)) {
+            SchematicData info = getInfo(block);
+            if (info != null && !info.isPhysicsBlock()) {
                 e.setCancelled(true);
             }
         }
@@ -119,9 +130,10 @@ public class BlockEvents implements Listener {
 
     @EventHandler
     public void onBlockFade(BlockFadeEvent e) {
-        if (startWithWorld(e.getBlock())) {
-            Game game = manager.getGame(e.getBlock().getWorld().getName());
-            if (game != null && !game.getInfo().isFadeBlock()) {
+        Block block = e.getBlock();
+        if (startWithWorld(block)) {
+            SchematicData info = getInfo(block);
+            if (info != null && !info.isFadeBlock()) {
                 e.setCancelled(true);
             }
         }
@@ -129,9 +141,10 @@ public class BlockEvents implements Listener {
 
     @EventHandler
     public void onLeavesDecay(LeavesDecayEvent e) {
-        if (startWithWorld(e.getBlock())) {
-            Game game = manager.getGame(e.getBlock().getWorld().getName());
-            if (game != null && !game.getInfo().isLeavesDecay()) {
+        Block block = e.getBlock();
+        if (startWithWorld(block)) {
+            SchematicData info = getInfo(block);
+            if (info != null && !info.isLeavesDecay()) {
                 e.setCancelled(true);
             }
         }
@@ -139,12 +152,21 @@ public class BlockEvents implements Listener {
 
     @EventHandler
     public void onBlockMultiPlace(BlockMultiPlaceEvent e) {
-        if (startWithWorld(e.getBlock())) {
-            Game game = manager.getGame(e.getBlock().getWorld().getName());
-            if (game != null && !game.getInfo().isMultiPlaceBlock()) {
+        Block block = e.getBlock();
+        if (startWithWorld(block)) {
+            SchematicData info = getInfo(block);
+            if (info != null && !info.isMultiPlaceBlock()) {
                 e.setCancelled(true);
             }
         }
+    }
+
+    private SchematicData getInfo(Block block) {
+        Game game = manager.getGame(block.getWorld().getName());
+        if (game == null) {
+            return null;
+        }
+        return game.getInfo();
     }
 
     private boolean startWithWorld(Block b) {

@@ -4,6 +4,7 @@ import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import ru.mitriyf.jparkour.cmd.admin.editor.GameEditor;
+import ru.mitriyf.jparkour.game.Game;
 import ru.mitriyf.jparkour.game.temp.editor.Editor;
 import ru.mitriyf.jparkour.game.temp.editor.data.PointData;
 
@@ -14,11 +15,12 @@ public class GetGameSettings {
         this.gameEditor = gameEditor;
     }
 
-    public void getGameSetting(Player p, Editor editor, String[] args) {
+    public void getGameSetting(Player p, Game game, Editor editor, String[] args) {
         switch (args[3].toLowerCase()) {
             case "pose": {
                 if (args.length == 5) {
                     getGamePose(p, editor, args[4]);
+                    return;
                 }
                 break;
             }
@@ -29,6 +31,7 @@ public class GetGameSettings {
             case "point": {
                 if (args.length == 5) {
                     getGamePoint(p, editor, args[4]);
+                    return;
                 }
                 break;
             }
@@ -42,6 +45,10 @@ public class GetGameSettings {
             }
             case "stands": {
                 getGameStands(p, editor);
+                return;
+            }
+            case "items": {
+                getGameItems(p, game);
                 return;
             }
             default: {
@@ -130,6 +137,11 @@ public class GetGameSettings {
             return;
         }
         p.sendMessage("Loc info:\nType: " + type + "\nLocation: " + bLocation);
+    }
+
+    private void getGameItems(Player p, Game game) {
+        game.setSlots(game.getValues().getEditorSlots());
+        p.sendMessage("§aSuccessfully!");
     }
 
     private void getGameStands(Player p, Editor editor) {

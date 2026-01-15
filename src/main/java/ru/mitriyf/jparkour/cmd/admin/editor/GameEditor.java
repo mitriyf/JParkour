@@ -71,7 +71,7 @@ public class GameEditor {
             return;
         }
         Player p = (Player) s;
-        manager.join(p, args.length == 4 ? args[3] : null, true);
+        manager.join(p, args.length == 4 ? args[3].toLowerCase() : null, true);
         s.sendMessage("§eWarning! You are in the game editor.");
         s.sendMessage("§eYou can't start the game here, but you can use the editor to create new maps and quickly adjust the locations of the stands.");
         s.sendMessage("§eFor help, use:\n/jparkour admin game\n§cExit the editor: /jparkour exit");
@@ -115,10 +115,10 @@ public class GameEditor {
             s.sendMessage("§cYou are not in the gameeditor!");
             return;
         }
-        checkAdminSubCommand(p, game.getEditor(), args);
+        checkAdminSubCommand(p, game, game.getEditor(), args);
     }
 
-    private void checkAdminSubCommand(Player p, Editor editor, String[] args) {
+    private void checkAdminSubCommand(Player p, Game game, Editor editor, String[] args) {
         switch (args[2].toLowerCase()) {
             case "set": {
                 setGameSettings.setGameSetting(p, editor, args);
@@ -126,7 +126,7 @@ public class GameEditor {
             }
             case "get": {
                 if (args.length >= 4) {
-                    getGameSettings.getGameSetting(p, editor, args);
+                    getGameSettings.getGameSetting(p, game, editor, args);
                     return;
                 }
                 break;
@@ -186,7 +186,8 @@ public class GameEditor {
         s.sendMessage("§a/jparkour admin game get stand §f- Find out the type of block selected by the axe.");
         s.sendMessage("§a/jparkour admin game get loc §f- Find out the type of block selected by the axe.");
         s.sendMessage("§a/jparkour admin game get point number(1to∞) §f- Find out information about the point.");
-        s.sendMessage("§a/jparkour admin game get locs §f- Get all locs..");
+        s.sendMessage("§a/jparkour admin game get locs §f- Get all locs.");
         s.sendMessage("§a/jparkour admin game get stands §f- Get all stands.");
+        s.sendMessage("§a/jparkour admin game get items §f- Get all Items.");
     }
 }

@@ -48,7 +48,7 @@ public class SaveGameSettings {
                 CountDownLatch clearLatch = new CountDownLatch(1);
                 scheduler.runTask(plugin, () -> {
                     editor.clear();
-                    scheduler.runTaskLater(plugin, clearLatch::countDown, 2);
+                    scheduler.runTaskLater(plugin, clearLatch::countDown, 5L);
                 });
                 clearLatch.await();
                 utils.getSchematic().save(name, editor.getPose1(), editor.getPose2(), editor.getPose3());
@@ -56,7 +56,7 @@ public class SaveGameSettings {
                 CountDownLatch saveLatch = new CountDownLatch(1);
                 scheduler.runTask(plugin, () -> {
                     editor.save(name);
-                    scheduler.runTaskLater(plugin, saveLatch::countDown, 2L);
+                    scheduler.runTaskLater(plugin, saveLatch::countDown, 5L);
                 });
                 saveLatch.await();
                 editor.setProcess(false);

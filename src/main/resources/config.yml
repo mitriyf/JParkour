@@ -1,10 +1,10 @@
 ############################################################
 #                         JParkour                         #
-#                           v1.5                           #
+#                           v1.6                           #
 ############################################################
 
 # Don't remove the version setting.
-version: 1.5-RELEASE
+version: 1.6
 
 # Plugin settings.
 settings:
