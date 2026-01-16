@@ -66,6 +66,7 @@ Finish the race, find out your score, and return home!
   - $ If you don't know the player's position in the top, you can get it by replacing "Number" with "name=PlayerName".
   - $ Enter the player's nickname in PlayerName. Examples: %jparkour_tops_nether_1_top%,
   - $ %jparkour_tops_nether_name=Mitriyf_top%, %jparkour_tops_nether_name=%player%_top%.
+  - $ Ready-made configuration of scoreboards: https://github.com/mitriyf/JParkour/blob/main/downloads/tab/config.yml
 <img width="556" height="177" alt="image" src="https://github.com/user-attachments/assets/cd03b156-8335-4e73-b372-d9633be14a37" />
 <img width="280" height="192" alt="image" src="https://github.com/user-attachments/assets/4f9b944f-6356-429d-b3d3-0095b867dd8b" />
 
