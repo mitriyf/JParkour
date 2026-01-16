@@ -116,6 +116,9 @@ settings:
 messages:
   # Actions:
   # [actionbar] message - Send the actionbar with your message. For 1.11+
+  # [connect] server - Send a player to a specific BungeeCord server.
+  # WARNING: Requires BungeeMessaging. This is present on BungeeCord and WaterFall.
+  # On Velocity it might be disabled by default. Check your proxy config.
   # [message] message - Send a message to the player.
   # [broadcast] message - Send a message to all players.
   # [log] message - Send a message to the console.

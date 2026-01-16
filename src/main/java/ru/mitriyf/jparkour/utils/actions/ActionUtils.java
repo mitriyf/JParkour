@@ -1,5 +1,7 @@
 package ru.mitriyf.jparkour.utils.actions;
 
+import com.google.common.io.ByteArrayDataOutput;
+import com.google.common.io.ByteStreams;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
@@ -125,6 +127,18 @@ public class ActionUtils {
         } catch (Exception e) {
             logger.warning("ActionBar error: " + e);
         }
+    }
+
+    public void connect(Player p, String server) {
+        ByteArrayDataOutput out = ByteStreams.newDataOutput();
+        try {
+            out.writeUTF("Connect");
+            out.writeUTF(server);
+        } catch (Exception e) {
+            logger.warning("A problem has been detected when sending player " + p.getName() + " to the " + server + " server");
+            return;
+        }
+        p.sendPluginMessage(plugin, "BungeeCord", out.toByteArray());
     }
 
     public void sendTitle(Player p, String titleS) {

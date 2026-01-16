@@ -149,40 +149,55 @@ public class Utils {
             context = PlaceholderAPI.setPlaceholders(p, context);
         }
         switch (type) {
-            case PLAYER:
+            case PLAYER: {
                 actionUtils.dispatchPlayer(p, context);
                 break;
-            case TELEPORT:
+            }
+            case TELEPORT: {
                 actionUtils.teleportPlayer(p, context);
                 break;
-            case CONSOLE:
+            }
+            case CONSOLE: {
                 commonUtils.dispatchConsole(context);
                 break;
-            case ACTIONBAR:
+            }
+            case ACTIONBAR: {
                 actionUtils.sendActionBar(p, context);
                 break;
-            case BOSSBAR:
+            }
+            case CONNECT: {
+                actionUtils.connect(p, context);
+                break;
+            }
+            case BOSSBAR: {
                 actionUtils.sendBossbar(p, context);
                 break;
-            case BROADCAST:
+            }
+            case BROADCAST: {
                 commonUtils.broadcast(context);
                 break;
-            case TITLE:
+            }
+            case TITLE: {
                 actionUtils.sendTitle(p, context);
                 break;
-            case SOUND:
+            }
+            case SOUND: {
                 actionUtils.playSound(p, context);
                 break;
-            case EFFECT:
+            }
+            case EFFECT: {
                 actionUtils.giveEffect(p, context);
                 break;
-            case EXPLOSION:
+            }
+            case EXPLOSION: {
                 actionUtils.createExplosion(p, context);
                 break;
-            case LOG:
+            }
+            case LOG: {
                 log(context);
                 break;
-            case DELAY:
+            }
+            case DELAY: {
                 try {
                     if (latch.await(Integer.parseInt(context) * 50L, TimeUnit.MILLISECONDS)) {
                         break;
@@ -190,9 +205,11 @@ public class Utils {
                 } catch (Exception ignored) {
                 }
                 break;
-            default:
+            }
+            default: {
                 sendMessage(p, context);
                 break;
+            }
         }
     }
 
@@ -200,16 +217,19 @@ public class Utils {
         ActionType type = action.getType();
         String context = replaceEach(action.getContext(), search, replace);
         switch (type) {
-            case CONSOLE:
+            case CONSOLE: {
                 commonUtils.dispatchConsole(context);
                 break;
-            case BROADCAST:
+            }
+            case BROADCAST: {
                 commonUtils.broadcast(context);
                 break;
-            case LOG:
+            }
+            case LOG: {
                 log(context);
                 break;
-            case DELAY:
+            }
+            case DELAY: {
                 try {
                     if (latch.await(Integer.parseInt(context) * 50L, TimeUnit.MILLISECONDS)) {
                         break;
@@ -217,6 +237,7 @@ public class Utils {
                 } catch (Exception ignored) {
                 }
                 break;
+            }
             case PLAYER:
             case TITLE:
             case ACTIONBAR:
@@ -224,6 +245,7 @@ public class Utils {
             case EFFECT:
             case TELEPORT:
             case SOUND:
+            case CONNECT:
             case EXPLOSION:
                 break;
             default:

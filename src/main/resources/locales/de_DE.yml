@@ -4,6 +4,9 @@ version: 1.6
 messages:
   # Aktionen:
   # [actionbar] Nachricht - Sende die Actionbar mit deiner Nachricht. Für 1.11+
+  # [connect] server - Spieler zu einem bestimmten BungeeCord-Server senden.
+  # WARNUNG: Erfordert BungeeMessaging. Dies ist bei BungeeCord und WaterFall vorhanden.
+  # Bei Velocity könnte es standardmäßig deaktiviert sein. Prüfe deine Proxy-Konfiguration.
   # [message] Nachricht - Sende eine Nachricht an den Spieler.
   # [broadcast] Nachricht - Sende eine Nachricht an alle Spieler.
   # [log] Nachricht - Sende eine Nachricht an die Konsole.

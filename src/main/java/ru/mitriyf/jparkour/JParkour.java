@@ -37,6 +37,7 @@ public final class JParkour extends JavaPlugin {
         getCommand("jparkour").setExecutor(new JParkourCommand(this));
         events = new Events(this);
         events.setup();
+        getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
     }
 
     @Override
