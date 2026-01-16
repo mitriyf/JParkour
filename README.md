@@ -29,7 +29,7 @@ Finish the race, find out your score, and return home!
 ![2026-01-16 02-37-32](https://github.com/user-attachments/assets/ca361be9-b7f3-439c-8f25-fdd24e27b69b)
 
 ## 🎮 The game process
-- You can watch the gameplay on Youtube:
+- You can watch the gameplay on YouTube:
   - https://youtu.be/SZLOos1hHf0
   - https://www.youtube.com/watch?v=SZLOos1hHf0
 ## 🚀 Requirements:
@@ -209,6 +209,7 @@ You can view the configurations by going to src/main/resources/:
 - config13.yml
 - slots.yml
 - slots13.yml
+- schematics/default.yml
 
 or by following the link:
 - https://github.com/mitriyf/JParkour/blob/main/src/main/resources/locales/ru_RU.yml
@@ -218,5 +219,6 @@ or by following the link:
 - https://github.com/mitriyf/JParkour/blob/main/src/main/resources/config13.yml
 - https://github.com/mitriyf/JParkour/blob/main/src/main/resources/slots.yml
 - https://github.com/mitriyf/JParkour/blob/main/src/main/resources/slots13.yml
+- https://github.com/mitriyf/JParkour/blob/main/src/main/resources/schematics/default.yml
 
 # 🤗 You can consider the rest of the possibilities when using the plugin.
