@@ -36,7 +36,7 @@ public class Supports {
             placeholders = null;
         }
         if (tops != null && tops.getTask() != null) {
-            tops.getTask().cancel();
+            tops.stopTimer();
             tops.getSchematic().clear();
         }
     }

@@ -44,13 +44,25 @@ public class Placeholders extends PlaceholderExpansion {
         if (args.length == 4) {
             Schematic schematic = tops.getSchematic().get(args[1]);
             if (schematic == null) {
+                if (values.getSchematics().containsKey(args[1])) {
+                    if (args[3].equalsIgnoreCase("name")) {
+                        return notClaimed(p);
+                    } else {
+                        return "";
+                    }
+                }
                 return "Schematic not found.";
             }
             int topPlace;
             try {
                 topPlace = Integer.parseInt(args[2]);
             } catch (Exception e) {
-                String name = args[2].replace("name=", "");
+                String name = args[2];
+                if (name.equalsIgnoreCase("player")) {
+                    name = p.getName();
+                } else {
+                    name = args[2].replace("name=", "");
+                }
                 topPlace = schematic.getTopName().getOrDefault(name, -404);
                 if (topPlace == -404) {
                     return falseString;
@@ -59,8 +71,7 @@ public class Placeholders extends PlaceholderExpansion {
             PlayerDataSchematic playerData = schematic.getTop().get(topPlace);
             if (playerData == null) {
                 if (args[3].equalsIgnoreCase("name")) {
-                    String text = values.getNotClaimed().getOrDefault(utils.getLocale().player(p), values.getNotClaimed().get(""));
-                    return values.getColorizer().colorize(text);
+                    return notClaimed(p);
                 }
                 return "";
             }
@@ -115,6 +126,16 @@ public class Placeholders extends PlaceholderExpansion {
             }
         }
         return null;
+    }
+
+    private String notClaimed(Player p) {
+        String text = values.getNotClaimed().getOrDefault(utils.getLocale().player(p), values.getNotClaimed().get(""));
+        return values.getColorizer().colorize(text);
+    }
+
+    @Override
+    public boolean persist() {
+        return true;
     }
 
     @Override

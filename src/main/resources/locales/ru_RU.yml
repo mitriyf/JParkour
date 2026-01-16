@@ -48,10 +48,12 @@ messages:
   # %jparkour_tops_SchematicName_Number_accuracy% - Определяет точность игрока, который находится на определенной вершине.
   # %jparkour_tops_SchematicName_Number_time% - Получить точное время завершения для игрока, который находится на определенной вершине.
   #
-  # Измените "SchematicName" на идентификатор схемы, а "Number" - на нужный вам номер в верхней части списка.
-  # Если вы не знаете позицию игрока в топе, вы можете получить ее, заменив "Number" на "name=игрок".
-  # Введите ник игрока в поле игрок. Примеры: %jparkour_tops_nether_1_top%,
-  # %jparkour_tops_nether_name=Mitriyf_top%, %jparkour_tops_nether_name=%player%_top%.
+  # Замените "SchematicName" на ID схемы, а "Number" на нужный вам номер в топе.
+  # Если вы не знаете позицию игрока в топе, вы можете получить её, заменив "Number" на "name=PlayerName".
+  # Или, если вы хотите узнать позицию смотрящего плейсхолдер, замените "Number" на "player".
+  # Введите никнейм игрока в PlayerName. Примеры: %jparkour_tops_nether_1_top%,
+  # %jparkour_tops_nether_name=Mitriyf_accuracy%, %jparkour_tops_nether_name=%player%_time%, %jparkour_tops_nether_player_name%.
+  # Внимание! Функция "name=PlayerName" может некорректно работать с именами пользователей, содержащими _
   #
   # Информация:
   # Сообщения, отправленные в консоль, могут не заменять плейсхолдеры или выполнять определенные действия выше.

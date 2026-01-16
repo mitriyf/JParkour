@@ -43,10 +43,12 @@ messages:
   # %jparkour_tops_SchematicName_Number_accuracy% - die Genauigkeit eines Spielers abrufen, der sich in einer bestimmten Bestenliste befindet.
   # %jparkour_tops_SchematicName_Number_time% - die genaue Abschlusszeit eines Spielers abrufen, der sich in einer bestimmten Bestenliste befindet.
   #
-  # Ersetze "SchematicName" durch die ID der Schematik und "Number" durch die gewünschte Position in der Bestenliste.
-  # Wenn du die Position des Spielers in der Bestenliste nicht kennst, kannst du sie abrufen, indem du "Number" durch "name=SpielerName" ersetzt.
-  # Gib den Spitznamen des Spielers bei "SpielerName" ein. Beispiele: %jparkour_tops_nether_1_top%,
-  # %jparkour_tops_nether_name=Mitriyf_top%, %jparkour_tops_nether_name=%player%_top%.
+  # Ersetzen Sie "SchematicName" durch die ID des Schemas und "Number" durch die gewünschte Position in der Bestenliste.
+  # Wenn Sie die Position des Spielers in der Bestenliste nicht kennen, können Sie sie abrufen, indem Sie "Number" durch "name=PlayerName" ersetzen.
+  # Oder, wenn Sie die Position der Person wissen möchten, die den Platzhalter betrachtet, ersetzen Sie "Number" durch "player".
+  # Geben Sie den Spitznamen des Spielers in PlayerName ein. Beispiele: %jparkour_tops_nether_1_top%,
+  # %jparkour_tops_nether_name=Mitriyf_accuracy%, %jparkour_tops_nether_name=%player%_time%, %jparkour_tops_nether_player_name%.
+  # Achtung! Die Funktion "name=PlayerName" funktioniert möglicherweise nicht gut mit Benutzernamen, die _ enthalten.
   #
   # Eingebaute Platzhalter:
   # %accuracy% - zeigt die Ausführungsgenauigkeit des Spielers an.
