@@ -64,8 +64,10 @@ Finish the race, find out your score, and return home!
     - %jparkour_tops_SchematicName_Number_time% - Get the exact completion time of a player who is on a specific top.
   - $ Change "SchematicName" to the schematics' ID, and "Number" to the number in the top that you require.
   - $ If you don't know the player's position in the top, you can get it by replacing "Number" with "name=PlayerName".
+  - $ Or if you want to know the position of the person who is watching the placeholder, replace "Number" with "player".
   - $ Enter the player's nickname in PlayerName. Examples: %jparkour_tops_nether_1_top%,
-  - $ %jparkour_tops_nether_name=Mitriyf_top%, %jparkour_tops_nether_name=%player%_top%.
+  - $ %jparkour_tops_nether_name=Mitriyf_accuracy%, %jparkour_tops_nether_name=%player%_time%, %jparkour_tops_nether_player_name%.
+  - $ Attention! The "name=PlayerName" function may not work well with usernames that contain _
   - $ Ready-made configuration of scoreboards: https://github.com/mitriyf/JParkour/blob/main/downloads/tab/config.yml
 <img width="556" height="177" alt="image" src="https://github.com/user-attachments/assets/cd03b156-8335-4e73-b372-d9633be14a37" />
 <img width="280" height="192" alt="image" src="https://github.com/user-attachments/assets/4f9b944f-6356-429d-b3d3-0095b867dd8b" />
