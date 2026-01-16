@@ -62,6 +62,10 @@ public class AdminEditor {
                     closeGame(s, args);
                     return;
                 }
+                case "locale": {
+                    getLocale(s);
+                    return;
+                }
             }
         }
         sendAdminHelp(s);
@@ -83,6 +87,14 @@ public class AdminEditor {
             game.restart();
             s.sendMessage("§aSuccessfully!");
         }
+    }
+
+    private void getLocale(CommandSender s) {
+        if (!(s instanceof Player)) {
+            s.sendMessage("§cYou console!");
+            return;
+        }
+        s.sendMessage("§aYour language code:\n" + utils.getLocale().player((Player) s));
     }
 
     private void updateTops(CommandSender s) {
@@ -122,5 +134,6 @@ public class AdminEditor {
         s.sendMessage("§a/jparkour admin restart playerName §f- Restart the player's game.");
         s.sendMessage("§a/jparkour admin updatetops §f- Update the tops.");
         s.sendMessage("§a/jparkour admin kick playerName §f- Kick the player out of the game.");
+        s.sendMessage("§a/jparkour admin locale §f- Get the client's language code.");
     }
 }

@@ -4,6 +4,7 @@ main: ru.mitriyf.jparkour.JParkour
 depend: [ FastAsyncWorldEdit ]
 softdepend: [ PlaceholderAPI ]
 api-version: 1.13
+website: https://github.com/mitriyf/JParkour
 authors: [ JDevs, Mitriyf ]
 commands:
   jparkour:

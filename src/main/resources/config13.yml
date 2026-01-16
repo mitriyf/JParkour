@@ -3,6 +3,9 @@
 #                           v1.6                           #
 ############################################################
 
+# You can find documentation or help about the plugin here: https://github.com/mitriyf/JParkour
+# Or: https://vk.com/jdevs
+
 # Don't remove the version setting.
 version: 1.6
 
@@ -11,11 +14,15 @@ settings:
   # Insert hex or minimessage.
   # minimessage - for Paper, 1.18+.
   # hex - It works starting from version 1.16.5, but if your server is lower than this version, do not change anything.
+  # It will also work on lower versions, but without displaying the correct colors
   translate: hex
   # You can find out the language code by clicking on the link below and looking at the In-Game section.
   # https://minecraft.fandom.com/wiki/Language#Languages
+  # Or you can find out your language code by running the command (don't forget to change the language on the client):
+  # /jparkour admin locale - Get the client's language code.
+  # You can configure locales in the plugin folder where the locales. The folder will be created when you enable locales
+  # in the plugin configuration. You can create your own files.
   # Set true to enable locales for messages.
-  # You can configure locales in the plugin folder where the locales. folder is located. You can create your own files.
   locales: false
   # Game settings.
   games:
