@@ -143,7 +143,7 @@ Finish the race, find out your score, and return home!
   - /jparkour admin locale - Get the client's language code.
 - /jparkour reload - Reload the plugin configuration.
 
-## 📖 Permissions:
+### 📖 Permissions:
 - **jparkour.help** - Can a player get help with subcommands?
 - **jparkour.join** - Can a player join/exit games?
 - **jparkour.status** - Can the player find out the status of the games?
@@ -153,7 +153,7 @@ Finish the race, find out your score, and return home!
 - **jparkour.game** - Can a player access the game settings in the AdminGameEditor?
 - **jparkour.item** - Can the player access item settings?
 
-## 🏃 Actions:
+### 🏃 Actions:
   - [actionbar] message - Send the actionbar with your message. For 1.11+
   - [connect] server - Send a player to a specific BungeeCord server.
     - WARNING: Requires BungeeMessaging. This is present on BungeeCord and WaterFall.
@@ -188,21 +188,21 @@ Finish the race, find out your score, and return home!
     - Messages sent to the console may not replace placeholders or perform certain actions above.
   - Built-in functions:
     - %player% - Get the player name.
-## ⚙️ Config:
+### ⚙️ Config:
 - Send actions to players using messages. (HEX support from 1.16+, MiniMessage support form 1.18+)
 - Settings for schematics, default maps, and more.
 
-## 🔐Storage:
+### 🔐Storage:
 - Backup of updated configurations after updating to a new plugin version.
 - Automatic loading of schematics if they are missing.
 - Automatic correction of broken configurations.
 - Automatic folder creation.
 
-## 🔄ConfigUpdater:
+### 🔄ConfigUpdater:
 - The plugin will check all configuration conditions and update them as much as possible, and it will also create backups of previous ones.
 - There are some moments where it can work when you are working with the editor.
 
-### 📝 Configurations:
+## 📝 Configurations:
 You can view the configurations by going to src/main/resources/:
 - locales/ru_RU.yml
 - locales/en_US.yml
