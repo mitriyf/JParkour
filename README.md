@@ -28,46 +28,65 @@ Finish the race, find out your score, and return home!
 ![2026-01-16 02-37-32](https://github.com/user-attachments/assets/ca361be9-b7f3-439c-8f25-fdd24e27b69b)
 
 ## 🎮 The game process
-The game process is watching videos (YouTube):
-https://youtu.be/SZLOos1hHf0 or https://www.youtube.com/watch?v=SZLOos1hHf0
+- You can watch the gameplay on Youtube:
+  - https://youtu.be/SZLOos1hHf0
+  - https://www.youtube.com/watch?v=SZLOos1hHf0
 ## 🚀 Requirements:
-- FastAsyncWorldEdit (FAWE). You can download it here: https://intellectualsites.github.io/download/fawe.html
-GitHub: https://github.com/IntellectualSites/FastAsyncWorldEdit
+- FastAsyncWorldEdit (FAWE).
+  - You can download it here: https://intellectualsites.github.io/download/fawe.html
+  - GitHub: https://github.com/IntellectualSites/FastAsyncWorldEdit
 ## 🌠 Optional requirements: 
-- PlaceholderAPI. You can download it here: https://github.com/PlaceholderAPI/PlaceholderAPI/releases
+- PlaceholderAPI.
+  - You can download it here: https://github.com/PlaceholderAPI/PlaceholderAPI/releases
 
 <img width="556" height="177" alt="image" src="https://github.com/user-attachments/assets/cd03b156-8335-4e73-b372-d9633be14a37" />
 
+## 🛠️ Supported:
+### 🔮 Support HEX (1.16+, it will also work on lower versions, but without displaying the correct colors), MiniMessage (1.18+)
+### 🌍 Languages:
+- en_US (English (US))
+- ru_RU (Russian)
+- de_DE (German)
+- Others (Don't forget to enable locales in the plugin configuration for language support)
+  - $ You can find out the language code by clicking on the link below and looking at the In-Game section. Or you can find out your language code by running the command (don't forget to change the language on the client): **/jparkour admin locale**
+  - $ https://minecraft.fandom.com/wiki/Language#Languages
+  - $ You can configure locales in the plugin folder where the locales. The folder will be created when you enable locales in the plugin configuration. You can create your own files.
 ## ⌨️ Commands (/jparkour):
 - /jparkour status - Check the status of the plugin.
 - /jparkour join - Create or join any available room.
 - /jparkour join roomId - Attempt to connect to the room (if it is free).
 - /jparkour exit - Exit the game/queue.
 - /jparkour admin - Get a Admin Help.
-- /jparkour admin add playerName - Add a player to a random game.
-- /jparkour admin add playerName Map - Add a player to a specific game.
-- /jparkour admin item - Get a Item Help.
-- /jparkour admin gameeditor - Get a GameEditor Help.
-- /jparkour admin gameeditor new - Create a new game schematic.
-- /jparkour admin gameeditor new OtherGame - Create a new game schematic by copying another game schematic.
-- /jparkour admin gameeditor list - Get a list of game schematics.
-- /jparkour admin gameeditor remove Name - Delete the game schematic.
-- /jparkour admin game - Set a GameEditor Settings.
-- /jparkour admin game set pose 1/2/3/portal - Stand at the border of one of the points and select it.
-- /jparkour admin game set stand Type - Strike the block where stand should be with the axe in your hands.
-- /jparkour admin game set loc Type - Strike the block where loc should be with the axe in your hands.
-- /jparkour admin game set point Number(1to∞) RadiusStartPoint(0.5/?.?) Teleportation(true/false) addX addY addZ Yaw Pitch - Go to the location where the point should be and enter this command. The normal block values will be taken (there is an add for this), and if yaw and pitch are not specified, the values that the player has looked at will be taken.
-- /jparkour admin game get pose 1/2/3/portal - Find out the coordinates of the boundaries of point 1 or 2...
-- /jparkour admin game get stand - Find out the type of block selected by the axe.
-- /jparkour admin game get loc - Find out the type of block selected by the axe.
-- /jparkour admin game get point number(1to∞) - Find out information about the point.
-- /jparkour admin game get locs - Get all locs.
-- /jparkour admin game get stands - Get all stands.
-- /jparkour admin game get items - Get all Items.
-- /jparkour admin game remove point number(1to∞) - Delete a point.
-- /jparkour admin restart playerName - Restart the player's game.
-- /jparkour admin updatetops - Update the tops.
-- /jparkour admin kick playerName - Kick the player out of the game.
+  - /jparkour admin add playerName - Add a player to a random game.
+  - /jparkour admin add playerName Map - Add a player to a specific game.
+  - /jparkour admin item - Get a Item Help.
+    - /jparkour admin item add default/schematicName slot itemName - Add the item in your hand to the selected schematic.
+    - /jparkour admin item list - Get a list of schematics.
+    - /jparkour admin item list default/schematicName - Get a list of items in the selected schematic.
+    - /jparkour admin item info default/schematicName itemName - Get the item from the selected schematic.
+    - /jparkour admin item remove default/schematicName itemName - Remove an item from the selected schematic.
+  - /jparkour admin gameeditor - Get a GameEditor Help.
+    - /jparkour admin gameeditor new - Create a new game schematic.
+    - /jparkour admin gameeditor new OtherGame - Create a new game schematic by copying another game schematic.
+    - /jparkour admin gameeditor list - Get a list of game schematics.
+    - /jparkour admin gameeditor remove Name - Delete the game schematic.
+  - /jparkour admin game - Set a GameEditor Settings.
+    - /jparkour admin game set pose 1/2/3/portal - Stand at the border of one of the points and select it.
+    - /jparkour admin game set stand Type - Strike the block where stand should be with the axe in your hands.
+    - /jparkour admin game set loc Type - Strike the block where loc should be with the axe in your hands.
+    - /jparkour admin game set point Number(1to∞) RadiusStartPoint(0.5/?.?) Teleportation(true/false) addX addY addZ Yaw Pitch - Go to the location where the point should be and enter this command. The normal block values will be taken (there is an add for this), and if yaw and pitch are not specified, the values that the player has looked at will be taken.
+    - /jparkour admin game get pose 1/2/3/portal - Find out the coordinates of the boundaries of point 1 or 2...
+    - /jparkour admin game get stand - Find out the type of block selected by the axe.
+    - /jparkour admin game get loc - Find out the type of block selected by the axe.
+    - /jparkour admin game get point number(1to∞) - Find out information about the point.
+    - /jparkour admin game get locs - Get all locs.
+    - /jparkour admin game get stands - Get all stands.
+    - /jparkour admin game get items - Get all Items.
+    - /jparkour admin game remove point number(1to∞) - Delete a point.
+  - /jparkour admin restart playerName - Restart the player's game.
+  - /jparkour admin updatetops - Update the tops.
+  - /jparkour admin kick playerName - Kick the player out of the game.
+  - /jparkour admin locale - Get the client's language code.
 - /jparkour reload - Reload the plugin configuration.
 
 ## 📖 Permissions:
