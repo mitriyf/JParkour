@@ -161,7 +161,7 @@ Finish the race, find out your score, and return home!
   - [message] message - Send a message to the player.
   - [broadcast] message - Send a message to all players.
   - [log] message - Send a message to the console.
-  - [delay] ticks - Make a delay between actions. In ticks. (20 ticks = 1 second)
+  - [delay] ticks - Make a delay between actions. In ticks (20 ticks = 1 second).
   - [player] command - Run the command on behalf of the player.
   - [teleport] world;x;y;z;yaw;pitch;delay - Teleport the player to the specified coordinates. The delay is measured in ticks.
   - [console] command - Run the command on behalf of the console.
