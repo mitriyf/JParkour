@@ -47,11 +47,11 @@ public class Run {
     private BukkitTask task;
 
     public Run(Game game) {
-        this.plugin = game.getPlugin();
+        plugin = game.getPlugin();
         this.game = game;
-        this.values = plugin.getValues();
-        this.locs = game.getLocs();
-        this.p = game.getPlayer();
+        values = plugin.getValues();
+        locs = game.getLocs();
+        p = game.getPlayer();
         info = game.getInfo();
         start = locs.getStart();
         end = locs.getEnd();

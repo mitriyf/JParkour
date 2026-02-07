@@ -19,8 +19,8 @@ public class BlockEvents implements Listener {
     private final Manager manager;
 
     public BlockEvents(JParkour plugin) {
-        this.values = plugin.getValues();
-        this.manager = plugin.getManager();
+        values = plugin.getValues();
+        manager = plugin.getManager();
     }
 
     @EventHandler

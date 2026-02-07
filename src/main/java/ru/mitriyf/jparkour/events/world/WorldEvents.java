@@ -22,7 +22,7 @@ public class WorldEvents implements Listener {
 
     public WorldEvents(JParkour plugin) {
         this.plugin = plugin;
-        this.values = plugin.getValues();
+        values = plugin.getValues();
     }
 
     @EventHandler

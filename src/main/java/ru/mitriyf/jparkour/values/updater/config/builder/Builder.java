@@ -10,12 +10,12 @@ public class Builder implements Cloneable {
     public Builder(FileConfiguration config, char separator) {
         this.config = config;
         this.separator = separator;
-        this.builder = new StringBuilder();
+        builder = new StringBuilder();
     }
 
     private Builder(Builder builder) {
-        this.config = builder.config;
-        this.separator = builder.separator;
+        config = builder.config;
+        separator = builder.separator;
         this.builder = new StringBuilder(builder.toString());
     }
 

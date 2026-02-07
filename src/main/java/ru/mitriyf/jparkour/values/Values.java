@@ -96,8 +96,8 @@ public class Values {
         this.plugin = plugin;
         updater = new Updater(plugin, this);
         dataFolder = plugin.getDataFolder();
-        configFile = new File(plugin.getDataFolder(), "config.yml");
-        slotsFile = new File(plugin.getDataFolder(), "slots.yml");
+        configFile = new File(dataFolder, "config.yml");
+        slotsFile = new File(dataFolder, "slots.yml");
         logger = plugin.getLogger();
         try {
             Class.forName("net.kyori.adventure.text.minimessage.MiniMessage");
@@ -380,7 +380,7 @@ public class Values {
         try {
             plugin.saveResource(resource, true);
             if (!defaultId.isEmpty()) {
-                Path oldCfg = new File(plugin.getDataFolder(), resource).toPath();
+                Path oldCfg = new File(dataFolder, resource).toPath();
                 Files.move(oldCfg, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
             }
         } catch (Exception e) {
