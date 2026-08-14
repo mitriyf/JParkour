@@ -1,0 +1,293 @@
+# Don't remove the version setting.
+version: '1.7'
+
+# Specify the name of the map. It will be displayed in the Scoreboard.
+schematic:
+  name: '&fDefault'
+  # Specify an asterisk symbol or another symbol that will indicate a victory.
+  # Leave this blank to display numbers.
+  star: ★
+  # Specify whether to insert air blocks into the schematic.
+  # The default value is false, as it does not work correctly with the editor in newer versions.
+  pasteAir: false
+  # GameRules.
+  # GameRule:Value
+  gameRules:
+  - randomTickSpeed:0
+# The game rules are configurable by the plugin.
+rules:
+  # Event when player food level changes.
+  foodLevelChange: false
+  # Event when player picks up an item.
+  pickupItem: false
+  # Event when player consumes an item.
+  consumeItem: false
+  # Event when player drops an item.
+  dropItem: false
+  # Event when entity takes damage.
+  entityDamage: false
+  # Event when creature spawns in the world.
+  creatureSpawn: false
+  # Event when entity explodes.
+  entityExplode: false
+  # Event when entity targets another entity.
+  entityTarget: false
+  # Event when item spawns in the world.
+  itemSpawn: false
+  # Event when player places a block.
+  placeBlock: false
+  # Event when player breaks a block.
+  breakBlock: false
+  # Event when block starts burning.
+  burnBlock: false
+  # Event when block is ignited.
+  igniteBlock: false
+  # Event when block changes from one state to another.
+  fromToBlock: false
+  # Event when entity changes a block.
+  entityChangeBlock: false
+  # Event when block physics occurs.
+  physicsBlock: false
+  # Event when block fades.
+  fadeBlock: false
+  # Event when leaves decay naturally.
+  leavesDecay: false
+  # Event when player places multiple blocks at once.
+  multiPlaceBlock: false
+# Entity settings.
+entity:
+  # Specify the entity.
+  type: CHICKEN
+  # Specify the speed of mob.
+  speed: 0.2
+  # Specify how many ticks the next mob movement will be measured.
+  everyTicks: 1
+  # Running entity.
+  run:
+    # Should I reset the vector's speed at the finish line?
+    resetVectorFinish: true
+    # Down and up when parkouring. It can help if you have too much parkour or something else.
+    directions:
+      # Up.
+      up:
+        # Checking all the blocks is ahead.
+        blockChecks:
+          # How many blocks ahead the plugin will look at.
+          forward: 3
+          # Should I check the upper blocks?
+          upBlock: true
+        # Lifting speed.
+        speed: 0.3
+      # Down.
+      down:
+        # Checking what height is needed for the block.
+        check: -0.2
+        # The rate of descent.
+        speed: -0.8
+player:
+  # Specify the maximum number of hit points. 2 hit points = 1 heart.
+  health: 6
+  # Specify the food level that the player will always have.
+  foodLevel: 10
+  # Specify which gameMode will be issued to the player.
+  gameMode: ADVENTURE
+  # Specify the bomb damage.
+  damageBomb: 2
+  # If the bomb was activated by the wrong object, then detonate it.
+  failedDefuseBomb: true
+  # Should we immediately provide all items of schematics and default?
+  fullSlots: false
+  # Specify the radius from the finish line at which victory can appear. (For mobs that are very tall)
+  radiusFinish: 0.5
+  # Specify how many ticks the player will be kicked after. (Finish, 20 ticks = 1 second)
+  exitTime: 100
+# Coordinates of the schematic insertion.
+coords:
+  x: 0
+  y: 103
+  z: 0
+# Locations.
+locations:
+  # Specify through: ";" - X, Y, Z, YAW, PITCH from the location of the schematic.
+  spawn: 0.5;0.0;0.5;180.0;0.0
+  # The block that will be used to start the game. (Works worldwide)
+  # Remove the extra blocks for teleportation at this Z coordinate. (To avoid accidentally entering parkour)
+  portal: 0.0;-1.0;-12.0;0.0;0.0
+  # Players
+  players:
+    # The player count starts at 0.
+    0:
+      # The starting point where the chicken will run.
+      start: -5.5;3.0;-11.5;180.0;0.0
+      # End.
+      end: -1.5;3.0;-52.5;180.0;0.0
+      # Points. Don't start with 0, only with 1! And always follow the order of numbers.
+      points:
+        1:
+          # Specify the radius within which the point will be detected.
+          radiusStartPoint: 0.15
+          # Specify the location of the point.
+          location:
+            # Specify through: ";" - X, Y, Z, YAW, PITCH from the location of the schematic.
+            start: -5.5;3.0;-20.5;0.0;0.0
+            # Is it possible to teleport the chicken's and the player's heads to the coordinates below?
+            # Otherwise, there will be some kind of drift. Is it enabled?
+            teleport: false
+        2:
+          radiusStartPoint: 0.15
+          location:
+            start: 1.5;3.0;-20.5;0.0;0.0
+            teleport: false
+        3:
+          radiusStartPoint: 0.15
+          location:
+            start: 1.5;3.0;-26.5;0.0;0.0
+            teleport: false
+        4:
+          radiusStartPoint: 0.15
+          location:
+            start: 6.5;3.0;-26.5;0.0;0.0
+            teleport: false
+        5:
+          radiusStartPoint: 0.15
+          location:
+            start: 6.5;3.0;-36.5;0.0;0.0
+            teleport: false
+        6:
+          radiusStartPoint: 0.15
+          location:
+            start: 1.5;3.0;-36.5;0.0;0.0
+            teleport: false
+        7:
+          radiusStartPoint: 0.15
+          location:
+            start: 1.5;3.0;-45.5;0.0;0.0
+            teleport: false
+        8:
+          radiusStartPoint: 0.15
+          location:
+            start: -1.5;3.0;-45.5;0.0;0.0
+            teleport: false
+      # Specify where the stands will appear.
+      # Order: type;X;Y;Z;YAW;PITCH (from the location of the schematic)
+      stands:
+      - gold_block;-1.5;4.0;-52.5;0.0;0.0
+      - bomb_diamond;-5.5;3.0;-16.5;0.0;0.0
+      - diamond_block;4.5;4.0;-34.5;0.0;0.0
+      - diamond_block;-3.5;4.0;-18.5;0.0;0.0
+      - gold_block;7.5;4.0;-31.5;0.0;0.0
+      - bomb_diamond;0.5;3.0;-45.5;0.0;0.0
+      - bomb_gold;1.5;3.0;-37.5;0.0;0.0
+      - bomb_gold;1.5;3.0;-23.5;0.0;0.0
+      - diamond_block;4.5;4.0;-28.5;0.0;0.0
+    1:
+      start: 6.5;3.0;-11.5;180.0;0.0
+      end: 2.5;3.0;-52.5;180.0;0.0
+      points:
+        1:
+          radiusStartPoint: 0.15
+          location:
+            start: 6.5;3.0;-20.5;0.0;0.0
+            teleport: false
+        2:
+          radiusStartPoint: 0.15
+          location:
+            start: -0.5;3.0;-20.5;0.0;0.0
+            teleport: false
+        3:
+          radiusStartPoint: 0.15
+          location:
+            start: -0.5;3.0;-26.5;0.0;0.0
+            teleport: false
+        4:
+          radiusStartPoint: 0.15
+          location:
+            start: -5.5;3.0;-26.5;0.0;0.0
+            teleport: false
+        5:
+          radiusStartPoint: 0.15
+          location:
+            start: -5.5;3.0;-36.5;0.0;0.0
+            teleport: false
+        6:
+          radiusStartPoint: 0.15
+          location:
+            start: -0.5;3.0;-36.5;0.0;0.0
+            teleport: false
+        7:
+          radiusStartPoint: 0.15
+          location:
+            start: -0.5;3.0;-45.5;0.0;0.0
+            teleport: false
+        8:
+          radiusStartPoint: 0.15
+          location:
+            start: 2.5;3.0;-45.5;0.0;0.0
+            teleport: false
+      stands:
+      - gold_block;-6.5;4.0;-31.5;0.0;0.0
+      - bomb_diamond;0.5;3.0;-45.5;0.0;0.0
+      - diamond_block;-3.5;4.0;-34.5;0.0;0.0
+      - bomb_diamond;6.5;3.0;-16.5;0.0;0.0
+      - gold_block;2.5;4.0;-52.5;0.0;0.0
+      - bomb_gold;-0.5;3.0;-23.5;0.0;0.0
+      - diamond_block;-3.5;4.0;-28.5;0.0;0.0
+      - bomb_gold;-0.5;3.0;-37.5;0.0;0.0
+      - diamond_block;4.5;4.0;-18.5;0.0;0.0
+stars:
+  # 1 - 100%.
+  # 0.8 - 80%.
+  # 0.1 - 10%.
+  # Percent
+  '5': 0.9
+  '4': 0.75
+  '3': 0.5
+  '2': 0.3
+  '1': 0.15
+
+# Stands.
+stands:
+  # Specify the radius for the stands to appear.
+  radiusStands: 4
+  # Set a timer before the bomb explodes.
+  timer: 25
+# Set up the message.
+# This will only work if you have selected the plugin configuration mode.
+messages:
+  # Actions. These actions perform the same role as in the config.
+  # But there is no support for other languages here.
+  actions:
+    joined:
+    - '[log] [SCHEMATIC] The %player% connected to the game: %game%'
+    started:
+    - '[log] [SCHEMATIC] The %player% started the game.'
+    end:
+    - '[log] [SCHEMATIC] The %player% has finished the game.'
+    kicked:
+    - '[log] [SCHEMATIC] The %player% was kicked out of the game.'
+    restarted:
+    - '[log] [SCHEMATIC] The game has been restarted.'
+    cooldownRestart:
+    - '[explosion] 1'
+    damageHeart:
+    - '[log] [SCHEMATIC] The %player% lost a heart.'
+    win:
+    - '[log] [SCHEMATIC] The %player% won and got a score %star_win%|%star_loss%'
+  # The star rating system.
+  stars:
+    # 1 - 100%.
+    # 0.8 - 80%.
+    # 0.1 - 10%.
+    # Specify additional actions below. You can view them in the configuration.
+    '5':
+    - '&e★★★★★'
+    '4':
+    - '&e★★★★&7★'
+    '3':
+    - '&e★★★&7★★'
+    '2':
+    - '&e★★&7★★★'
+    '1':
+    - '&e★&7★★★★'
+    '0':
+    - '&7★★★★★'
