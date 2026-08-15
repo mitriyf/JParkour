@@ -1,4 +1,5 @@
 versions:
+  - "1.7;RELEASE;https://github.com/mitriyf/JParkour/releases/download/1.7-release/JParkour.jar"
   - "1.6;RELEASE;https://github.com/mitriyf/JParkour/releases/download/1.6-release/JParkour.jar"
   - "1.5;REQUIRED;https://github.com/mitriyf/JParkour/releases/download/1.5-release/JParkour.jar"
   - "1.4;REQUIRED;https://github.com/mitriyf/JParkour/releases/download/1.4-release/JParkour.jar"
