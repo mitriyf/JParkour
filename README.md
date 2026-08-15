@@ -157,6 +157,7 @@ Finish the race, find out your score, and return home!
     - /jparkour admin game set stand Type addX addY addZ Yaw Pitch - Strike the block where stand should be with the axe in your hands.
     - /jparkour admin game set loc Type addX addY addZ Yaw Pitch - Strike the block where loc should be with the axe in your hands.
     - /jparkour admin game set point Number(1to∞) RadiusStartPoint(0.5/?.?) Teleportation(true/false) addX addY addZ Yaw Pitch - Go to the location where the point should be and enter this command. The normal block values will be taken (there is an add for this), and if yaw and pitch are not specified, the values that the player has looked at will be taken.
+    - /jparkour admin game get player - Get the player. The initial value is 0.
     - /jparkour admin game get pose 1/2/3/portal - Find out the coordinates of the boundaries of point 1 or 2...
     - /jparkour admin game get stand - Find out the type of block selected by the axe.
     - /jparkour admin game get loc - Find out the type of block selected by the axe.
