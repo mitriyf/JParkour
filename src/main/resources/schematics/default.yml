@@ -1,19 +1,19 @@
 # Don't remove the version setting.
-version: 1.6
+version: '1.7'
 
 # Specify the name of the map. It will be displayed in the Scoreboard.
 schematic:
-  name: "&fDefault"
+  name: '&fDefault'
   # Specify an asterisk symbol or another symbol that will indicate a victory.
   # Leave this blank to display numbers.
-  star: "★"
+  star: ★
   # Specify whether to insert air blocks into the schematic.
   # The default value is false, as it does not work correctly with the editor in newer versions.
   pasteAir: false
   # GameRules.
   # GameRule:Value
   gameRules:
-    - "randomTickSpeed:0"
+    - randomTickSpeed:0
 # The game rules are configurable by the plugin.
 rules:
   # Event when player food level changes.
@@ -106,83 +106,98 @@ coords:
   x: 0
   y: 100
   z: 0
-# Location during teleportation.
-location:
-  # What yaw will be assigned during teleportation?
-  yaw: 180
-  # Which pitch will be assigned during teleportation?
-  pitch: 0
-locs:
-  # Specify through: ";" - X, Y, Z from the location of the schematic.
-  spawn: "0.5;0;0.5"
+# Locations.
+locations:
+  # Specify through: ";" - X, Y, Z, YAW, PITCH from the location of the schematic.
+  spawn: 0.5;0.0;0.5;180.0;0.0
   # The block that will be used to start the game. (Works worldwide)
   # Remove the extra blocks for teleportation at this Z coordinate. (To avoid accidentally entering parkour)
-  portal: "0;0;-7"
-  # The starting point where the chicken will run.
-  start: "0.5;0;-11.5"
-  # End.
-  end: "0.5;0;-101.5"
-  # Points. Don't start with 0, only with 1! And always follow the order of numbers.
-  points:
+  portal: 0.0;0.0;-7.0;180.0;0.0
+  # Players
+  players:
+    # The player count starts at 0.
+    0:
+      # The starting point where the chicken will run.
+      start: 0.5;0.0;-11.5;180.0;0.0
+      # End.
+      end: 0.5;0.0;-101.5;180.0;0.0
+      # Points. Don't start with 0, only with 1! And always follow the order of numbers.
+      points:
+        1:
+          # Specify the radius within which the point will be detected.
+          radiusStartPoint: 0.15
+          # Specify the location of the point.
+          location:
+            # Specify through: ";" - X, Y, Z, YAW, PITCH from the location of the schematic.
+            start: 0.0;0.0;-15.0;0.0;0.0
+            # Is it possible to teleport the chicken's and the player's heads to the coordinates below?
+            # Otherwise, there will be some kind of drift. Is it enabled?
+            teleport: false
+        2:
+          radiusStartPoint: 0.15
+          location:
+            start: 1.0;0.0;-21.5;0.0;0.0
+            teleport: false
+        3:
+          radiusStartPoint: 0.15
+          location:
+            start: 0.5;0.0;-28.0;0.0;0.0
+            teleport: false
+      # Specify where the stands will appear.
+      # Order: type;X;Y;Z;YAW;PITCH (from the location of the schematic)
+      stands:
+        - bomb_gold;0.5;0.0;-93.5;0.0;0.0
+        - gold_block;-1.5;2.0;-56.5;0.0;0.0
+        - diamond_block;2.5;2.0;-46.5;0.0;0.0
+        - bomb_diamond;0.5;1.0;-78.5;0.0;0.0
+        - gold_block;-1.5;1.0;-23.5;0.0;0.0
+        - diamond_block;2.5;1.0;-68.5;0.0;0.0
+        - bomb_diamond;0.5;1.0;-35.5;0.0;0.0
     1:
-      # Specify the radius within which the point will be detected.
-      radiusStartPoint: 0.5
-      # Specify the location of the point.
-      location:
-        # Specify through: ";" - X, Y, Z from the location of the schematic.
-        start: "0;0;-15"
-        # Is it possible to teleport the chicken's and the player's heads to the coordinates below?
-        # Otherwise, there will be some kind of drift.
-        teleport:
-          # Is it enabled?
-          enabled: false
-          # Yaw.
-          yaw: 0
-          # pitch.
-          pitch: 0
-    2:
-      radiusStartPoint: 0.5
-      location:
-        start: "1;0;-21.5"
-        teleport:
-          enabled: false
-          yaw: 0
-          pitch: 0
-    3:
-      radiusStartPoint: 0.5
-      location:
-        start: "0.5;0;-28"
-        teleport:
-          enabled: false
-          yaw: 0
-          pitch: 0
+      start: 0.5;0.0;-101.5;0.0;0.0
+      end: 0.5;0.0;-11.5;0.0;0.0
+      points:
+        1:
+          radiusStartPoint: 0.15
+          location:
+            start: 0.0;0.0;-22.5;0.0;0.0
+            teleport: false
+        2:
+          radiusStartPoint: 0.15
+          location:
+            start: 1.0;0.0;-17.5;0.0;0.0
+            teleport: false
+        3:
+          radiusStartPoint: 0.15
+          location:
+            start: 0.5;0.0;-14.5;0.0;0.0
+            teleport: false
+      stands:
+        - gold_block;-1.5;1.0;-29.5;0.0;0.0
+        - bomb_diamond;0.5;0.0;-94.5;0.0;0.0
+        - bomb_diamond;0.5;0.0;-20.5;0.0;0.0
+        - gold_block;-1.5;1.0;-86.5;0.0;0.0
+        - bomb_gold;0.5;0.0;-13.5;0.0;0.0
+        - bomb_gold;0.5;1.0;-36.5;0.0;0.0
+        - diamond_block;0.5;1.0;-61.5;0.0;0.0
+        - bomb_diamond;0.5;0.0;-70.5;0.0;0.0
 stars:
   # 1 - 100%.
   # 0.8 - 80%.
   # 0.1 - 10%.
   # Percent
-  5: 0.9
-  4: 0.75
-  3: 0.5
-  2: 0.3
-  1: 0.15
+  '5': 0.9
+  '4': 0.75
+  '3': 0.5
+  '2': 0.3
+  '1': 0.15
 
 # Stands.
 stands:
   # Specify the radius for the stands to appear.
   radiusStands: 5
   # Set a timer before the bomb explodes.
-  timer: 20 # In ticks. 20 ticks - 1 second.
-  # Specify where the stands will appear.
-  # Order: type;X;Y;Z (from the location of the schematic)
-  locs:
-    - "gold_block;-1.5;1;-23.5"
-    - "bomb_diamond;0.5;1;-35.5"
-    - "diamond_block;2.5;2;-46.5"
-    - "gold_block;-1.5;2;-56.5"
-    - "diamond_block;2.5;1;-68.5"
-    - "bomb_diamond;0.5;1;-78.5"
-    - "bomb_gold;0.5;0;-93.5"
+  timer: 20
 # Set up the message.
 # This will only work if you have selected the plugin configuration mode.
 messages:
@@ -190,36 +205,36 @@ messages:
   # But there is no support for other languages here.
   actions:
     joined:
-      - "[log] [SCHEMATIC] The %player% connected to the game: %game%"
+      - '[log] [SCHEMATIC] The %player% connected to the game: %game%'
     started:
-      - "[log] [SCHEMATIC] The %player% started the game."
+      - '[log] [SCHEMATIC] The %player% started the game.'
     end:
-      - "[log] [SCHEMATIC] The %player% has finished the game."
+      - '[log] [SCHEMATIC] The %player% has finished the game.'
     kicked:
-      - "[log] [SCHEMATIC] The %player% was kicked out of the game."
+      - '[log] [SCHEMATIC] The %player% was kicked out of the game.'
     restarted:
-      - "[log] [SCHEMATIC] The game has been restarted."
+      - '[log] [SCHEMATIC] The game has been restarted.'
     cooldownRestart:
-      - "[explosion] 1"
+      - '[explosion] 1'
     damageHeart:
-      - "[log] [SCHEMATIC] The %player% lost a heart."
+      - '[log] [SCHEMATIC] The %player% lost a heart.'
     win:
-      - "[log] [SCHEMATIC] The %player% won and got a score %star_win%|%star_loss%"
+      - '[log] [SCHEMATIC] The %player% won and got a score %star_win%|%star_loss%'
   # The star rating system.
   stars:
     # 1 - 100%.
     # 0.8 - 80%.
     # 0.1 - 10%.
     # Specify additional actions below. You can view them in the configuration.
-    5:
-      - "&e★★★★★"
-    4:
-      - "&e★★★★&7★"
-    3:
-      - "&e★★★&7★★"
-    2:
-      - "&e★★&7★★★"
-    1:
-      - "&e★&7★★★★"
-    0:
-      - "&7★★★★★"
+    '5':
+      - '&e★★★★★'
+    '4':
+      - '&e★★★★&7★'
+    '3':
+      - '&e★★★&7★★'
+    '2':
+      - '&e★★&7★★★'
+    '1':
+      - '&e★&7★★★★'
+    '0':
+      - '&7★★★★★'

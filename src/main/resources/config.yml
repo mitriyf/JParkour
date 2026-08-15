@@ -1,13 +1,13 @@
 ############################################################
 #                         JParkour                         #
-#                           v1.6                           #
+#                           v1.7                           #
 ############################################################
 
 # You can find documentation or help about the plugin here: https://github.com/mitriyf/JParkour
 # Or: https://vk.com/jdevs
 
 # Don't remove the version setting.
-version: 1.6
+version: 1.7
 
 # Plugin settings.
 settings:
@@ -40,6 +40,12 @@ settings:
     deleteWhenClosing: false
     # Specify in ticks the amount of delay for pressing the item marked restart. 1 second = 20 ticks.
     restartCooldown: 100
+  # Party settings.
+  party:
+    # Turn on the party? If it’s disabled, use bigSize to make your response for the party subcommand.
+    enabled: true
+    # Specify the time in seconds for accepting the invitation.
+    timeForJoin: 30
   # Notification of updates.
   updater:
     # Is it enabled?
@@ -122,6 +128,8 @@ messages:
   # WARNING: Requires BungeeMessaging. This is present on BungeeCord and WaterFall.
   # On Velocity it might be disabled by default. Check your proxy config.
   # [message] message - Send a message to the player.
+  # [party] message - Send a message to the party's players.
+  # [room] message - Send a message to the room's players.
   # [broadcast] message - Send a message to all players.
   # [log] message - Send a message to the console.
   # [delay] ticks - Make a delay between actions. In ticks. (20 ticks = 1 second)
@@ -147,6 +155,7 @@ messages:
   # Placeholders:
   # %jparkour_map% - Displays the name of the map.
   # %jparkour_id% - Displays the ID of the map.
+  # %jparkour_playerid% - Display the player's ID.
   # %jparkour_status% - Displays the status of the map.
   # %jparkour_lefts% - Displays the number of clicks on the stand.
   # %jparkour_maxlefts% - Displays the maximum number of clicks on the stand.
@@ -175,34 +184,7 @@ messages:
   # %player% - Get the player name.
   #
   # The command message.
-  cmd:
-    help:
-      - "[message] &a[JParkour] Help &7(/jparkour help):"
-      - ""
-      - "[message] &a/jparkour status &f- Check the status of the plugin."
-      - "[message] &a/jparkour join &f- Create or join any available room."
-      - "[message] &a/jparkour join roomId &f- Attempt to connect to the room (if it is free)."
-      - "[message] &a/jparkour exit &f- Exit the game/queue."
-      - "[message] &a/jparkour admin &f- Get a Admin Help."
-      - "[message] &a/jparkour reload &f- Reload the plugin configuration."
-      - ""
-    noperm:
-      - "[message] &cYou do not have sufficient permissions!"
   game:
-    room:
-      notfound:
-        - "[message] &cThis map does not exist."
-      started:
-        - "[message] &cThe game has already started."
-      connect:
-        - "[message] &aConnecting to the room &e%room%..."
-      waiter:
-        - "[message] &aYou have been placed in queue."
-        - "[message] &fExit the queue: &c/jparkour exit"
-      exit:
-        - "[message] &cYou have left the queue."
-      noExit:
-        - "[message] &cYou are not in the game."
     # You cannot use actions in statuses and placeholders.
     status:
       wait: "&eWaiting"
@@ -213,23 +195,123 @@ messages:
     placeholders:
       notClaimed: "Not claimed"
     actions:
-      joined:
-        - "[message] &aYou are connected to the game: &e%game%"
-      started:
-        - "[message] &eGame is started."
-      ingame:
-        - "[message] &cYou are in the game!"
-      end:
-        - "[message] &cThe game is over."
-      restarted:
-        - "[delay] 5"
-        - "[message] &aThe game has been restarted."
-      cooldownRestart:
-        - "[message] &cYou can't reload the game that quickly."
-      kicked:
-        - "[message] &cThe game is over."
-      damageHeart:
-        - "[message] &c-1 &l♥"
-        - "[explosion] 1"
-      win:
-        - "[title] &aVictory;&e%star_win%&7%star_loss% &f- &e%accuracy%%"
+      command:
+        help:
+          - "[message] &a[JParkour] Help &7(/jparkour help):"
+          - ""
+          - "[message] &a/jparkour status &f- Check the status of the plugin."
+          - "[message] &a/jparkour join &f- Create or join any available room."
+          - "[message] &a/jparkour join roomId &f- Attempt to connect to the room (if it is free)."
+          - "[message] &a/jparkour exit &f- Exit the game/queue."
+          - "[message] &a/jparkour party &f- Get a Party Help."
+          - "[message] &a/jparkour admin &f- Get a Admin Help."
+          - "[message] &a/jparkour reload &f- Reload the plugin configuration."
+          - ""
+        party:
+          help:
+            - "[message] [JParkour] Party Help &7(/jparkour party help):"
+            - "[message] &a/jparkour party info &f- Information about the party."
+            - "[message] &a/jparkour party create Name &f- Create a party with name."
+            - "[message] &a/jparkour party setLeader PlayerName &f- Transfer leadership."
+            - "[message] &a/jparkour party disband &f- Delete your party."
+            - "[message] &a/jparkour party invite PlayerName &f- Invite a player."
+            - "[message] &a/jparkour party kick PlayerName &f- Kick a player."
+            - "[message] &a/jparkour party leave &f- Leave the party."
+            - "[message] &a/jparkour party accept PartyName &f- Accept an invitation."
+            - "[message] &a/jparkour party deny PartyName &f- Decline the party invitation."
+          info:
+            - "[message] &aInformation about the party:"
+            - "[message] &fParty name: &e%party%"
+            - "[message] &eLeader: &a%leader%"
+            - "[message] &aMembers: &f%members%"
+        noperm:
+          - "[message] &cYou do not have sufficient permissions!"
+      room:
+        notfound:
+          - "[message] &cThis map does not exist."
+        started:
+          - "[message] &cThe game has already started."
+        connect:
+          - "[party] &aConnecting to the room &e%room%..."
+        waiter:
+          - "[party] &aYou have been placed in queue."
+          - "[party] &fExit the queue: &c/jparkour exit"
+        exit:
+          - "[message] &cYou have left the queue."
+        noExit:
+          - "[message] &cYou are not in the game."
+      party:
+        newLeader:
+          - "[party] &fA new leader has been assigned to the party: &e%leader%"
+        playerLeaved:
+          - "[party] &cPlayer %player% has left the party."
+        joinedToParty:
+          - "[party] &aPlayer %player% joined the party."
+        kickedFromParty:
+          - "[party] &cPlayer %player% has been kicked from the party."
+        partyBroken:
+          - "[party] &cThis party broke up."
+        alreadyLeader:
+          - "[message] &cYou are already the leader of the party."
+        playerNotInParty:
+          - "[message] &cThis player is not in your party."
+        playerNotFound:
+          - "[message] &cThere is no such player on the server."
+        haveCreated:
+          - "[message] &cYou have already created a party."
+        alreadyCreated:
+          - "[message] &cA party with that name already exists."
+        partyCreated:
+          - "[message] &aThe party named &e%party%&a was successfully created."
+        notLeader:
+          - "[message] &cYou are not the leader of the party."
+        notInParty:
+          - "[message] &cYou're not part of the party."
+        inParty:
+          - "[message] &cThe player is already in the party."
+        leaderSendRequest:
+          - "[message] &aAn invitation was sent to the player."
+        alreadySendRequest:
+          - "[message] &cYou have already sent an invitation to this player."
+        playerGetRequest:
+          - "[message] &fPlayer &e%leader% &fhas sent you an invitation to his party &e%party%&f."
+          - "[message] &fTo accept it, send the following message to the chat: &a/jparkour party accept %party%"
+          - "[message] &fTo decline an invitation, write: &c/jparkour party deny %party%"
+          - "[message] &eYou have 30 seconds to accept the invitation."
+        playerTimeLeaved:
+          - "[message] &cYou didn't have time to accept the invitation to %party%"
+        leaderTimeLeaved:
+          - "[message] &cPlayer %player% did not respond to your invitation."
+        noHaveInvites:
+          - "[message] &cYou don't have any invitations."
+        dontHaveInvite:
+          - "[message] &cYou don't have this invitation."
+        playerDenyInvite:
+          - "[message] &cYou have declined the invitation to %party%"
+        deniedInviteParty:
+          - "[message] &cPlayer %player% has declined your invitation."
+        bigSize:
+          - "[party] &cYour party is too large to enter this map."
+      game:
+        joined:
+          - "[message] &aYou are connected to the game: &e%game%"
+          - "[room] &e%player% &ais connected."
+        started:
+          - "[message] &eGame is started."
+        ingame:
+          - "[message] &cYou are in the game!"
+        end:
+          - "[message] &cThe game is over."
+        restarted:
+          - "[delay] 5"
+          - "[message] &aThe game has been restarted."
+        cooldownRestart:
+          - "[message] &cYou can't reload the game that quickly."
+        kicked:
+          - "[message] &cThe game is over."
+        damageHeart:
+          - "[message] &c-1 &l♥"
+          - "[explosion] 1"
+        win:
+          - "[title] &aVictory;&e%star_win%&7%star_loss% &f- &e%accuracy%%"
+          - "[room] &a%player% &f| &e%star_win%&7%star_loss% &f- &e%accuracy%%"

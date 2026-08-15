@@ -8,16 +8,15 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.inventory.ItemStack;
 import ru.mitriyf.jparkour.JParkour;
-import ru.mitriyf.jparkour.game.Game;
+import ru.mitriyf.jparkour.model.SchematicData;
+import ru.mitriyf.jparkour.model.StandData;
+import ru.mitriyf.jparkour.updater.Updater;
 import ru.mitriyf.jparkour.utils.Utils;
 import ru.mitriyf.jparkour.utils.actions.Action;
 import ru.mitriyf.jparkour.utils.actions.ActionType;
 import ru.mitriyf.jparkour.utils.colors.Colorizer;
 import ru.mitriyf.jparkour.utils.colors.impl.LegacyColorizer;
 import ru.mitriyf.jparkour.utils.colors.impl.MiniMessageColorizer;
-import ru.mitriyf.jparkour.values.data.StandData;
-import ru.mitriyf.jparkour.values.data.schematic.SchematicData;
-import ru.mitriyf.jparkour.values.updater.Updater;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,7 +41,6 @@ public class Values {
     private final File configFile;
     private final String schematicsDir = "schematics/";
     private final List<String> maps = new ArrayList<>();
-    private final Map<String, Game> rooms = new HashMap<>();
     private final String[] files = new String[]{"hello.txt"};
     private final Map<String, String> left = new HashMap<>();
     private final Set<ItemStack> exitItems = new HashSet<>();
@@ -57,7 +55,6 @@ public class Values {
     private final Map<String, StandData> stands = new HashMap<>();
     private final Map<String, List<Action>> map = new HashMap<>();
     private final Map<String, String> notClaimed = new HashMap<>();
-    private final Map<String, List<Action>> help = new HashMap<>();
     private final Map<String, List<Action>> exit = new HashMap<>();
     private final Map<String, List<Action>> waiter = new HashMap<>();
     private final Map<String, List<Action>> noExit = new HashMap<>();
@@ -67,19 +64,47 @@ public class Values {
     private final Map<String, List<Action>> inGame = new HashMap<>();
     private final Map<String, List<Action>> started = new HashMap<>();
     private final Map<String, List<Action>> connect = new HashMap<>();
+    private final Map<String, List<Action>> inParty = new HashMap<>();
     private final Map<String, List<Action>> mStarted = new HashMap<>();
     private final Map<ItemStack, String> standsItems = new HashMap<>();
     private final Map<String, List<Action>> notfound = new HashMap<>();
+    private final Map<String, List<Action>> partyInfo = new HashMap<>();
     private final Map<String, List<Action>> restarted = new HashMap<>();
+    private final Map<String, List<Action>> partyHelp = new HashMap<>();
+    private final Map<String, List<Action>> notLeader = new HashMap<>();
+    private final Map<String, List<Action>> newLeader = new HashMap<>();
     private final Map<Integer, ItemStack> editorSlots = new HashMap<>();
     private final String[] lcs = new String[]{"de_DE", "en_US", "ru_RU"};
+    private final Map<String, List<Action>> notInParty = new HashMap<>();
     private final Map<String, List<Action>> damageHeart = new HashMap<>();
+    private final Map<String, List<Action>> partyBroken = new HashMap<>();
+    private final Map<String, List<Action>> commandHelp = new HashMap<>();
     private final Map<String, SchematicData> schematics = new HashMap<>();
+    private final Map<String, List<Action>> haveCreated = new HashMap<>();
+    private final Map<String, List<Action>> bigSizeParty = new HashMap<>();
+    private final Map<String, List<Action>> playerLeaved = new HashMap<>();
+    private final Map<String, List<Action>> partyCreated = new HashMap<>();
+    private final Map<String, List<Action>> noHaveInvites = new HashMap<>();
+    private final Map<String, List<Action>> joinedToParty = new HashMap<>();
+    private final Map<String, List<Action>> alreadyLeader = new HashMap<>();
+    private final Map<String, List<Action>> alreadyCreated = new HashMap<>();
+    private final Map<String, List<Action>> dontHaveInvite = new HashMap<>();
+    private final Map<String, List<Action>> playerNotFound = new HashMap<>();
     private final Map<String, List<Action>> cooldownRestart = new HashMap<>();
+    private final Map<String, List<Action>> kickedFromParty = new HashMap<>();
+    private final Map<String, List<Action>> playerDenyInvite = new HashMap<>();
+    private final Map<String, List<Action>> playerGetRequest = new HashMap<>();
+    private final Map<String, List<Action>> playerTimeLeaved = new HashMap<>();
+    private final Map<String, List<Action>> leaderTimeLeaved = new HashMap<>();
+    private final Map<String, List<Action>> playerNotInParty = new HashMap<>();
+    private final Map<String, List<Action>> deniedInviteParty = new HashMap<>();
+    private final Map<String, List<Action>> leaderSendRequest = new HashMap<>();
+    private final Map<String, List<Action>> playerAddedToParty = new HashMap<>();
+    private final Map<String, List<Action>> alreadySendRequest = new HashMap<>();
     private final Pattern action_pattern = Pattern.compile("\\[(\\w+)] ?(.*)");
-    private boolean deleteWhenClosing, topsEnabled, placeholderAPI, locale, damageWaiters, miniMessage;
+    private boolean deleteWhenClosing, topsEnabled, placeholderAPI, locale, damageWaiters, miniMessage, partyEnabled;
     private boolean updaterEnabled = true, required = true, release = false;
-    private int topsInterval, amount, restartCooldown;
+    private int topsInterval, amount, restartCooldown, timeForJoin;
     private ConfigurationSection settings;
     @Setter
     private FileConfiguration itemSlots;
@@ -90,6 +115,8 @@ public class Values {
     @Setter
     private String schematicUrl;
     private Colorizer colorizer;
+    @Setter
+    private int maxSize;
     private Utils utils;
 
     public Values(JParkour plugin) {
@@ -168,16 +195,30 @@ public class Values {
                     String name = schem.getName().split("\\.")[0];
                     String id = name.toLowerCase();
                     File file = new File(dir, name + ".yml");
+                    YamlConfiguration yaml = null;
                     if (!file.exists()) {
                         plugin.saveResource(schematicsDir + "default.yml", true);
                         if (new File(dir, "default.yml").renameTo(file)) {
                             logger.info("The configuration file " + file.getName() + " has been created");
+                            if (!name.equals("nether")) {
+                                yaml = YamlConfiguration.loadConfiguration(file);
+                                ConfigurationSection locations = yaml.getConfigurationSection("locations");
+                                locations.set("players", null);
+                                locations.createSection("players");
+                                try {
+                                    yaml.save(file);
+                                } catch (Exception e) {
+                                    logger.warning("An attempt to change the configuration was unsuccessful - the players did not. Your configuration may not work properly.");
+                                }
+                            }
                         } else {
                             logger.warning("An error occurred while creating the " + file.getName() + " configuration file");
                             return;
                         }
                     }
-                    YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
+                    if (yaml == null) {
+                        yaml = YamlConfiguration.loadConfiguration(file);
+                    }
                     maps.add(id);
                     String schemName = schem.getName();
                     schematics.put(id, new SchematicData(this, yaml, schemName, name));
@@ -226,6 +267,9 @@ public class Values {
         deleteWhenClosing = games.getBoolean("deleteWhenClosing");
         worldStart = world.replace("XIDX", "");
         restartCooldown = games.getInt("restartCooldown");
+        ConfigurationSection party = settings.getConfigurationSection("party");
+        partyEnabled = party.getBoolean("enabled");
+        timeForJoin = party.getInt("timeForJoin") * 20;
         ConfigurationSection supports = settings.getConfigurationSection("supports");
         placeholderAPI = supports.getBoolean("placeholderAPI");
         if (placeholderAPI && plugin.getServer().getPluginManager().getPlugin("PlaceholderAPI") == null) {
@@ -307,36 +351,82 @@ public class Values {
         for (Map.Entry<String, FileConfiguration> entry : locales.entrySet()) {
             ConfigurationSection messages = entry.getValue().getConfigurationSection("messages");
             String name = entry.getKey();
-            ConfigurationSection cmd = messages.getConfigurationSection("cmd");
-            help.put(name, getActionList(cmd.getStringList("help")));
-            noperm.put(name, getActionList(cmd.getStringList("noperm")));
             ConfigurationSection game = messages.getConfigurationSection("game");
-            ConfigurationSection room = game.getConfigurationSection("room");
-            notfound.put(name, getActionList(room.getStringList("notfound")));
-            started.put(name, getActionList(room.getStringList("started")));
-            connect.put(name, getActionList(room.getStringList("connect")));
-            exit.put(name, getActionList(room.getStringList("exit")));
-            waiter.put(name, getActionList(room.getStringList("waiter")));
-            noExit.put(name, getActionList(room.getStringList("noExit")));
             ConfigurationSection status = game.getConfigurationSection("status");
             sWait.put(name, status.getString("wait"));
             sStart.put(name, status.getString("start"));
             sWin.put(name, status.getString("win"));
             left.put(name, status.getString("left"));
             right.put(name, status.getString("right"));
-            ConfigurationSection placeholders = game.getConfigurationSection("placeholders");
-            notClaimed.put(name, placeholders.getString("notClaimed"));
+            ConfigurationSection placeholdersSection = game.getConfigurationSection("placeholders");
+            notClaimed.put(name, placeholdersSection.getString("notClaimed"));
             ConfigurationSection actions = game.getConfigurationSection("actions");
-            joined.put(name, getActionList(actions.getStringList("joined")));
-            inGame.put(name, getActionList(actions.getStringList("ingame")));
-            mStarted.put(name, getActionList(actions.getStringList("started")));
-            restarted.put(name, getActionList(actions.getStringList("restarted")));
-            cooldownRestart.put(name, getActionList(actions.getStringList("cooldownRestart")));
-            kicked.put(name, getActionList(actions.getStringList("kicked")));
-            end.put(name, getActionList(actions.getStringList("end")));
-            damageHeart.put(name, getActionList(actions.getStringList("damageHeart")));
-            win.put(name, getActionList(actions.getStringList("win")));
+            ConfigurationSection commandSection = actions.getConfigurationSection("command");
+            setupCommandSection(name, commandSection);
+            ConfigurationSection partySection = actions.getConfigurationSection("party");
+            setupPartySection(name, partySection);
+            ConfigurationSection roomSection = actions.getConfigurationSection("room");
+            setupRoomSection(name, roomSection);
+            ConfigurationSection gameSection = actions.getConfigurationSection("game");
+            setupGameSection(name, gameSection);
         }
+    }
+
+    private void setupCommandSection(String name, ConfigurationSection commandSection) {
+        commandHelp.put(name, getActionList(commandSection.getStringList("help")));
+        noperm.put(name, getActionList(commandSection.getStringList("noperm")));
+        ConfigurationSection partySection = commandSection.getConfigurationSection("party");
+        partyHelp.put(name, getActionList(partySection.getStringList("help")));
+        partyInfo.put(name, getActionList(partySection.getStringList("info")));
+    }
+
+    private void setupPartySection(String name, ConfigurationSection partySection) {
+        alreadyLeader.put(name, getActionList(partySection.getStringList("alreadyLeader")));
+        newLeader.put(name, getActionList(partySection.getStringList("newLeader")));
+        playerLeaved.put(name, getActionList(partySection.getStringList("playerLeaved")));
+        kickedFromParty.put(name, getActionList(partySection.getStringList("kickedFromParty")));
+        playerNotInParty.put(name, getActionList(partySection.getStringList("playerNotInParty")));
+        playerNotFound.put(name, getActionList(partySection.getStringList("playerNotFound")));
+        haveCreated.put(name, getActionList(partySection.getStringList("haveCreated")));
+        alreadyCreated.put(name, getActionList(partySection.getStringList("alreadyCreated")));
+        partyCreated.put(name, getActionList(partySection.getStringList("partyCreated")));
+        notLeader.put(name, getActionList(partySection.getStringList("notLeader")));
+        inParty.put(name, getActionList(partySection.getStringList("inParty")));
+        notInParty.put(name, getActionList(partySection.getStringList("notInParty")));
+        leaderSendRequest.put(name, getActionList(partySection.getStringList("leaderSendRequest")));
+        alreadySendRequest.put(name, getActionList(partySection.getStringList("alreadySendRequest")));
+        playerGetRequest.put(name, getActionList(partySection.getStringList("playerGetRequest")));
+        playerTimeLeaved.put(name, getActionList(partySection.getStringList("playerTimeLeaved")));
+        leaderTimeLeaved.put(name, getActionList(partySection.getStringList("leaderTimeLeaved")));
+        noHaveInvites.put(name, getActionList(partySection.getStringList("noHaveInvites")));
+        partyBroken.put(name, getActionList(partySection.getStringList("partyBroken")));
+        dontHaveInvite.put(name, getActionList(partySection.getStringList("dontHaveInvite")));
+        playerAddedToParty.put(name, getActionList(partySection.getStringList("playerAddedToParty")));
+        joinedToParty.put(name, getActionList(partySection.getStringList("joinedToParty")));
+        playerDenyInvite.put(name, getActionList(partySection.getStringList("playerDenyInvite")));
+        deniedInviteParty.put(name, getActionList(partySection.getStringList("deniedInviteParty")));
+        bigSizeParty.put(name, getActionList(partySection.getStringList("bigSize")));
+    }
+
+    private void setupRoomSection(String name, ConfigurationSection roomSection) {
+        notfound.put(name, getActionList(roomSection.getStringList("notfound")));
+        started.put(name, getActionList(roomSection.getStringList("started")));
+        connect.put(name, getActionList(roomSection.getStringList("connect")));
+        exit.put(name, getActionList(roomSection.getStringList("exit")));
+        waiter.put(name, getActionList(roomSection.getStringList("waiter")));
+        noExit.put(name, getActionList(roomSection.getStringList("noExit")));
+    }
+
+    private void setupGameSection(String name, ConfigurationSection gameSection) {
+        joined.put(name, getActionList(gameSection.getStringList("joined")));
+        inGame.put(name, getActionList(gameSection.getStringList("ingame")));
+        mStarted.put(name, getActionList(gameSection.getStringList("started")));
+        restarted.put(name, getActionList(gameSection.getStringList("restarted")));
+        cooldownRestart.put(name, getActionList(gameSection.getStringList("cooldownRestart")));
+        kicked.put(name, getActionList(gameSection.getStringList("kicked")));
+        end.put(name, getActionList(gameSection.getStringList("end")));
+        damageHeart.put(name, getActionList(gameSection.getStringList("damageHeart")));
+        win.put(name, getActionList(gameSection.getStringList("win")));
     }
 
     private void recovery() {
@@ -427,7 +517,7 @@ public class Values {
         stands.clear();
         exitItems.clear();
         editorSlots.clear();
-        for (Map<String, List<Action>> map : Arrays.asList(help, noperm, notfound, started, mStarted, joined, damageHeart, connect, exit, waiter, noExit, inGame, kicked, end, win)) {
+        for (Map<String, List<Action>> map : Arrays.asList(partyInfo, inParty, alreadyLeader, newLeader, playerLeaved, kickedFromParty, playerNotInParty, commandHelp, noperm, notfound, started, mStarted, joined, damageHeart, connect, exit, waiter, noExit, inGame, kicked, end, win, partyHelp, playerNotFound, haveCreated, alreadyCreated, partyCreated, notLeader, notInParty, leaderSendRequest, alreadySendRequest, playerGetRequest, playerTimeLeaved, leaderTimeLeaved, noHaveInvites, partyBroken, dontHaveInvite, playerAddedToParty, joinedToParty, playerDenyInvite, deniedInviteParty)) {
             map.clear();
         }
     }

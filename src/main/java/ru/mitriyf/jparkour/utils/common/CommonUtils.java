@@ -9,11 +9,15 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitScheduler;
 import ru.mitriyf.jparkour.JParkour;
+import ru.mitriyf.jparkour.game.Game;
+import ru.mitriyf.jparkour.model.PartyData;
 import ru.mitriyf.jparkour.utils.Utils;
 import ru.mitriyf.jparkour.values.Values;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import java.util.logging.Logger;
 
 public class CommonUtils {
@@ -29,6 +33,33 @@ public class CommonUtils {
         values = plugin.getValues();
         logger = plugin.getLogger();
         scheduler = plugin.getServer().getScheduler();
+    }
+
+    public void sendRoom(Player player, String message) {
+        String text = utils.formatString(message);
+        UUID uuid = player.getUniqueId();
+        Game game = plugin.getGameManager().getGame(uuid);
+        if (game == null) {
+            player.sendMessage(text);
+            return;
+        }
+        for (Player member : game.getPlayers()) {
+            member.sendMessage(text);
+        }
+    }
+
+    public void sendParty(Player player, String message) {
+        String text = utils.formatString(message);
+        for (PartyData partyData : plugin.getPartyManager().getPartyDataMap().values()) {
+            Set<UUID> members = partyData.getMembers();
+            if (members.contains(player.getUniqueId())) {
+                for (UUID member : members) {
+                    plugin.getServer().getPlayer(member).sendMessage(text);
+                }
+                return;
+            }
+        }
+        player.sendMessage(text);
     }
 
     public void broadcast(String message) {

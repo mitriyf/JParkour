@@ -13,6 +13,12 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import ru.mitriyf.jparkour.JParkour;
+import ru.mitriyf.jparkour.compat.abstraction.PasteSchematic;
+import ru.mitriyf.jparkour.compat.abstraction.WorldGenerator;
+import ru.mitriyf.jparkour.compat.impl.v1_12.PasteSchematicV12;
+import ru.mitriyf.jparkour.compat.impl.v1_12.WorldGeneratorV12;
+import ru.mitriyf.jparkour.compat.impl.v1_13.PasteSchematicV13;
+import ru.mitriyf.jparkour.compat.impl.v1_13.WorldGeneratorV13;
 import ru.mitriyf.jparkour.utils.actions.Action;
 import ru.mitriyf.jparkour.utils.actions.ActionType;
 import ru.mitriyf.jparkour.utils.actions.ActionUtils;
@@ -23,12 +29,6 @@ import ru.mitriyf.jparkour.utils.common.CommonUtils;
 import ru.mitriyf.jparkour.utils.locales.Locale;
 import ru.mitriyf.jparkour.utils.locales.impl.Locale12;
 import ru.mitriyf.jparkour.utils.locales.impl.Locale13;
-import ru.mitriyf.jparkour.utils.schematic.Paste;
-import ru.mitriyf.jparkour.utils.schematic.impl.Paste12;
-import ru.mitriyf.jparkour.utils.schematic.impl.Paste13;
-import ru.mitriyf.jparkour.utils.worlds.WorldGenerator;
-import ru.mitriyf.jparkour.utils.worlds.impl.Generator12;
-import ru.mitriyf.jparkour.utils.worlds.impl.Generator13;
 import ru.mitriyf.jparkour.values.Values;
 
 import java.util.*;
@@ -47,8 +47,8 @@ public class Utils {
     private final Set<Integer> tasks = new HashSet<>();
     private boolean actionBar = false, bar = false, tit = false;
     private WorldGenerator worldGenerator;
+    private PasteSchematic schematic;
     private Material gSword;
-    private Paste schematic;
     private Locale locale;
     private Title title;
 
@@ -72,15 +72,15 @@ public class Utils {
             }
             values.setSchematicUrl("nether.schematic");
             locale = new Locale12();
-            schematic = new Paste12(plugin);
-            worldGenerator = new Generator12();
+            schematic = new PasteSchematicV12(plugin);
+            worldGenerator = new WorldGeneratorV12();
             gSword = Material.valueOf("GOLD_SWORD");
         } else {
             values.setSchematicUrl("nether.schem");
             values.setDefaultId("13");
             locale = new Locale13();
-            schematic = new Paste13(plugin);
-            worldGenerator = new Generator13();
+            schematic = new PasteSchematicV13(plugin);
+            worldGenerator = new WorldGeneratorV13();
             gSword = Material.GOLDEN_SWORD;
         }
         if (version < 11) {
@@ -111,7 +111,6 @@ public class Utils {
             }
         }.runTaskAsynchronously(plugin);
     }
-
 
     public BukkitTask sendMessage(CommandSender sender, Map<String, List<Action>> actions) {
         return sendMessage(sender, actions, null, null);
@@ -144,11 +143,19 @@ public class Utils {
 
     private void sendPlayer(Player p, Action action, String[] search, String[] replace) {
         ActionType type = action.getType();
-        String context = replaceEach(action.getContext().replace("%player%", p.getName()).replace("%world%", p.getWorld().getName()), search, replace);
+        String context = replaceEach(action.getContext(), search, replace).replace("%player%", p.getName()).replace("%world%", p.getWorld().getName());
         if (values.isPlaceholderAPI()) {
             context = PlaceholderAPI.setPlaceholders(p, context);
         }
         switch (type) {
+            case ROOM: {
+                commonUtils.sendRoom(p, context);
+                break;
+            }
+            case PARTY: {
+                commonUtils.sendParty(p, context);
+                break;
+            }
             case PLAYER: {
                 actionUtils.dispatchPlayer(p, context);
                 break;
@@ -246,6 +253,8 @@ public class Utils {
             case TELEPORT:
             case SOUND:
             case CONNECT:
+            case ROOM:
+            case PARTY:
             case EXPLOSION:
                 break;
             default:
@@ -297,6 +306,12 @@ public class Utils {
             schematic.paste(loc, schematicId, pasteAir);
         } catch (Exception error) {
             logger.warning("An error occurred while inserting the diagram. Please contact the administrator.\nError: " + error);
+        }
+    }
+
+    public void setSlots(Player player, Map<Integer, ItemStack> slots) {
+        for (Map.Entry<Integer, ItemStack> s : slots.entrySet()) {
+            player.getInventory().setItem(s.getKey(), s.getValue());
         }
     }
 

@@ -1,119 +1,198 @@
 # Die Version-Einstellung nicht bereinigen.
-version: 1.6
+version: 1.7
 
+# Nachrichtenkonfiguration.
 messages:
   # Aktionen:
-  # [actionbar] Nachricht - Sende die Actionbar mit deiner Nachricht. Für 1.11+
-  # [connect] server - Spieler zu einem bestimmten BungeeCord-Server senden.
-  # WARNUNG: Erfordert BungeeMessaging. Dies ist bei BungeeCord und WaterFall vorhanden.
-  # Bei Velocity könnte es standardmäßig deaktiviert sein. Prüfe deine Proxy-Konfiguration.
+  # [actionbar] Nachricht - Sende die Nachricht in der Actionbar. Für 1.11+
+  # [connect] Server - Sende einen Spieler zu einem bestimmten BungeeCord-Server.
+  # WARNUNG: Erfordert BungeeMessaging. Dies ist auf BungeeCord und WaterFall vorhanden.
+  # Auf Velocity ist es möglicherweise standardmäßig deaktiviert. Überprüfe deine Proxy-Konfiguration.
   # [message] Nachricht - Sende eine Nachricht an den Spieler.
+  # [party] Nachricht - Sende eine Nachricht an die Spieler der Party.
+  # [room] Nachricht - Sende eine Nachricht an die Spieler des Raums.
   # [broadcast] Nachricht - Sende eine Nachricht an alle Spieler.
   # [log] Nachricht - Sende eine Nachricht an die Konsole.
-  # [delay] Zecken - Machen Sie eine Verzögerung zwischen den Aktionen. In Zecken. (20 Zecken = 1 Sekunde)
-  # [player] Befehl - Führe den Befehl im Namen des Spielers aus.
-  # [teleport] Welt;x;y;z;yaw;pitch;Verzögerung - Teleportiere den Spieler zu den angegebenen Koordinaten. Die Verzögerung wird in Ticks gemessen.
+  # [delay] Ticks - Erstelle eine Verzögerung zwischen Aktionen. In Ticks. (20 Ticks = 1 Sekunde)
+  # [player] Nachricht - Führe eine Nachricht im Namen des Spielers aus. (oder einen Befehl über /)
+  # [teleport] Welt;x;y;z;Gier;Nick;Verzögerung - Teleportiere den Spieler zu den angegebenen Koordinaten. Die Verzögerung wird in Ticks gemessen.
   # [console] Befehl - Führe den Befehl im Namen der Konsole aus.
-  # [title] Titel;Untertitel;Einblendzeit;Anzeigezeit;Ausblendzeit - Sende den Titel an den Spieler. Für 1.8+
+  # [title] Titel;Untertitel;fadeIn;Anzeige;fadeOut - Sende den Titel an den Spieler. Für 1.8+
   # [sound] Sound;Lautstärke;Tonhöhe;Verzögerung - Spiele einen Sound für den Spieler ab. Die Verzögerung wird in Ticks gemessen.
   # Suche nach Sounds hier: https://helpch.at/docs/$version$/org/bukkit/Sound.html
-  # // Ersetze $version$ durch die Version deines Servers, zum Beispiel: https://helpch.at/docs/1.8.8/org/bukkit/Sound.html
-  # [effect] Typ;Dauer;Verstärker;Verzögerung - Gib dem Spieler den Effekt. Verzögerung und Dauer werden in Ticks gemessen.
+  # // Ersetze $version$ durch die Version deines Servers, z.B.: https://helpch.at/docs/1.8.8/org/bukkit/Sound.html
+  # [effect] Typ;Dauer;Verstärkung;Verzögerung - Gib dem Spieler den Effekt. Verzögerung und Dauer werden in Ticks gemessen.
   # Finde die Effekttypen hier: https://helpch.at/docs/$version$/org/bukkit/potion/PotionEffectType.html
-  # [explosion] Leistung;FeuerSetzen;BlöckeZerstören;Verzögerung;XHinzufügen;YHinzufügen;ZHinzufügen - Erstelle eine Explosion. Die Verzögerung wird in Ticks gemessen.
-  # FeuerSetzen, BlöckeZerstören - auf false oder true setzen. XHinzufügen, YHinzufügen, ZHinzufügen - Double-Werte, die zum Explosionsort des Spielers addiert werden.
-  # [bossbar] Nachricht;Farbe;Typ;Zeit;Stil;Flag - Sende einen Bossbalken an einen Spieler mit einer Nachricht für eine bestimmte Zeit. Für 1.9+
+  # [explosion] Stärke;setFire;breakBlocks;Verzögerung;addX;addY;addZ - Erzeuge eine Explosion. Die Verzögerung wird in Ticks gemessen.
+  # setFire, breakBlocks - auf false oder true setzen. addX, addY, addZ - double-Werte, die zur Explosionsposition des Spielers addiert werden.
+  # [bossbar] Nachricht;Farbe;Typ;Zeit;Stil;Flagge - Sende einem Spieler eine BossBar mit einer Nachricht für eine bestimmte Zeit. Für 1.9+
   # Typen:
-  # stop - der Bossbalken verschwindet nach der angegebenen Zeit (Sekunden)
-  # time - der Bossbalken animiert die verbleibende Zeit.
+  # stop - Die BossBar verschwindet nach der von dir angegebenen Zeit (in Sekunden)
+  # time - Die BossBar animiert die ablaufende Zeit.
   # Funktionen:
-  # %time% - verbleibende Sekunden.
-  # Alle Funktionen wie Farbe, Stil und Flag findest du hier: https://helpch.at/docs/$version$/org/bukkit/boss/BossBar.html
+  # %time% - Verbleibende Sekunden.
+  # Alle Funktionen wie Farbe, Stil und Flagge findest du hier: https://helpch.at/docs/$version$/org/bukkit/boss/BossBar.html
   #
   # Platzhalter:
-  # %jparkour_map% - zeigt den Namen der Map an.
-  # %jparkour_id% - zeigt die ID der Map an.
-  # %jparkour_status% - zeigt den Status der Map an.
-  # %jparkour_lefts% - zeigt die Anzahl der Klicks auf den Stand.
-  # %jparkour_maxlefts% - zeigt die maximale Anzahl der Klicks auf den Stand.
-  # %jparkour_rights% - zeigt die Anzahl der Klicks auf die Bombe.
-  # %jparkour_maxrights% - zeigt die maximale Anzahl der Bombenklicks.
-  # %jparkour_tops_SchematicName_Number_name% - den Namen eines Spielers abrufen, der sich in einer bestimmten Bestenliste befindet.
-  # %jparkour_tops_SchematicName_Number_top% - die Platzierung eines Spielers in der Bestenliste abrufen.
-  # %jparkour_tops_SchematicName_Number_accuracy% - die Genauigkeit eines Spielers abrufen, der sich in einer bestimmten Bestenliste befindet.
-  # %jparkour_tops_SchematicName_Number_time% - die genaue Abschlusszeit eines Spielers abrufen, der sich in einer bestimmten Bestenliste befindet.
+  # %jparkour_map% - Zeigt den Namen der Karte an.
+  # %jparkour_id% - Zeigt die ID der Karte an.
+  # %jparkour_playerid% - Zeigt die ID des Spielers an.
+  # %jparkour_status% - Zeigt den Status der Karte an.
+  # %jparkour_lefts% - Zeigt die Anzahl der Klicks auf den Ständer an.
+  # %jparkour_maxlefts% - Zeigt die maximale Anzahl der Klicks auf den Ständer an.
+  # %jparkour_rights% - Zeigt die Anzahl der Klicks auf die Bombe an.
+  # %jparkour_maxrights% - Zeigt die maximale Anzahl der Bombenklicks an.
+  # %jparkour_tops_SchematicName_Number_name% - Holt den Namen eines Spielers, der sich auf einem bestimmten Platz in der Bestenliste befindet.
+  # %jparkour_tops_SchematicName_Number_top% - Holt den Platz eines Spielers in der Bestenliste.
+  # %jparkour_tops_SchematicName_Number_accuracy% - Holt die Genauigkeit eines Spielers, der sich auf einem bestimmten Platz in der Bestenliste befindet.
+  # %jparkour_tops_SchematicName_Number_time% - Holt die genaue Abschlusszeit eines Spielers, der sich auf einem bestimmten Platz in der Bestenliste befindet.
   #
-  # Ersetzen Sie "SchematicName" durch die ID des Schemas und "Number" durch die gewünschte Position in der Bestenliste.
-  # Wenn Sie die Position des Spielers in der Bestenliste nicht kennen, können Sie sie abrufen, indem Sie "Number" durch "name=PlayerName" ersetzen.
-  # Oder, wenn Sie die Position der Person wissen möchten, die den Platzhalter betrachtet, ersetzen Sie "Number" durch "player".
-  # Geben Sie den Spitznamen des Spielers in PlayerName ein. Beispiele: %jparkour_tops_nether_1_top%,
+  # Ersetze "SchematicName" durch die ID des Schemas und "Number" durch die Platznummer in der Bestenliste, die du benötigst.
+  # Wenn du die Position des Spielers in der Bestenliste nicht kennst, kannst du sie erhalten, indem du "Number" durch "name=Spielername" ersetzt.
+  # Oder wenn du die Position der Person wissen möchtest, die den Platzhalter betrachtet, ersetze "Number" durch "player".
+  # Gib den Spitznamen des Spielers bei Spielername ein. Beispiele: %jparkour_tops_nether_1_top%,
   # %jparkour_tops_nether_name=Mitriyf_accuracy%, %jparkour_tops_nether_name=%player%_time%, %jparkour_tops_nether_player_name%.
-  # Achtung! Die Funktion "name=PlayerName" funktioniert möglicherweise nicht gut mit Benutzernamen, die _ enthalten.
+  # Achtung! Die Funktion "name=Spielername" funktioniert möglicherweise nicht gut mit Benutzernamen, die _ enthalten.
   #
-  # Eingebaute Platzhalter:
-  # %accuracy% - zeigt die Ausführungsgenauigkeit des Spielers an.
-  # %star_win% - zeigt die Sterne an, die der Spieler verdient hat.
-  # %star_loss% - zeigt die Sterne an, die der Spieler nicht verdient hat.
+  # Integrierte Platzhalter:
+  # %accuracy% - Zeigt die Ausführungsgenauigkeit des Spielers an.
+  # %star_win% - Zeigt die Sterne an, die der Spieler verdient hat.
+  # %star_loss% - Zeigt die Sterne an, die der Spieler nicht verdient hat.
   #
-  # Information:
-  # An die Konsole gesendete Nachrichten können Platzhalter nicht ersetzen oder bestimmte oben genannte Aktionen ausführen.
-  # Eingebaute Funktionen:
-  # %player% - Spielernamen abrufen.
+  # Info:
+  # Nachrichten, die an die Konsole gesendet werden, ersetzen möglicherweise keine Platzhalter oder führen bestimmte Aktionen oben nicht aus.
+  # Integrierte Funktionen:
+  # %player% - Holt den Spielernamen.
   #
-  # Die Befehlsnachricht.
-  cmd:
-    help:
-      - "[message] &a[JParkour] Hilfe &7(/jparkour help):"
-      - ""
-      - "[message] &a/jparkour status &f- Überprüfe den Status des Plugins."
-      - "[message] &a/jparkour join &f- Erstelle oder betrete einen verfügbaren Raum."
-      - "[message] &a/jparkour join roomid &f- Versuche, eine Verbindung zum Raum herzustellen (wenn er frei ist)."
-      - "[message] &a/jparkour exit &f- Verlasse das Spiel/die Warteschlange."
-      - "[message] &a/jparkour admin &f- Hilfe über den Unterbefehl admin erhalten."
-      - "[message] &a/jparkour reload &f- Plugin-Konfiguration neu laden."
-      - ""
-    noperm:
-      - "[message] &cDu hast keine ausreichenden Berechtigungen!"
+  # Die Befehlsnachrichten.
   game:
-    room:
-      notfound:
-        - "[message] &cDiese Map existiert nicht."
-      started:
-        - "[message] &cDas Spiel hat bereits begonnen."
-      connect:
-        - "[message] &aVerbinde mit Raum &e%room%..."
-      waiter:
-        - "[message] &aDu wurdest in die Warteschlange gesetzt."
-        - "[message] &fWarteschlange verlassen: &c/jparkour exit"
-      exit:
-        - "[message] &cDu hast die Warteschlange verlassen."
-      noExit:
-        - "[message] &cDu bist nicht im Spiel."
+    # Du kannst keine Aktionen in Status und Platzhaltern verwenden.
     status:
       wait: "&eWarten"
-      start: "&fSpielt"
+      start: "&fSpielen"
       win: "&aSieg"
-      left: "&fBlöcke zerstört: &e%blocks%/&e%blocks_all%"
-      right: "&fBomben abgewehrt: &e%bombs%&f/&e%bombs_all%"
+      left: "&fZerstörte Blöcke: &e%blocks%/%blocks_all%"
+      right: "&fAbgewehrte Bomben: &e%bombs%/%bombs_all%"
     placeholders:
-      notClaimed: "Nicht abgeholt"
+      notClaimed: "Nicht beansprucht"
     actions:
-      joined:
-        - "[message] &aSie waren mit dem Spiel verbunden: &e%game%"
-      started:
-        - "[message] &eDas Spiel hat begonnen."
-      ingame:
-        - "[message] &cDu bist im Spiel!"
-      end:
-        - "[message] &cDas Spiel ist vorbei."
-      restarted:
-        - "[message] &aDas Spiel wurde neu gestartet."
-      cooldownRestart:
-        - "[message] &cSie können das Spiel nicht so schnell neu starten."
-      kicked:
-        - "[message] &cDas Spiel ist vorbei."
-      damageHeart:
-        - "[message] &c-1 &l♥"
-        - "[explosion] 1"
-      win:
-        - "[title] &aSieg;&e%star_win%&7%star_loss% &f- &e%accuracy%%"
+      command:
+        help:
+          - "[message] &a[JParkour] Hilfe &7(/jparkour help):"
+          - ""
+          - "[message] &a/jparkour status &f- Überprüfe den Status des Plugins."
+          - "[message] &a/jparkour join &f- Erstelle oder trete einem beliebigen verfügbaren Raum bei."
+          - "[message] &a/jparkour join RaumID &f- Versuche, dem Raum beizutreten (wenn er frei ist)."
+          - "[message] &a/jparkour exit &f- Verlasse das Spiel/die Warteschlange."
+          - "[message] &a/jparkour party &f- Erhalte Party-Hilfe."
+          - "[message] &a/jparkour admin &f- Erhalte Admin-Hilfe."
+          - "[message] &a/jparkour reload &f- Lade die Plugin-Konfiguration neu."
+          - ""
+        party:
+          help:
+            - "[message] [JParkour] Party-Hilfe &7(/jparkour party help):"
+            - "[message] &a/jparkour party info &f- Informationen über die Party."
+            - "[message] &a/jparkour party create Name &f- Erstelle eine Party mit Namen."
+            - "[message] &a/jparkour party setLeader Spielername &f- Übertrage die Führung."
+            - "[message] &a/jparkour party disband &f- Lösche deine Party."
+            - "[message] &a/jparkour party invite Spielername &f- Lade einen Spieler ein."
+            - "[message] &a/jparkour party kick Spielername &f- Werfe einen Spieler raus."
+            - "[message] &a/jparkour party leave &f- Verlasse die Party."
+            - "[message] &a/jparkour party accept PartyName &f- Akzeptiere eine Einladung."
+            - "[message] &a/jparkour party deny PartyName &f- Lehne die Party-Einladung ab."
+          info:
+            - "[message] &aInformationen über die Party:"
+            - "[message] &fParty-Name: &e%party%"
+            - "[message] &eLeiter: &a%leader%"
+            - "[message] &aMitglieder: &f%members%"
+        noperm:
+          - "[message] &cDu hast keine ausreichenden Berechtigungen!"
+      room:
+        notfound:
+          - "[message] &cDiese Karte existiert nicht."
+        started:
+          - "[message] &cDas Spiel hat bereits begonnen."
+        connect:
+          - "[party] &aVerbinde mit Raum &e%room%..."
+        waiter:
+          - "[party] &aDu wurdest in die Warteschlange gesetzt."
+          - "[party] &fVerlasse die Warteschlange: &c/jparkour exit"
+        exit:
+          - "[message] &cDu hast die Warteschlange verlassen."
+        noExit:
+          - "[message] &cDu bist nicht im Spiel."
+      party:
+        newLeader:
+          - "[party] &fEin neuer Leiter wurde für die Party ernannt: &e%leader%"
+        playerLeaved:
+          - "[party] &cSpieler %player% hat die Party verlassen."
+        joinedToParty:
+          - "[party] &aSpieler %player% ist der Party beigetreten."
+        kickedFromParty:
+          - "[party] &cSpieler %player% wurde aus der Party geworfen."
+        partyBroken:
+          - "[party] &cDiese Party hat sich aufgelöst."
+        alreadyLeader:
+          - "[message] &cDu bist bereits der Leiter der Party."
+        playerNotInParty:
+          - "[message] &cDieser Spieler ist nicht in deiner Party."
+        playerNotFound:
+          - "[message] &cEs gibt keinen solchen Spieler auf dem Server."
+        haveCreated:
+          - "[message] &cDu hast bereits eine Party erstellt."
+        alreadyCreated:
+          - "[message] &cEine Party mit diesem Namen existiert bereits."
+        partyCreated:
+          - "[message] &aDie Party mit dem Namen &e%party%&a wurde erfolgreich erstellt."
+        notLeader:
+          - "[message] &cDu bist nicht der Leiter der Party."
+        notInParty:
+          - "[message] &cDu bist nicht Teil der Party."
+        inParty:
+          - "[message] &cDer Spieler ist bereits in einer Party."
+        leaderSendRequest:
+          - "[message] &aEine Einladung wurde an den Spieler gesendet."
+        alreadySendRequest:
+          - "[message] &cDu hast diesem Spieler bereits eine Einladung gesendet."
+        playerGetRequest:
+          - "[message] &fSpieler &e%leader% &fhat dir eine Einladung zu seiner Party &e%party%&f gesendet."
+          - "[message] &fUm sie anzunehmen, sende folgende Nachricht in den Chat: &a/jparkour party accept %party%"
+          - "[message] &fUm eine Einladung abzulehnen, schreibe: &c/jparkour party deny %party%"
+          - "[message] &eDu hast 30 Sekunden Zeit, um die Einladung anzunehmen."
+        playerTimeLeaved:
+          - "[message] &cDu hast es nicht rechtzeitig geschafft, die Einladung zu %party% anzunehmen."
+        leaderTimeLeaved:
+          - "[message] &cSpieler %player% hat nicht auf deine Einladung reagiert."
+        noHaveInvites:
+          - "[message] &cDu hast keine Einladungen."
+        dontHaveInvite:
+          - "[message] &cDu hast diese Einladung nicht."
+        playerDenyInvite:
+          - "[message] &cDu hast die Einladung zu %party% abgelehnt."
+        deniedInviteParty:
+          - "[message] &cSpieler %player% hat deine Einladung abgelehnt."
+        bigSize:
+          - "[party] &cDeine Party ist zu groß, um diese Karte zu betreten."
+      game:
+        joined:
+          - "[message] &aDu bist mit dem Spiel verbunden: &e%game%"
+          - "[room] &e%player% &aist verbunden."
+        started:
+          - "[message] &eDas Spiel hat begonnen."
+        ingame:
+          - "[message] &cDu bist im Spiel!"
+        end:
+          - "[message] &cDas Spiel ist vorbei."
+        restarted:
+          - "[delay] 5"
+          - "[message] &aDas Spiel wurde neu gestartet."
+        cooldownRestart:
+          - "[message] &cDu kannst das Spiel nicht so schnell neu starten."
+        kicked:
+          - "[message] &cDas Spiel ist vorbei."
+        damageHeart:
+          - "[message] &c-1 &l♥"
+          - "[explosion] 1"
+        win:
+          - "[title] &aSieg;&e%star_win%&7%star_loss% &f- &e%accuracy%%"
+          - "[room] &a%player% &f| &e%star_win%&7%star_loss% &f- &e%accuracy%%"
