@@ -1,8 +1,8 @@
 # 🐔 JParkour [![CodeFactor](https://www.codefactor.io/repository/github/mitriyf/jparkour/badge)](https://www.codefactor.io/repository/github/mitriyf/jparkour)
 ## 🗡️ Ride a chicken or any other entity by destroying objects
 This plugin adds a mini-game in the form of various mobs that you can ride and knock down stands with.
-- $ Versions 1.8.1-1.21+ are supported. It may be 1.7, but it has not been tested.
-- $ Has been tested on versions: 1.8.8, 1.12.2, 1.16.5, 1.18.2, 1.21+. The best performance was observed on these versions: 1.8.8, 1.12.2, and 1.16.5.
+- $ Versions 1.8.1-26+ are supported. It may be 1.7, but it has not been tested.
+- $ Has been tested on versions: 1.8.8, 1.12.2, 1.16.5, 1.18.2, 1.21, 26+. The best performance was observed on these versions: 1.8.8, 1.12.2, and 1.16.5.
 - $ Some plugin updates on SpigotMC.ru may be delayed.
 - $ There may be a future FAQ about the plugin here.
 - $ Attention! An additional plugin is required for the plugin to work. You can read the requirements below.
@@ -11,6 +11,7 @@ This plugin adds a mini-game in the form of various mobs that you can ride and k
 Ride a chicken and experience a storm of emotions!
 
 <img width="1920" height="1009" alt="2026-01-16_01 40 49" src="https://github.com/user-attachments/assets/acdd9458-3ee2-4f41-ad55-c28c041aff39" />
+<img width="1920" height="1009" alt="2026-08-16_02 41 00" src="https://github.com/user-attachments/assets/4310cf29-86c4-4560-aa47-26a2fd7775a5" />
 
 ![2026-01-16 02-32-49](https://github.com/user-attachments/assets/d9783e3d-5c3a-4510-b5b2-1a62be7dbb89)
 
@@ -105,11 +106,37 @@ Finish the race, find out your score, and return home!
   - /jparkour admin game set loc end - Enter this command when you select the end of the chicken run. At this point, the player will receive their results and be kicked.
 - Save the game easily and simply:
   - /jparkour admin game save nameSchematic - Saving the game's layout and configuration will be successful if the positions and locations are selected.
+- You have configured this only for player 0! Now you can also do the same for other players:
+  - /jparkour admin game set player 0/1/2/... - Change the player. Create as many players as you like! Don’t forget to save them.
+### 💿 Party (/jparkour party):
+- Now you can play with your friends!
+  - /jparkour party info - Information about the party.
+  - /jparkour party create Name - Create a party with name.
+  - /jparkour party setLeader PlayerName - Transfer leadership.
+  - /jparkour party disband - Delete your party.
+  - /jparkour party invite PlayerName - Invite a player.
+  - /jparkour party kick PlayerName - Kick a player.
+  - /jparkour party leave - Leave the party.
+  - /jparkour party accept PartyName - Accept an invitation.
+  - /jparkour party deny PartyName - Decline the party invitation.
+  
+  <img width="1920" height="1009" alt="2026-08-16_02 40 09" src="https://github.com/user-attachments/assets/68d8e0fd-0af2-445d-894f-5299339dbeae" />
+  <img width="1920" height="1009" alt="2026-08-16_02 41 00" src="https://github.com/user-attachments/assets/7c9a4081-4c0e-48fa-834d-20f9ad50d87c" />
 ### ⌨️ Command (/jparkour):
 - /jparkour status - Check the status of the plugin.
 - /jparkour join - Create or join any available room.
 - /jparkour join roomId - Attempt to connect to the room (if it is free).
 - /jparkour exit - Exit the game/queue.
+- /jparkour party - Get a Party Help.
+  - /jparkour party info - Information about the party.
+  - /jparkour party create Name - Create a party with name.
+  - /jparkour party setLeader PlayerName - Transfer leadership.
+  - /jparkour party disband - Delete your party.
+  - /jparkour party invite PlayerName - Invite a player.
+  - /jparkour party kick PlayerName - Kick a player.
+  - /jparkour party leave - Leave the party.
+  - /jparkour party accept PartyName - Accept an invitation.
+  - /jparkour party deny PartyName - Decline the party invitation.
 - /jparkour admin - Get a Admin Help.
   - /jparkour admin add playerName - Add a player to a random game.
   - /jparkour admin add playerName Map - Add a player to a specific game.
@@ -125,9 +152,10 @@ Finish the race, find out your score, and return home!
     - /jparkour admin gameeditor list - Get a list of game schematics.
     - /jparkour admin gameeditor remove Name - Delete the game schematic.
   - /jparkour admin game - Set a GameEditor Settings.
+    - /jparkour admin game set player 0/1/2/... - Change the player. The initial value is 0.
     - /jparkour admin game set pose 1/2/3/portal - Stand at the border of one of the points and select it.
-    - /jparkour admin game set stand Type - Strike the block where stand should be with the axe in your hands.
-    - /jparkour admin game set loc Type - Strike the block where loc should be with the axe in your hands.
+    - /jparkour admin game set stand Type addX addY addZ Yaw Pitch - Strike the block where stand should be with the axe in your hands.
+    - /jparkour admin game set loc Type addX addY addZ Yaw Pitch - Strike the block where loc should be with the axe in your hands.
     - /jparkour admin game set point Number(1to∞) RadiusStartPoint(0.5/?.?) Teleportation(true/false) addX addY addZ Yaw Pitch - Go to the location where the point should be and enter this command. The normal block values will be taken (there is an add for this), and if yaw and pitch are not specified, the values that the player has looked at will be taken.
     - /jparkour admin game get pose 1/2/3/portal - Find out the coordinates of the boundaries of point 1 or 2...
     - /jparkour admin game get stand - Find out the type of block selected by the axe.
@@ -146,6 +174,7 @@ Finish the race, find out your score, and return home!
 ### 📖 Permissions:
 - **jparkour.help** - Can a player get help with subcommands?
 - **jparkour.join** - Can a player join/exit games?
+- **jparkour.party** - Can a player interact with the party?
 - **jparkour.status** - Can the player find out the status of the games?
 - **jparkour.reload** - Can the player reload the plugin configuration?
 - **jparkour.admin** - Can the player access the gameeditor, game, item, and other commands? + Removing restrictions on commands and walking through worlds.
@@ -159,6 +188,8 @@ Finish the race, find out your score, and return home!
     - WARNING: Requires BungeeMessaging. This is present on BungeeCord and WaterFall.
     - On Velocity it might be disabled by default. Check your proxy config.
   - [message] message - Send a message to the player.
+  - [party] message - Send a message to the party's players.
+  - [room] message - Send a message to the room's players.
   - [broadcast] message - Send a message to all players.
   - [log] message - Send a message to the console.
   - [delay] ticks - Make a delay between actions. In ticks (20 ticks = 1 second).
