@@ -10,16 +10,15 @@ import org.bukkit.entity.ItemFrame;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitScheduler;
 import ru.mitriyf.jparkour.JParkour;
+import ru.mitriyf.jparkour.editor.GameEditor;
 import ru.mitriyf.jparkour.game.Game;
 import ru.mitriyf.jparkour.utils.Utils;
 
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
 
 public class LocationsData {
     private final BukkitScheduler scheduler;
     private final boolean dev, infoExists;
-    private final CountDownLatch latch;
     private final SchematicData info;
     private final JParkour plugin;
     private final String name;
@@ -31,9 +30,8 @@ public class LocationsData {
     @Setter
     private Location defaultLocation;
 
-    public LocationsData(JParkour plugin, Game game, CountDownLatch latch, boolean dev) {
+    public LocationsData(JParkour plugin, Game game, boolean dev) {
         this.plugin = plugin;
-        this.latch = latch;
         this.game = game;
         this.dev = dev;
         scheduler = game.getScheduler();
@@ -65,19 +63,24 @@ public class LocationsData {
             } else {
                 defaultLocation = w.getBlockAt(0, 100, 0).getLocation();
             }
-            latch.countDown();
+            paste();
         });
-        try {
-            latch.await();
-        } catch (Exception ignored) {
-        }
+    }
+
+    private void paste() {
         setLocations();
-        if (infoExists) {
-            utils.paste(defaultLocation, info.getSchematic(), info.isPasteAir());
-            scheduler.runTask(plugin, () -> game.setTrigger(!dev ? portal.getBlock().getType() : null));
-        } else {
-            scheduler.runTask(plugin, () -> defaultLocation.getBlock().setType(Material.STONE));
-        }
+        scheduler.runTaskAsynchronously(plugin, () -> {
+            if (infoExists) {
+                utils.paste(defaultLocation, info.getSchematic(), info.isPasteAir());
+                scheduler.runTask(plugin, () -> game.setTrigger(!dev ? portal.getBlock().getType() : null));
+            } else {
+                scheduler.runTask(plugin, () -> defaultLocation.getBlock().setType(Material.STONE));
+            }
+            if (dev) {
+                game.setGameEditor(new GameEditor(game));
+            }
+            game.readyMap();
+        });
     }
 
     private void setLocations() {
@@ -98,16 +101,14 @@ public class LocationsData {
     }
 
     public Location getLocation(double[] coords) {
-        Location location = null;
+        Location location;
         try {
             location = defaultLocation.clone().add(coords[0], coords[1], coords[2]);
             location.setYaw((float) coords[3]);
             location.setPitch((float) coords[4]);
         } catch (Exception e) {
             plugin.getLogger().warning("An error occurred while receiving the location. Make sure everything is in this format: X;Y;Z;YAW;PITCH");
-            if (location == null) {
-                location = defaultLocation.clone();
-            }
+            location = defaultLocation.clone();
         }
         return location;
     }

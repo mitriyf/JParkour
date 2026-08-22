@@ -1,6 +1,5 @@
 package ru.mitriyf.jparkour.updater.config;
 
-import com.google.common.base.Preconditions;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -26,13 +25,18 @@ public class ConfigUpdater {
         this.plugin = plugin;
     }
 
-    public void update(String resourceName, File toUpdate, String ignoredSection) throws IOException {
+    public void update(String resourceName, File toUpdate, String ignoredSection) throws Exception {
         update(plugin, resourceName, toUpdate, ignoredSection == null || ignoredSection.isEmpty() ? Collections.emptyList() : Collections.singletonList(ignoredSection));
     }
 
-    private void update(Plugin plugin, String resourceName, File toUpdate, List<String> ignoredSections) throws IOException {
-        Preconditions.checkArgument(toUpdate.exists(), "Update file doesn't exist!");
-        FileConfiguration defaultConfig = YamlConfiguration.loadConfiguration(new InputStreamReader(plugin.getResource(resourceName), StandardCharsets.UTF_8));
+    private void update(Plugin plugin, String resourceName, File toUpdate, List<String> ignoredSections) throws Exception {
+        if (!toUpdate.exists()) {
+            throw new IllegalArgumentException("Update file doesn't exist!");
+        }
+        FileConfiguration defaultConfig;
+        try (InputStreamReader inputStreamReader = new InputStreamReader(plugin.getResource(resourceName), StandardCharsets.UTF_8)) {
+            defaultConfig = YamlConfiguration.loadConfiguration(inputStreamReader);
+        }
         FileConfiguration currentConfig = YamlConfiguration.loadConfiguration(toUpdate);
         Map<String, String> comments = parseComments(plugin, resourceName, defaultConfig);
         Map<String, String> ignoredSectionsValues = parseIgnoredSections(toUpdate, comments, ignoredSections);
@@ -45,7 +49,7 @@ public class ConfigUpdater {
         }
     }
 
-    private void write(FileConfiguration defaultConfig, FileConfiguration currentConfig, BufferedWriter writer, Map<String, String> comments, Map<String, String> ignoredSectionsValues) throws IOException {
+    private void write(FileConfiguration defaultConfig, FileConfiguration currentConfig, BufferedWriter writer, Map<String, String> comments, Map<String, String> ignoredSectionsValues) throws Exception {
         FileConfiguration parserConfig = new YamlConfiguration();
         for (String fullKey : defaultConfig.getKeys(true)) {
             String indents = getIndents(fullKey);
@@ -74,59 +78,62 @@ public class ConfigUpdater {
         writer.close();
     }
 
-    private Map<String, String> parseComments(Plugin plugin, String resourceName, FileConfiguration defaultConfig) throws IOException {
+    private Map<String, String> parseComments(Plugin plugin, String resourceName, FileConfiguration defaultConfig) throws Exception {
         List<String> keys = new ArrayList<>(defaultConfig.getKeys(true));
-        BufferedReader reader = new BufferedReader(new InputStreamReader(plugin.getResource(resourceName)));
-        Map<String, String> comments = new LinkedHashMap<>();
-        StringBuilder commentBuilder = new StringBuilder();
-        Builder builder = new Builder(defaultConfig, SEPARATOR);
-        String currentValidKey = null;
-        String line;
-        while ((line = reader.readLine()) != null) {
-            String trimmedLine = line.trim();
-            if (trimmedLine.startsWith("-")) {
-                continue;
-            }
-            if (trimmedLine.isEmpty() || trimmedLine.startsWith("#")) {
-                commentBuilder.append(trimmedLine).append("\n");
-            } else {
-                if (!line.startsWith(" ")) {
-                    builder.clear();
-                    currentValidKey = trimmedLine;
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(plugin.getResource(resourceName)))) {
+            Map<String, String> comments = new LinkedHashMap<>();
+            StringBuilder commentBuilder = new StringBuilder();
+            Builder builder = new Builder(defaultConfig, SEPARATOR);
+            String currentValidKey = null;
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String trimmedLine = line.trim();
+                if (trimmedLine.startsWith("-")) {
+                    continue;
                 }
-                builder.parseLine(trimmedLine, true);
-                String key = builder.toString();
-                if (commentBuilder.length() > 0) {
-                    comments.put(key, commentBuilder.toString());
-                    commentBuilder.setLength(0);
-                }
-                int nextKeyIndex = keys.indexOf(builder.toString()) + 1;
-                if (nextKeyIndex < keys.size()) {
-                    String nextKey = keys.get(nextKeyIndex);
-                    while (!builder.isEmpty() && !nextKey.startsWith(builder.toString())) {
-                        builder.removeLastKey();
+                if (trimmedLine.isEmpty() || trimmedLine.startsWith("#")) {
+                    commentBuilder.append(trimmedLine).append("\n");
+                } else {
+                    if (!line.startsWith(" ")) {
+                        builder.clear();
+                        currentValidKey = trimmedLine;
                     }
-                    if (builder.isEmpty()) {
-                        builder.parseLine(currentValidKey, false);
+                    builder.parseLine(trimmedLine, true);
+                    String key = builder.toString();
+                    if (commentBuilder.length() > 0) {
+                        comments.put(key, commentBuilder.toString());
+                        commentBuilder.setLength(0);
+                    }
+                    int nextKeyIndex = keys.indexOf(builder.toString()) + 1;
+                    if (nextKeyIndex < keys.size()) {
+                        String nextKey = keys.get(nextKeyIndex);
+                        while (!builder.isEmpty() && !nextKey.startsWith(builder.toString())) {
+                            builder.removeLastKey();
+                        }
+                        if (builder.isEmpty()) {
+                            builder.parseLine(currentValidKey, false);
+                        }
                     }
                 }
             }
+            reader.close();
+            if (commentBuilder.length() > 0) {
+                comments.put(null, commentBuilder.toString());
+            }
+            return comments;
         }
-        reader.close();
-        if (commentBuilder.length() > 0) {
-            comments.put(null, commentBuilder.toString());
-        }
-        return comments;
     }
 
-    @SuppressWarnings("all")
-    private Map<String, String> parseIgnoredSections(File toUpdate, Map<String, String> comments, List<String> ignoredSections) throws IOException {
+    private Map<String, String> parseIgnoredSections(File toUpdate, Map<String, String> comments, List<String> ignoredSections) throws Exception {
         Map<String, String> ignoredSectionValues = new LinkedHashMap<>(ignoredSections.size());
         DumperOptions options = new DumperOptions();
         options.setLineBreak(DumperOptions.LineBreak.UNIX);
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         Yaml yaml = new Yaml(new YamlConstructor(), new YamlRepresenter(), options);
-        Map<Object, Object> root = (Map<Object, Object>) yaml.load(new FileReader(toUpdate));
+        Map<Object, Object> root;
+        try (FileReader fileReader = new FileReader(toUpdate)) {
+            root = yaml.load(fileReader);
+        }
         ignoredSections.forEach(section -> {
             String[] split = section.split("[" + SEPARATOR + "]");
             String key = split[split.length - 1];
@@ -145,7 +152,7 @@ public class ConfigUpdater {
         return ignoredSectionValues;
     }
 
-    @SuppressWarnings("all")
+    @SuppressWarnings("unchecked")
     private Map<Object, Object> getSection(String fullKey, Map<Object, Object> root) {
         String[] keys = fullKey.split("[" + SEPARATOR + "]", 2);
         String key = keys[0];
@@ -162,7 +169,7 @@ public class ConfigUpdater {
         return getSection(keys[1], (Map<Object, Object>) value);
     }
 
-    @SuppressWarnings("all")
+    @SuppressWarnings("unchecked")
     private String buildIgnored(String fullKey, Map<Object, Object> ymlMap, Map<String, String> comments, StringBuilder keyBuilder, StringBuilder ignoredBuilder, Yaml yaml) {
         String[] keys = fullKey.split("[" + SEPARATOR + "]", 2);
         String key = keys[0];
@@ -202,7 +209,6 @@ public class ConfigUpdater {
         return ignoredBuilder.toString();
     }
 
-    @SuppressWarnings("all")
     private void writeIgnoredValue(Yaml yaml, Object toWrite, StringBuilder ignoredBuilder, String indents) {
         String yml = yaml.dump(toWrite);
         if (toWrite instanceof Collection) {
@@ -224,7 +230,7 @@ public class ConfigUpdater {
         return builder.toString();
     }
 
-    private void writeCommentIfExists(Map<String, String> comments, BufferedWriter writer, String fullKey, String indents) throws IOException {
+    private void writeCommentIfExists(Map<String, String> comments, BufferedWriter writer, String fullKey, String indents) throws Exception {
         String comment = comments.get(fullKey);
         if (comment != null)
             writer.write(indents + comment.substring(0, comment.length() - 1).replace("\n", "\n" + indents) + "\n");
@@ -265,7 +271,7 @@ public class ConfigUpdater {
         return null;
     }
 
-    private void writeYamlValue(final FileConfiguration parserConfig, final BufferedWriter bufferedWriter, final String indents, final String trailingKey, final Object currentValue) throws IOException {
+    private void writeYamlValue(final FileConfiguration parserConfig, final BufferedWriter bufferedWriter, final String indents, final String trailingKey, final Object currentValue) throws Exception {
         parserConfig.set(trailingKey, currentValue);
         String yaml = parserConfig.saveToString();
         yaml = yaml.substring(0, yaml.length() - 1).replace("\n", "\n" + indents);
@@ -274,7 +280,7 @@ public class ConfigUpdater {
         bufferedWriter.write(toWrite);
     }
 
-    private boolean writeIgnoredSectionValueIfExists(final Map<String, String> ignoredSectionsValues, final BufferedWriter bufferedWriter, final String fullKey) throws IOException {
+    private boolean writeIgnoredSectionValueIfExists(final Map<String, String> ignoredSectionsValues, final BufferedWriter bufferedWriter, final String fullKey) throws Exception {
         String ignored = ignoredSectionsValues.get(fullKey);
         if (ignored != null) {
             bufferedWriter.write(ignored);
@@ -288,7 +294,7 @@ public class ConfigUpdater {
         return false;
     }
 
-    private void writeConfigurationSection(final BufferedWriter bufferedWriter, final String indents, final String trailingKey, final ConfigurationSection configurationSection) throws IOException {
+    private void writeConfigurationSection(final BufferedWriter bufferedWriter, final String indents, final String trailingKey, final ConfigurationSection configurationSection) throws Exception {
         bufferedWriter.write(indents + trailingKey + ":");
         if (!(configurationSection).getKeys(false).isEmpty()) {
             bufferedWriter.write("\n");

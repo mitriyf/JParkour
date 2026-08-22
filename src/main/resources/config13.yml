@@ -1,13 +1,13 @@
 ############################################################
 #                         JParkour                         #
-#                           v1.7                           #
+#                           v1.8                           #
 ############################################################
 
 # You can find documentation or help about the plugin here: https://github.com/mitriyf/JParkour
 # Or: https://vk.com/jdevs
 
 # Don't remove the version setting.
-version: 1.7
+version: 1.8
 
 # Plugin settings.
 settings:

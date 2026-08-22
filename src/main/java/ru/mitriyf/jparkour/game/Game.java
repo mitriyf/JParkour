@@ -19,7 +19,6 @@ import ru.mitriyf.jparkour.values.Values;
 
 import java.io.File;
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Getter
@@ -47,6 +46,7 @@ public class Game {
     @Setter
     private boolean triggerEnabled = true;
     private LocationsData locations;
+    @Setter
     private GameEditor gameEditor;
     @Setter
     private SchematicData info;
@@ -54,7 +54,7 @@ public class Game {
     private Material trigger;
     private String mapName;
 
-    public Game(JParkour plugin, SchematicData schematicData, CountDownLatch latch, GameData gameData, String mapId, String name, boolean dev) {
+    public Game(JParkour plugin, SchematicData schematicData, GameData gameData, String mapId, String name, boolean dev) {
         this.dev = dev;
         this.name = name;
         this.plugin = plugin;
@@ -70,29 +70,27 @@ public class Game {
         size = players.size();
         map = mapId;
         if (!dev) {
-            setupSchematic(latch, false);
+            setupSchematic(false);
         } else {
             if (mapId == null || !values.getSchematics().containsKey(mapId)) {
                 infoExists = false;
-                locations = new LocationsData(plugin, this, latch, true);
+                locations = new LocationsData(plugin, this, true);
             } else {
-                setupSchematic(latch, true);
+                setupSchematic(true);
             }
-            gameEditor = new GameEditor(this);
         }
-        readyMap();
     }
 
-    private void setupSchematic(CountDownLatch latch, boolean dev) {
+    private void setupSchematic(boolean dev) {
         fullSlots = info.isFullSlots();
         mapName = info.getName();
         health = info.getHealth();
         foodLevel = info.getFoodLevel();
         exitTime = info.getExitTime();
-        locations = new LocationsData(plugin, this, latch, dev);
+        locations = new LocationsData(plugin, this, dev);
     }
 
-    private void readyMap() {
+    public void readyMap() {
         List<Integer> list = new ArrayList<>();
         if (infoExists) {
             for (int i = 0; i < info.getSize(); i++) {

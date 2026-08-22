@@ -21,7 +21,7 @@ import java.util.concurrent.ThreadLocalRandom;
 @Getter
 public final class JParkour extends JavaPlugin {
     private final ThreadLocalRandom random = ThreadLocalRandom.current();
-    private final String configsVersion = "1.7";
+    private final String configsVersion = "1.8";
     private PartyManager partyManager;
     private GameManager gameManager;
     private Supports supports;
@@ -55,9 +55,6 @@ public final class JParkour extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        if (supports.getPlaceholders() != null) {
-            supports.getPlaceholders().unregister();
-        }
         for (Game game : new HashMap<>(gameManager.getRooms()).values()) {
             if (game != null) {
                 game.close(true, true);

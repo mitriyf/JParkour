@@ -22,7 +22,6 @@ import ru.mitriyf.jparkour.values.Values;
 
 import java.io.File;
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
 
 @Getter
 public class GameEditor {
@@ -107,28 +106,25 @@ public class GameEditor {
 
     public void processSave(Player player, String name) {
         process = true;
-        scheduler.runTaskAsynchronously(plugin, () -> {
-            try {
-                CountDownLatch clearLatch = new CountDownLatch(1);
-                scheduler.runTask(plugin, () -> {
-                    clear(false);
-                    scheduler.runTaskLater(plugin, clearLatch::countDown, 5L);
-                });
-                clearLatch.await();
-                utils.getSchematic().save(name, pose1, pose2, pose3);
-                values.setup(false);
-                CountDownLatch saveLatch = new CountDownLatch(1);
-                scheduler.runTask(plugin, () -> {
-                    save(name);
-                    scheduler.runTaskLater(plugin, saveLatch::countDown, 5L);
-                });
-                saveLatch.await();
-                process = false;
-                player.sendMessage("§aSuccessfully!\n§eSettings accepted.\nExit the editor: /jparkour exit");
-            } catch (Exception e) {
-                plugin.getLogger().warning("Couldn't save schem. Error: " + e);
-                player.sendMessage("§cCouldn't save schem.");
-            }
+        scheduler.runTask(plugin, () -> {
+            clear(false);
+            scheduler.runTaskLaterAsynchronously(plugin, () -> {
+                try {
+                    utils.getSchematic().save(name, pose1, pose2, pose3);
+                    scheduler.runTask(plugin, () -> {
+                        values.setup(false);
+                        save(name);
+                        scheduler.runTaskLater(plugin, () -> {
+                            process = false;
+                            player.sendMessage("§aSuccessfully!\n§eSettings accepted.\nExit the editor: /jparkour exit");
+                        }, 5L);
+                    });
+                } catch (Exception e) {
+                    plugin.getLogger().warning("Couldn't save schem. Error: " + e);
+                    player.sendMessage("§cCouldn't save schem.");
+                    process = false;
+                }
+            }, 5L);
         });
     }
 

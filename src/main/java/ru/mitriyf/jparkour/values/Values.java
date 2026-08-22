@@ -1,6 +1,5 @@
 package ru.mitriyf.jparkour.values;
 
-import com.google.common.collect.ImmutableList;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.configuration.ConfigurationSection;
@@ -494,11 +493,11 @@ public class Values {
     }
 
     public List<Action> getActionList(List<String> actionStrings) {
-        ImmutableList.Builder<Action> actionListBuilder = ImmutableList.builder();
+        List<Action> actionListBuilder = new ArrayList<>();
         for (String actionString : actionStrings) {
             actionListBuilder.add(fromString(actionString));
         }
-        return actionListBuilder.build();
+        return Collections.unmodifiableList(actionListBuilder);
     }
 
     private void clear() {

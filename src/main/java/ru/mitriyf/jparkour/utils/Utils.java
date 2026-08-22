@@ -32,8 +32,6 @@ import ru.mitriyf.jparkour.utils.locales.impl.Locale13;
 import ru.mitriyf.jparkour.values.Values;
 
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 @Getter
@@ -41,7 +39,6 @@ public class Utils {
     private final Values values;
     private final Logger logger;
     private final JParkour plugin;
-    private final CountDownLatch latch;
     private final CommonUtils commonUtils;
     private final ActionUtils actionUtils;
     private final Set<Integer> tasks = new HashSet<>();
@@ -56,7 +53,6 @@ public class Utils {
         this.plugin = plugin;
         values = plugin.getValues();
         logger = plugin.getLogger();
-        latch = new CountDownLatch(1);
         actionUtils = new ActionUtils(this, plugin);
         commonUtils = new CommonUtils(this, plugin);
     }
@@ -93,52 +89,60 @@ public class Utils {
         }
     }
 
-    public BukkitTask sendMessage(Player p, List<Action> actions) {
-        return sendMessage(p, actions, null, null);
-    }
-
-    public BukkitTask sendMessage(Player p, List<Action> actions, String[] search, String[] replace) {
-        return new BukkitRunnable() {
-            @Override
-            public void run() {
-                tasks.add(getTaskId());
-                for (Action action : actions) {
-                    if (!tasks.contains(getTaskId())) {
-                        return;
-                    }
-                    sendPlayer(p, action, search, replace);
-                }
-            }
-        }.runTaskAsynchronously(plugin);
-    }
-
     public BukkitTask sendMessage(CommandSender sender, Map<String, List<Action>> actions) {
         return sendMessage(sender, actions, null, null);
     }
 
+    public BukkitTask sendMessage(Player player, List<Action> actions, String[] search, String[] replace) {
+        return sendMessage(player, actions, search, replace, true);
+    }
+
+    public BukkitTask sendMessage(Player player, List<Action> actions) {
+        return sendMessage(player, actions, null, null, true);
+    }
+
     public BukkitTask sendMessage(CommandSender sender, Map<String, List<Action>> actions, String[] search, String[] replace) {
+        List<Action> actionList;
+        boolean isPlayer;
+        if (sender instanceof Player) {
+            actionList = actions.getOrDefault(locale.player((Player) sender), actions.get(""));
+            isPlayer = true;
+        } else {
+            actionList = actions.get("");
+            isPlayer = false;
+        }
+        return sendMessage(sender, actionList, search, replace, isPlayer);
+    }
+
+    private BukkitTask sendMessage(CommandSender sender, List<Action> actionList, String[] search, String[] replace, boolean isPlayer) {
         return new BukkitRunnable() {
             @Override
             public void run() {
-                tasks.add(getTaskId());
-                if (sender instanceof Player) {
-                    Player p = (Player) sender;
-                    for (Action action : actions.getOrDefault(locale.player(p), actions.get(""))) {
-                        if (!tasks.contains(getTaskId())) {
-                            return;
+                int delayTicks = 0;
+                for (Action action : actionList) {
+                    if (action.getType() == ActionType.DELAY) {
+                        try {
+                            delayTicks += formatInt(action.getContext());
+                        } catch (Exception ignored) {
                         }
-                        sendPlayer(p, action, search, replace);
+                        continue;
                     }
-                    return;
-                }
-                for (Action action : actions.get("")) {
-                    if (!tasks.contains(getTaskId())) {
-                        return;
+                    if (delayTicks > 0) {
+                        plugin.getServer().getScheduler().runTaskLater(plugin, () -> sendMessage(sender, action, search, replace, isPlayer), delayTicks);
+                    } else {
+                        sendMessage(sender, action, search, replace, isPlayer);
                     }
-                    sendSender(sender, action, search, replace);
                 }
             }
-        }.runTaskAsynchronously(plugin);
+        }.runTask(plugin);
+    }
+
+    private void sendMessage(CommandSender sender, Action action, String[] search, String[] replace, boolean isPlayer) {
+        if (isPlayer) {
+            sendPlayer((Player) sender, action, search, replace);
+        } else {
+            sendSender(sender, action, search, replace);
+        }
     }
 
     private void sendPlayer(Player p, Action action, String[] search, String[] replace) {
@@ -204,15 +208,6 @@ public class Utils {
                 log(context);
                 break;
             }
-            case DELAY: {
-                try {
-                    if (latch.await(Integer.parseInt(context) * 50L, TimeUnit.MILLISECONDS)) {
-                        break;
-                    }
-                } catch (Exception ignored) {
-                }
-                break;
-            }
             default: {
                 sendMessage(p, context);
                 break;
@@ -234,15 +229,6 @@ public class Utils {
             }
             case LOG: {
                 log(context);
-                break;
-            }
-            case DELAY: {
-                try {
-                    if (latch.await(Integer.parseInt(context) * 50L, TimeUnit.MILLISECONDS)) {
-                        break;
-                    }
-                } catch (Exception ignored) {
-                }
                 break;
             }
             case PLAYER:

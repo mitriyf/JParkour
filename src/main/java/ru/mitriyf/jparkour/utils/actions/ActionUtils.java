@@ -1,11 +1,9 @@
 package ru.mitriyf.jparkour.utils.actions;
 
-import com.google.common.io.ByteArrayDataOutput;
-import com.google.common.io.ByteStreams;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Server;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.boss.BarColor;
@@ -20,6 +18,8 @@ import org.bukkit.scheduler.BukkitScheduler;
 import ru.mitriyf.jparkour.JParkour;
 import ru.mitriyf.jparkour.utils.Utils;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.util.logging.Logger;
 
 public class ActionUtils {
@@ -46,7 +46,7 @@ public class ActionUtils {
             Sound sound = Sound.valueOf(spl[0]);
             float volume = spl.length >= 2 ? utils.formatFloat(spl[1]) : 1.0F;
             float pitch = spl.length >= 3 ? utils.formatFloat(spl[2]) : 1.0F;
-            scheduler.runTaskLaterAsynchronously(plugin, () -> p.playSound(p.getLocation(), sound, volume, pitch), later);
+            scheduler.runTaskLater(plugin, () -> p.playSound(p.getLocation(), sound, volume, pitch), later);
         } catch (Exception e) {
             logger.warning("Sound error: " + e);
         }
@@ -78,9 +78,10 @@ public class ActionUtils {
                 return;
             }
             int later = spl.length == 7 ? utils.formatInt(spl[6]) : 0;
-            World w = Bukkit.getWorld(spl[0]);
+            Server server = plugin.getServer();
+            World w = server.getWorld(spl[0]);
             if (w == null) {
-                w = Bukkit.getWorld("world");
+                w = server.getWorld("world");
             }
             double x = spl.length >= 2 ? utils.formatDouble(spl[1]) : 0;
             double y = spl.length >= 3 ? utils.formatDouble(spl[2]) : 80;
@@ -130,7 +131,8 @@ public class ActionUtils {
     }
 
     public void connect(Player p, String server) {
-        ByteArrayDataOutput out = ByteStreams.newDataOutput();
+        ByteArrayOutputStream b = new ByteArrayOutputStream();
+        DataOutputStream out = new DataOutputStream(b);
         try {
             out.writeUTF("Connect");
             out.writeUTF(server);
@@ -138,33 +140,30 @@ public class ActionUtils {
             logger.warning("A problem has been detected when sending player " + p.getName() + " to the " + server + " server");
             return;
         }
-        p.sendPluginMessage(plugin, "BungeeCord", out.toByteArray());
+        p.sendPluginMessage(plugin, "BungeeCord", b.toByteArray());
     }
 
     public void sendTitle(Player p, String titleS) {
-        scheduler.runTaskAsynchronously(plugin, () -> {
-            try {
-                String[] t = titleS.split(";");
-                if (t.length == 0 || t.length > 5 || utils.isTit()) {
-                    logger.warning("Invalid title. [title;subtitle;int;int1;int2]. For 1.8+, error: " + utils.getTitle());
-                    return;
-                }
-                String titleF = utils.formatString(t[0]);
-                String subtitle = t.length >= 2 ? utils.formatString(t[1]) : "";
-                int fadeIn = t.length >= 3 ? utils.formatInt(t[2]) : 10;
-                int stay = t.length >= 4 ? utils.formatInt(t[3]) : 60;
-                int fadeOut = t.length == 5 ? utils.formatInt(t[4]) : 20;
-                utils.getTitle().send(p, titleF, subtitle, fadeIn, stay, fadeOut);
-            } catch (Exception e) {
-                logger.warning("Title error: " + e);
+        try {
+            String[] t = split(titleS);
+            if (t.length == 0 || t.length > 5 || utils.isTit()) {
+                logger.warning("Invalid title. [title;subtitle;int;int1;int2]. For 1.8+, error: " + utils.getTitle());
+                return;
             }
-        });
-
+            String titleF = utils.formatString(t[0]);
+            String subtitle = t.length >= 2 ? utils.formatString(t[1]) : "";
+            int fadeIn = t.length >= 3 ? utils.formatInt(t[2]) : 10;
+            int stay = t.length >= 4 ? utils.formatInt(t[3]) : 60;
+            int fadeOut = t.length == 5 ? utils.formatInt(t[4]) : 20;
+            utils.getTitle().send(p, titleF, subtitle, fadeIn, stay, fadeOut);
+        } catch (Exception e) {
+            logger.warning("Title error: " + e);
+        }
     }
 
     public void sendBossbar(Player p, String bossbar) {
         try {
-            String[] b = bossbar.split(";");
+            String[] b = split(bossbar);
             if (b.length == 0 || b.length > 6 || utils.isBar()) {
                 logger.warning("Invalid bossbar. [message;color;type;time;style;flag]. For 1.9+, error: " + bossbar);
                 return;
@@ -177,37 +176,50 @@ public class ActionUtils {
             BarFlag flag = b.length == 6 ? BarFlag.valueOf(b[5].toUpperCase()) : null;
             boolean update = b[0].contains("%time%");
             String text = utils.formatString(b[0].replace("%time%", time + ""));
-            BossBar bossBar = flag == null ? plugin.getServer().createBossBar(text, color, style) : plugin.getServer().createBossBar(text, color, style, flag);
-            bossBar.addPlayer(p);
-            if (type.equalsIgnoreCase("stop")) {
-                scheduler.runTaskLaterAsynchronously(plugin, () -> {
-                    bossBar.removeAll();
-                    bossBar.setVisible(false);
-                }, ticks);
-            } else {
-                new BukkitRunnable() {
-                    private int t = 0;
+            scheduler.runTask(plugin, () -> {
+                BossBar bossBar = flag == null ? plugin.getServer().createBossBar(text, color, style) : plugin.getServer().createBossBar(text, color, style, flag);
+                bossBar.addPlayer(p);
+                if (type.equalsIgnoreCase("stop")) {
+                    scheduler.runTaskLaterAsynchronously(plugin, () -> {
+                        bossBar.removeAll();
+                        bossBar.setVisible(false);
+                    }, ticks);
+                } else {
+                    new BukkitRunnable() {
+                        private int t = 0;
 
-                    @Override
-                    public void run() {
-                        t++;
-                        if (t == ticks) {
-                            bossBar.removeAll();
-                            bossBar.setVisible(false);
-                            cancel();
-                            return;
+                        @Override
+                        public void run() {
+                            t++;
+                            if (t == ticks) {
+                                bossBar.removeAll();
+                                bossBar.setVisible(false);
+                                cancel();
+                                return;
+                            }
+                            int left = (int) (time - Math.floor((double) t / 20));
+                            if (update) {
+                                bossBar.setTitle(utils.formatString(b[0].replace("%time%", left + "")));
+                            }
+                            bossBar.setProgress(1 - ((double) t / ticks));
                         }
-                        int left = (int) (time - Math.floor((double) t / 20));
-                        if (update) {
-                            bossBar.setTitle(utils.formatString(b[0].replace("%time%", left + "")));
-                        }
-                        bossBar.setProgress(1 - ((double) t / ticks));
-                    }
-                }.runTaskTimerAsynchronously(plugin, 1, 1);
-            }
+                    }.runTaskTimerAsynchronously(plugin, 1, 1);
+                }
+            });
         } catch (Exception e) {
             logger.warning("Bossbar error: " + e);
         }
+    }
+
+    private String[] split(String text) {
+        if (text == null || text.isEmpty()) {
+            return new String[0];
+        }
+        String[] parts = text.split("(?<!\\\\);");
+        for (int i = 0; i < parts.length; i++) {
+            parts[i] = parts[i].replace("\\;", ";");
+        }
+        return parts;
     }
 
     public void dispatchPlayer(Player p, String cmd) {

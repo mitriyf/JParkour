@@ -15,7 +15,6 @@ import ru.mitriyf.jparkour.utils.Utils;
 import ru.mitriyf.jparkour.values.Values;
 
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class GameManager {
@@ -92,7 +91,6 @@ public class GameManager {
             tasks.remove(uuid);
             Player leader = gameData.getLeader();
             utils.sendMessage(leader, values.getConnect(), search, new String[]{name});
-            CountDownLatch latch = new CountDownLatch(1);
             SchematicData schematicData = values.getSchematics().get(readyMapId);
             int size = players.size();
             if (!dev && schematicData.getSize() < size) {
@@ -107,7 +105,7 @@ public class GameManager {
             }
             waiters.add(uuid);
             rooms.put(name, null);
-            scheduler.runTaskAsynchronously(plugin, () -> rooms.put(name, new Game(plugin, schematicData, latch, gameData, readyMapId, name, dev)));
+            scheduler.runTaskAsynchronously(plugin, () -> rooms.put(name, new Game(plugin, schematicData, gameData, readyMapId, name, dev)));
         } else {
             regenerateRoom(gameData, uuid, partyName, mapId, dev);
         }

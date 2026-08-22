@@ -46,10 +46,12 @@ public class Updater {
         try {
             URLConnection connection = new URL("https://github.com/mitriyf/JParkour/raw/refs/heads/main/updater/versions.yml").openConnection();
             connection.setConnectTimeout(5000);
-            InputStream in = connection.getInputStream();
             File cfg = new File(dataFolder, "temp/versions.yml");
             File folder = cfg.getParentFile();
-            if (folder.mkdirs()) {
+            if (!folder.mkdirs()) {
+                logger.info("The folder has already been created.");
+            }
+            try (InputStream in = connection.getInputStream()) {
                 copyInputStreamToFile(in, cfg);
             }
             YamlConfiguration versions = YamlConfiguration.loadConfiguration(cfg);
@@ -81,6 +83,7 @@ public class Updater {
         } catch (Exception e) {
             logger.warning("An error occurred while checking for updates. Please check your network connection.");
             logger.warning("Error: " + e);
+            values.deleteDirectory(new File(dataFolder, "temp"));
         }
     }
 
@@ -117,7 +120,7 @@ public class Updater {
         String schemVer = plugin.getConfigsVersion();
         File[] files = sch.listFiles();
         if (files == null) {
-            plugin.getLogger().warning("No files were found in the schematics folder.");
+            logger.warning("No files were found in the schematics folder.");
         } else {
             for (File schem : files) {
                 updateConfig(schem, schemVer, sc, sc + "default.yml", "locations.players");
@@ -138,10 +141,10 @@ public class Updater {
                     }
                     yml.save(cfg);
                     configUpdater.update(updatePath, cfg, ignoreSection);
-                    plugin.getLogger().info("The " + cfg.getName() + " has been successfully updated to version " + ver);
+                    logger.info("The " + cfg.getName() + " has been successfully updated to version " + ver);
                 }
-            } catch (IOException e) {
-                plugin.getLogger().warning("Update " + cfg.getName() + " is failed! Error: " + e);
+            } catch (Exception e) {
+                logger.warning("Update " + cfg.getName() + " is failed! Error: " + e);
             }
         }
     }

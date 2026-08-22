@@ -4,8 +4,8 @@ import org.bukkit.configuration.file.FileConfiguration;
 
 public class Builder implements Cloneable {
     private final FileConfiguration config;
-    private final char separator;
     private final StringBuilder builder;
+    private final char separator;
 
     public Builder(FileConfiguration config, char separator) {
         this.config = config;
